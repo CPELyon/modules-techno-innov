@@ -1,0 +1,52 @@
+mod_gpio_demo is an example code for the development module made by
+Techno-Innov.
+
+It has support for the LPC1224 as used on this development module, and
+for the peripherals found on the development module (Led, eeprom and
+temperature sensor).
+
+By default, both uarts are configured to send an initial character ('A' for
+UART 0 and 'Z' for UART 1) and echo any received character.
+
+More usefull stuff is up to you.
+
+
+********************
+BUID and FLASH
+
+Build has been tested using gcc, and only gcc, in the version provided by
+the emdebian project, but any ARM gcc toolchain should do.
+
+In order to get the emdebian ARM gcc cross-toolchain you should add this
+repository to your apt sources :
+   deb http://www.emdebian.org/debian/ unstable main
+and then update and install package gcc-4.7-arm-linux-gnueabi
+It may be requiered that you create a symlink in /usr/bin for the arm gcc
+   cd /usr/bin && ln -s arm-linux-gnueabi-gcc-4.7 arm-linux-gnueabi-gcc
+There's no need for the related libc package here, the libc does not fit
+in our microcontroler memory. Instead have a look at the content of the
+lib/ directory, and add stuff there.
+
+Once done you should build using the provided makefile by running the
+simple "make" command.
+
+To flash the binary (the one with .bin) to the LPC Flash you will need
+our lpctool package (not yet packaged for Debian as of 2013-03-07)
+available in our git repository : http://git.techno-innov.fr/lpctools
+Clone using :
+   git clone http://gitclone.techno-innov.fr/lpctools
+Then build (make) and use :)
+Usual command lines :
+   ./lpcprog /dev/ttyUSB0 id
+   ./lpcprog /dev/ttyUSB0 flash mod_gpio.bin -u
+See lpctools readme and lpcprog or isp help (-h) for more info.
+
+
+********************
+TODO :
+
+I2C support not commited yet (not tested), so no support for eeprom or
+temperature sensor right now.
+
+Deep sleep mode support.
+

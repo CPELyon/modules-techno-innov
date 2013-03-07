@@ -47,7 +47,6 @@
 
 #define EEPROM_TYPE_SMALL  EEPROM_ID_SMALL_ADDR
 #define EEPROM_TYPE_BIG    EEPROM_ID_BIG_ADDR
-static uint8_t eeprom_type = 0; /* Will in fact store the eeprom address */
 
 /* Detect the eeprom size */
 int eeprom_detect(void)
@@ -75,6 +74,20 @@ int eeprom_detect(void)
     return ret; /* Error or module size */
 }
 
+int get_eeprom_type(void)
+{
+	static int eeprom_type = 0; /* Will in fact store the eeprom address */
+
+	if (eeprom_type <= 0) {
+		eeprom_type = eeprom_detect();
+		if (eeprom_type <= 0) {
+			return -EBADFD;
+		}
+	}
+	return eeprom_type;
+}
+
+
 /* EEPROM Read
  * Performs a non-blocking read on the eeprom.
  *   address : data offset in eeprom.
@@ -95,13 +108,7 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
     int ret = 0;
     char cmd_buf[CMD_BUF_SIZE] = { EEPROM_ID_BIG_ADDR, 0, 0, (EEPROM_ID_BIG_ADDR | 0x01), };
     char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
-
-	if (eeprom_type <= 0) {
-		eeprom_type = eeprom_detect();
-		if (eeprom_type <= 0) {
-			return -EBADFD;
-		}
-	}
+	int eeprom_type = get_eeprom_type();
 
     /* Read the requested data */
     switch (eeprom_type) {
@@ -145,6 +152,67 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 #define EEPROM_ID_MAX_PAGE_SIZE EEPROM_ID_BIG_PAGE_SIZE
 int eeprom_write(uint32_t offset, const void *buf, size_t count)
 {
+	int ret = 0;
+    uint8_t cmd_size = CMD_SIZE_BIG, page_size = EEPROM_ID_BIG_PAGE_SIZE;
+    int write_count = 0, size = 0;
+    char cmd[MAX_CMD_SIZE] = { EEPROM_ID_BIG_ADDR, 0, 0 };
+    char full_buff[(EEPROM_ID_MAX_PAGE_SIZE + MAX_CMD_SIZE)];
+	int eeprom_type = get_eeprom_type();
+
+	 switch (type) {
+        case EEPROM_TYPE_SMALL:
+            cmd_size = CMD_SIZE_SMALL;
+            page_size = EEPROM_ID_SMALL_PAGE_SIZE;
+            break;
+        case EEPROM_TYPE_BIG:
+            /* already configured */
+            /* cmd_size = CMD_SIZE_BIG; */
+            /* page_size = EEPROM_ID_BIG_PAGE_SIZE; */
+            break;
+        default:
+            ret = -1;
+            write_count = count; /* skip the while loop */
+            break;
+    }
+    while (write_count < count) {
+        switch (type) {
+            case EEPROM_TYPE_SMALL:
+                cmd[0] = EEPROM_ID_SMALL_ADDR | ((offset & 0x700) >> 7);
+                cmd[1] = offset & 0xFF;
+                break;
+            case EEPROM_TYPE_BIG:
+                cmd[1] = ((offset & 0xFF00) >> 8);
+                cmd[2] = offset & 0xFF;
+                break;
+        }
+        /* make first write page alligned */
+        if (offset & (page_size - 1)) {
+            size = (page_size - (offset & (page_size - 1)));
+        } else {
+            size = page_size;
+        }
+        if (size > (count - write_count))
+            size = (count - write_count);
+        offset += size;
+        memcpy(full_buff, cmd, cmd_size);
+        memcpy(full_buff + cmd_size, buf + write_count, size);
+        ret = i2c_write(full_buff, (cmd_size + size), NULL);
+
+        if (ret != (cmd_size + size)) {
+            break;
+        }
+        /* Wait for page write completion : The device does not acknoledge anything during
+         * page write, perform page writes with no data, until it returns 1 */
+        do {
+            ret = i2c_write(full_buff, 1, NULL);
+        } while (ret != 1);
+
+        write_count += size;
+    }
+
+	if (write_count != count)
+        return ret;
+    return write_count;
 }
 
 

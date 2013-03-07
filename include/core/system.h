@@ -96,6 +96,9 @@ void clkout_on(uint32_t src, uint32_t div);
 void clkout_off(void);
 
 
+/* This "sleep" is a simple wait routine but has no relation to
+ * time in any way, it is highly dependent to CPU clock speed
+ */
 static inline void msleep(uint32_t ms)
 {
     volatile uint32_t dec = ms * 1000;

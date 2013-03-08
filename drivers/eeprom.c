@@ -47,6 +47,8 @@
 
 #define EEPROM_TYPE_SMALL  EEPROM_ID_SMALL_ADDR
 #define EEPROM_TYPE_BIG    EEPROM_ID_BIG_ADDR
+#define EEPROM_TYPE_NONE   0xFF   /* Impossible eeprom address */
+
 
 /* Detect the eeprom size */
 int eeprom_detect(void)
@@ -67,7 +69,7 @@ int eeprom_detect(void)
 	}
 
 	if (ret > 0) {
-	   	return = -1;
+		return -1;
 	} else if (ret == -EREMOTEIO) {
 		return EEPROM_TYPE_NONE; /* No module */
 	}
@@ -77,6 +79,9 @@ int eeprom_detect(void)
 int get_eeprom_type(void)
 {
 	static int eeprom_type = 0; /* Will in fact store the eeprom address */
+
+	if (eeprom_type == EEPROM_TYPE_NONE)
+		return -1; /* No need to check again */
 
 	if (eeprom_type <= 0) {
 		eeprom_type = eeprom_detect();
@@ -175,7 +180,7 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 			break;
 	}
 	while (write_count < count) {
-		switch (type) {
+		switch (eeprom_type) {
 			case EEPROM_TYPE_SMALL:
 				cmd[0] = EEPROM_ID_SMALL_ADDR | ((offset & 0x700) >> 7);
 				cmd[1] = offset & 0xFF;

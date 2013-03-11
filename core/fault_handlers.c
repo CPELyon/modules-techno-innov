@@ -23,23 +23,11 @@
  *****************************************************************************/
 
 #include "core/lpc_regs_12xx.h"
-#include "lib/string.h"
-
-#if 0
-extern char* UARTBUFFER;
-extern volatile int UARTPTR;
-extern volatile int UARTSENDPTR;
-extern volatile int UARTSENDING;
+#include "drivers/serial.h"
 
 void fault_info(const char* name, uint32_t len)
 {
-	struct lpc_uart* uart = LPC_UART_1;
-	char* dest = &UARTBUFFER[UARTPTR];
-	UARTPTR += len;
-	memcpy(dest, name, len);
-	if (UARTSENDING == 0) {
-		uart->func.buffer = UARTBUFFER[UARTSENDPTR++];
-	}
+	serial_write(1, name, len);
 }
 
 /* Cortex M0 core interrupt handlers */
@@ -63,7 +51,6 @@ void SysTick_Handler(void)
 {
 	fault_info(__FUNCTION__, sizeof(__FUNCTION__));
 }
-#endif
 
 
 

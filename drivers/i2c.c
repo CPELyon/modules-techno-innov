@@ -452,7 +452,7 @@ void set_i2c_pins(void)
 
 	/* Make sure IO_Config is clocked */
 	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
-	ioctrl->pio0_10 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE; /* True open drai */
+	ioctrl->pio0_10 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE; /* True open drain */
 	ioctrl->pio0_11 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE;
 	/* Config done, power off IO_CONFIG block */
 	sys_ctrl->sys_AHB_clk_ctrl &= ~LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;

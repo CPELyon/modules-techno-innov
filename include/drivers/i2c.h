@@ -71,6 +71,22 @@ enum i2c_state_machine_states {
 	I2C_DATA_NACK = 0x58,
 };
 
+#define UEXT_MOD_HAS_NONE  0
+#define UEXT_MOD_HAS_UART (1 << 0)
+#define UEXT_MOD_HAS_I2C  (1 << 1)
+#define UEXT_MOD_HAS_SPI  (1 << 2)
+
+struct module_desc {
+	uint16_t serial_number;
+	uint8_t version;
+	uint8_t header_size;
+	uint8_t capabilities; /* Bit mask of UEXT_MOD_HAS_* */
+	uint8_t name_offset;
+	uint8_t name_size;
+	uint8_t image_offset;
+	uint16_t image_size;
+} __attribute__ ((packed));
+
 enum i2c_eeprom_type {
 	EEPROM_TYPE_NONE = 0,
 	EEPROM_TYPE_SMALL,

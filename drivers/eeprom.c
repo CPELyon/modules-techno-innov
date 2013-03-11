@@ -45,10 +45,6 @@
 #define EEPROM_ID_BIG_I2C_SIZE  16*1024
 #define EEPROM_ID_BIG_PAGE_SIZE 64
 
-#define EEPROM_TYPE_SMALL  EEPROM_ID_SMALL_ADDR
-#define EEPROM_TYPE_BIG    EEPROM_ID_BIG_ADDR
-#define EEPROM_TYPE_NONE   0xFF   /* Impossible eeprom address */
-
 
 /* Detect the eeprom size */
 int eeprom_detect(void)
@@ -78,16 +74,15 @@ int eeprom_detect(void)
 
 int get_eeprom_type(void)
 {
-	static int eeprom_type = 0; /* Will in fact store the eeprom address */
+	static int eeprom_type = -1;
 
-	if (eeprom_type == EEPROM_TYPE_NONE)
-		return -1; /* No need to check again */
+	if (eeprom_type >= 0) {
+		return eeprom_type; /* No need to check again */
+	}
 
+	eeprom_type = eeprom_detect();
 	if (eeprom_type <= 0) {
-		eeprom_type = eeprom_detect();
-		if (eeprom_type <= 0) {
-			return -EBADFD;
-		}
+		return -1;
 	}
 	return eeprom_type;
 }

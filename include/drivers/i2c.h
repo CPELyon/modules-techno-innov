@@ -71,6 +71,12 @@ enum i2c_state_machine_states {
 	I2C_DATA_NACK = 0x58,
 };
 
+enum i2c_eeprom_type {
+	EEPROM_TYPE_NONE = 0,
+	EEPROM_TYPE_SMALL,
+	EEPROM_TYPE_BIG,
+};
+
 
 /***************************************************************************** */
 /*                I2C Init                                                     */

@@ -32,7 +32,6 @@
 
 
 /* Error Values, from glibc errno.h and errno-base.h */
-/* I2C */
 #define EIO          5 /* Bad one: Illegal start or stop, or illegal state in i2c state machine */
 #define EAGAIN      11 /* Device already in use */
 #define EFAULT      14 /* address above eeprom size */

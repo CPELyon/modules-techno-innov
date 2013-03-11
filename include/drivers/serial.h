@@ -28,7 +28,7 @@
 /***************************************************************************** */
 /*    Serial Write    */
 
-int serial_write(uint32_t uart_num, char *buf, uint32_t length);
+int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 
 
 

@@ -37,7 +37,7 @@ struct uart_device
 	uint32_t baudrate;
 
 	/* Output buffer */
-	volatile char* out_buff;
+	volatile const char* out_buff;
 	volatile uint32_t sending; /* Actual sending position in out buffer */
 	volatile uint32_t out_lock;
 	volatile uint32_t out_length; /* actual position to add in out buffer */
@@ -116,7 +116,7 @@ static void uart_start_sending(uint32_t uart_num)
 /***************************************************************************** */
 /*    Serial Write    */
 
-int serial_write(uint32_t uart_num, char *buf, uint32_t length)
+int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 {
 	struct uart_device* uart = NULL;
 

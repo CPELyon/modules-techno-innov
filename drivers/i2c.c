@@ -493,8 +493,10 @@ void i2c_off(void)
 /* Allow system to propagate main clock */
 void i2c_clock_update(void)
 {
-	if (mod_i2c.clock)
+	if (mod_i2c.clock) {
+		/* FIXME : we should stop I2C transfers, disable I2C interrupts and stop I1C clock. */
 		i2c_clock_on(mod_i2c.clock); /* 6 is not a module num, nor system i2c (5) */
+	}
 }
 
 

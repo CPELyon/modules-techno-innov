@@ -341,17 +341,19 @@ static inline void NVIC_SystemReset(void)
 /*******************************************************************************/
 /*            Sync lock                                                        */
 /*******************************************************************************/
-/* There is no syncro instructions on Cortex-M0 */
+/* There is no syncro instructions on Cortex-M0
+ * Returns the old value if the new value has been set (lock acquired)
+ */
 static inline uint32_t sync_lock_test_and_set(volatile uint32_t *addr, uint32_t value)
 {
+	uint32_t oldval;
 	lpc_disable_irq();
     dsb();
-	if (*addr == value)
-		return 0;
+	oldval = *addr;
 	*addr = value;
     dsb();
 	lpc_enable_irq();
-	return value;
+	return oldval;
 }
 /* Remove the lock */
 static inline void sync_lock_release(volatile uint32_t *addr)

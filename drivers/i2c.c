@@ -33,7 +33,6 @@
  * I2C Bus structure
  *
  * clock : current i2c clock.
- * bus_lock : lock to take hold of the bus.
  * state : global state of the i2c engine.
  * master_status : status returned by i2c block as found in "status" register.
  *
@@ -48,7 +47,6 @@
 struct i2c_bus {
 	volatile struct lpc_i2c* regs;
 	volatile uint32_t clock;
-	volatile uint32_t bus_lock;
 	volatile uint32_t state;
 	volatile uint32_t master_status;
 	volatile uint32_t slave_status;
@@ -290,13 +288,7 @@ int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* i
 	if ((inbuff == NULL) && (count > 0))
 		return -EINVAL;
 
-	/* Lock acquire */
-	if (sync_lock_test_and_set(&mod_i2c.bus_lock, 1) == 1)
-		return -EAGAIN;
-
 	if (mod_i2c.state == I2C_BUSY) {
-		/* Someone uses the bus without hold of the bus lock ?? */
-		sync_lock_release(&mod_i2c.bus_lock);
 		return -EBUSY;
 	}
 	if (mod_i2c.state != I2C_OK) {
@@ -349,9 +341,6 @@ int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* i
 	do {} while (mod_i2c.state == I2C_BUSY);
 	mod_i2c.state = I2C_OK;
 
-	/* Release the lock */
-	sync_lock_release(&mod_i2c.bus_lock);
-
 	return ret;
 }
 
@@ -383,13 +372,7 @@ int i2c_write(const void *buf, size_t count, const void* ctrl_buf)
 	if (buf == NULL)
 		return -EINVAL;
 
-	/* Lock acquire */
-	if (sync_lock_test_and_set(&mod_i2c.bus_lock, 1) == 1)
-		return -EAGAIN;
-
 	if (mod_i2c.state == I2C_BUSY) {
-		/* Someone uses the bus without hold of the bus lock ?? */
-		sync_lock_release(&mod_i2c.bus_lock);
 		return -EBUSY;
 	}
 	if (mod_i2c.state != I2C_OK) {
@@ -441,9 +424,6 @@ int i2c_write(const void *buf, size_t count, const void* ctrl_buf)
 	mod_i2c.regs->ctrl_set = I2C_START_FLAG;
 	do {} while (mod_i2c.state == I2C_BUSY);
 	mod_i2c.state = I2C_OK;
-
-	/* Release the lock */
-	sync_lock_release(&mod_i2c.bus_lock);
 
 	return ret;
 }

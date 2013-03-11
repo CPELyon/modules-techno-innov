@@ -79,7 +79,7 @@ static struct i2c_bus mod_i2c;
 /* I2C Interrupt handler */
 /* Actual version will stop on NACKs */
 /* See LPC1764 user's manual UM10360 on page 457 (19.9.5) for details on I2C State machine */
-void I2C_Handler(void)
+void I2C_0_Handler(void)
 {
 	uint8_t status;
 	struct i2c_bus* i2c = &mod_i2c;

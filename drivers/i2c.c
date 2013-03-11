@@ -476,7 +476,8 @@ void i2c_on(uint32_t i2c_clk_freq)
 	mod_i2c.regs = (struct lpc_i2c*)LPC_I2C0;
 	mod_i2c.state = I2C_OK;
 	/* Enable I2C */
-	i2c->ctrl_set = 0x40; /* Fixme, if enabling slave functions, write 0x44 instead */
+	/* Fixme, if enabling slave functions, add I2C_ASSERT_ACK flag */
+	i2c->ctrl_set = (I2C_ENABLE_FLAG);
 	/* And enable interrupts */
 	NVIC_EnableIRQ(I2C0_IRQ);
 }

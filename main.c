@@ -30,14 +30,9 @@
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
 
+
 #define SELECTED_FREQ  FREQ_SEL_36MHz
 
-#if 0
-char* UARTBUFFER = (char*)0x10000000;
-volatile int UARTPTR = 0;
-volatile int UARTSENDPTR = 0;
-volatile int UARTSENDING = 0;
-#endif
 
 void system_init()
 {

@@ -65,15 +65,6 @@ static struct uart_device uarts[NUM_UARTS] = {
 	},
 };
 
-#if 0
-#define DEBUG
-extern char* UARTBUFFER;
-extern volatile int UARTPTR;
-extern volatile int UARTSENDPTR;
-extern volatile int UARTSENDING;
-#endif
-
-
 /* Generic UART handler */
 static void UART_Handler(struct uart_device* uart)
 {
@@ -89,15 +80,8 @@ static void UART_Handler(struct uart_device* uart)
 		if (uart->out_buff && uart->sending && (uart->out_length > uart->sending)) {
 			uart->regs->func.buffer = uart->out_buff[uart->sending];
 			uart->sending++;
-#ifdef DEBUG
-		} else if (UARTPTR > UARTSENDPTR) {
-			uart->regs->func.buffer = UARTBUFFER[UARTSENDPTR++];
-#endif
 		} else {
 			uart->sending = 0;
-#ifdef DEBUG
-			UARTSENDING = 0;
-#endif
 		}
 	}
 }

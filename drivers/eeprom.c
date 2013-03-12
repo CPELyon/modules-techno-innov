@@ -40,8 +40,8 @@
 #define EEPROM_ID_SMALL_PAGE_SIZE 16
 /* Big eeprom : from 4k bytes and above : These use two address bytes, and the three
  *   physical address pins are used to set the chip address. On DTPlug modules they should
- *   have address 0xA2. */
-#define EEPROM_ID_BIG_ADDR  0xA2
+ *   have address 0xA8. */
+#define EEPROM_ID_BIG_ADDR  0xA8
 #define EEPROM_ID_BIG_I2C_SIZE  16*1024
 #define EEPROM_ID_BIG_PAGE_SIZE 64
 

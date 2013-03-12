@@ -26,12 +26,19 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "lib/stdio.h"
 #include "drivers/i2c.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
 
 
-#define SELECTED_FREQ  FREQ_SEL_36MHz
+#ifndef MODULE_SERIAL_NUM
+#define MODULE_SERIAL_NUM 0
+#define MODULE_VERSION    0x02
+#define MODULE_NAME "GPIO Mod demo"
+#endif
+
+#define SELECTED_FREQ  FREQ_SEL_24MHz
 
 
 void system_init()
@@ -64,28 +71,98 @@ void Temp_config(void)
 
 /***************************************************************************** */
 /* EEPROM */
+#define DUMP_BUFF_SIZE 80
+void module_desc_dump()
+{
+	char buff[DUMP_BUFF_SIZE];
+	int len = 0, ret = 0;
+	struct module_desc desc;
 
+	/* Read module descriptor structure from eeprom */
+	ret = eeprom_read(0, (char*)&desc, sizeof(struct module_desc));
+	if (ret != sizeof(struct module_desc)) {
+		return;
+	}
+	/* Send the content of the header */
+	serial_write(1, "Module :\r\n", 10);
+	len = snprintf(buff, 16, "serial: %d, ", desc.serial_number);
+	len += snprintf((buff + len), 15, "ver: %d\r\n", desc.version);
+	len += snprintf((buff + len), 16, "cap: 0x%04x\r\n", desc.capabilities);
+	/* Get and send the module name */
+	if (desc.name_size >= DUMP_BUFF_SIZE) {
+		desc.name_size = DUMP_BUFF_SIZE - len - 3;
+	}
+	ret = eeprom_read(desc.name_offset, (buff + len), desc.name_size);
+	if (ret == desc.name_size) {
+		len += ret;
+		len += snprintf((buff + len), 3, "\r\n");
+	}
+	ret = 0;
+	do {
+		ret += serial_write(1, (buff + ret), (len - ret));
+	} while (ret < len);
+}
 
+int module_desc_set(char* name)
+{
+	int ret = 0;
+	struct module_desc desc = {
+		.serial_number = MODULE_SERIAL_NUM,
+		.version = MODULE_VERSION,
+		.capabilities = (UEXT_MOD_HAS_UART | UEXT_MOD_HAS_I2C | UEXT_MOD_HAS_SPI),
+		.name_offset = sizeof(struct module_desc),
+		.image_offset = 0,
+		.image_size = 0,
+	};
+	desc.name_size = strlen(name);
+	ret = eeprom_write(0, (char*)&desc, sizeof(struct module_desc));
+	if (ret != sizeof(struct module_desc)) {
+		return -1;
+	}
+	ret += eeprom_write(ret, name, desc.name_size);
+	return ret;
+}
 
 /***************************************************************************** */
 /* GPIO */
+void set_spi_cs_low(void)
+{
+	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 
+	config_gpio(&ioctrl->pio0_15, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
 
+	/* Configure SPI_CS as output and set it low. */
+	gpio0->data_dir |= (1 << 15);
+	gpio0->clear = (1 << 15);
+}
 
+#define WRITE 0
 
 /***************************************************************************** */
 int main(void) {
-	struct lpc_uart* uart0 = LPC_UART_0;
 	struct lpc_uart* uart1 = LPC_UART_1;
 
 	system_init();
 	uart_on(0, 115200);
 	uart_on(1, 115200);
 
-	uart0->func.buffer = 'A';
-	uart1->func.buffer = 'Z';
+	/* Temporary hack to set SPI_CS low, should be shared with SPI */
+	set_spi_cs_low();
 
-	status_led(green_on);
+	i2c_on(I2C_CLK_100KHz);
+
+
+	if (WRITE) {
+		if (module_desc_set(MODULE_NAME) <= 0) {
+			uart1->func.buffer = 'E';
+		} else {
+			uart1->func.buffer = 'O';
+		}
+	} else {
+		module_desc_dump();
+	}
+
 	while (1) {
 		chenillard(250);
 	}

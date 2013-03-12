@@ -33,7 +33,7 @@
 
 
 #ifndef MODULE_SERIAL_NUM
-#define MODULE_SERIAL_NUM 0
+#define MODULE_SERIAL_NUM 1
 #define MODULE_VERSION    0x02
 #define MODULE_NAME "GPIO Mod demo"
 #endif
@@ -137,7 +137,9 @@ void set_spi_cs_low(void)
 	gpio0->clear = (1 << 15);
 }
 
+#ifndef WRITE
 #define WRITE 0
+#endif
 
 /***************************************************************************** */
 int main(void) {

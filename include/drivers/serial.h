@@ -26,8 +26,16 @@
 
 
 /***************************************************************************** */
-/*    Serial Write    */
-
+/*    Serial Write
+ *
+ * Try to send at most "length" characters from "buf" on the requested uart.
+ * Returns -1 on error, or number of characters copied into output buffer, witch
+ * may be less than requested "length"
+ * Possible errors: requested uart does not exists or unable to acquire uart lock.
+ *
+ * Warning for Real Time : This implementation will block if there's already a
+ * transmission ongoing.
+ */
 int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 
 
@@ -37,13 +45,10 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 /***************************************************************************** */
 /*   Public access to UART setup   */
 
-
 void set_uarts_pins(void);
-
 
 /* Allow any change to the main clock to be forwarded to us */
 void uart_clk_update(void);
-
 
 /* Do we need to allow setting of other parameters ? (Other than 8n1) */
 /* Do we need to allow specifying an interrupt handler ? */

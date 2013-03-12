@@ -29,7 +29,9 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "lib/string.h"
 
+#define SERIAL_OUT_BUFF_SIZE 64
 struct uart_device
 {
 	uint32_t num;
@@ -37,7 +39,7 @@ struct uart_device
 	uint32_t baudrate;
 
 	/* Output buffer */
-	volatile const char* out_buff;
+	volatile char out_buff[SERIAL_OUT_BUFF_SIZE];
 	volatile uint32_t sending; /* Actual sending position in out buffer */
 	volatile uint32_t out_lock;
 	volatile uint32_t out_length; /* actual position to add in out buffer */
@@ -51,7 +53,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.num = 0,
 		.regs = (struct lpc_uart*)LPC_UART_0,
 		.baudrate = 0,
-		.out_buff = NULL,
+		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
 	},
@@ -59,7 +61,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.num = 1,
 		.regs = (struct lpc_uart*)LPC_UART_1,
 		.baudrate = 0,
-		.out_buff = NULL,
+		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
 	},
@@ -114,8 +116,16 @@ static void uart_start_sending(uint32_t uart_num)
 
 
 /***************************************************************************** */
-/*    Serial Write    */
-
+/*    Serial Write
+ *
+ * Try to send at most "length" characters from "buf" on the requested uart.
+ * Returns -1 on error, or number of characters copied into output buffer, witch
+ * may be less than requested "length"
+ * Possible errors: requested uart does not exists or unable to acquire uart lock.
+ *
+ * Warning for Real Time : This implementation will block if there's already a
+ * transmission ongoing.
+ */
 int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 {
 	struct uart_device* uart = NULL;
@@ -132,7 +142,10 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 	/* If UART is sending wait for buffer empty */
 	do {} while (uart->sending != 0);
 
-	uart->out_buff = buf;
+	if (length > SERIAL_OUT_BUFF_SIZE) {
+		length = SERIAL_OUT_BUFF_SIZE;
+	}
+	memcpy((char*)uart->out_buff, buf, length);
 	uart->out_length = length;
 
 	/* Turn output on */

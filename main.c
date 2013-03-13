@@ -30,6 +30,7 @@
 #include "drivers/i2c.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
+#include "drivers/temp.h"
 
 
 #ifndef MODULE_SERIAL_NUM
@@ -61,13 +62,39 @@ void system_init()
 void WAKEUP_Handler(void)
 {
 }
-void Temp_config(void)
+void temp_config(void)
 {
 	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
+	int ret = 0;
+
 	/* Temp Alert */
 	config_gpio(&ioctrl->pio0_7, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP));
+
+	/* Temp sensor */
+	ret = sensor_config(TMP_RES_ELEVEN_BITS);
+	if (ret != 0) {
+		serial_write(1, "Temp config error\r\n", 19);
+	}
 }
 
+void temp_display(void)
+{
+	char buff[40];
+	uint16_t raw = 0;
+	int deci_degrees = 0;
+	int len = 0;
+
+	sensor_start_conversion();
+	msleep(250); /* Wait for the end of the conversion : 40ms */
+	len = temp_read(&raw, &deci_degrees);
+	if (len != 0) {
+		serial_write(1, "Temp read error\r\n", 19);
+	} else {
+		len = snprintf(buff, 40, "Temp read: %d,%d - raw: 0x%04x.\r\n",
+				(deci_degrees/10), (deci_degrees%10), raw);
+		serial_write(1, buff, len);
+	}
+}
 
 /***************************************************************************** */
 /* EEPROM */
@@ -165,8 +192,12 @@ int main(void) {
 		module_desc_dump();
 	}
 
+	temp_config();
+	temp_display();
+
 	while (1) {
 		chenillard(250);
+		temp_display();
 	}
 	return 0;
 }

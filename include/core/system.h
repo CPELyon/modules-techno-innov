@@ -36,6 +36,7 @@
 #define EAGAIN      11 /* Device already in use */
 #define EFAULT      14 /* address above eeprom size */
 #define EBUSY       16 /* Device or ressource Busy or Arbitration lost */
+#define ENODEV      19 /* No such device */
 #define EINVAL      22 /* Invalid argument */
 #define EBADFD      77 /* Device not initialized */
 #define EREMOTEIO  121 /* Device did not acknowledge */

@@ -29,6 +29,8 @@
 #define I2C_CLK_100KHz  (100*1000)
 #define I2C_CLK_400KHz  (400*1000)
 
+#define I2C_READ_BIT 0x01
+#define I2C_WRITE_BIT 0x00
 
 enum i2c_conditions {
 	I2C_CONT = 0,
@@ -71,6 +73,12 @@ enum i2c_state_machine_states {
 	I2C_DATA_NACK = 0x58,
 };
 
+
+/***************************************************************************** */
+/*       Module identification support for DTPlug and DomoTab                  */
+/***************************************************************************** */
+
+/* Module capabilities */
 #define UEXT_MOD_HAS_NONE  0
 #define UEXT_MOD_HAS_UART (1 << 0)
 #define UEXT_MOD_HAS_I2C  (1 << 1)
@@ -94,14 +102,6 @@ enum i2c_eeprom_type {
 };
 
 
-/***************************************************************************** */
-/*                I2C Init                                                     */
-/***************************************************************************** */
-void set_i2c_pins(void);
-void i2c_on(uint32_t i2c_clk_freq);
-void i2c_off(void);
-/* Allow system to propagate main clock */
-void i2c_clock_update(void);
 
 /***************************************************************************** */
 /*          Read and Write for system eeprom                                   */
@@ -183,6 +183,19 @@ int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* i
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 int i2c_write(const void *buf, size_t count, const void* ctrl_buf);
+
+
+
+
+/***************************************************************************** */
+/*                I2C Init                                                     */
+/***************************************************************************** */
+void set_i2c_pins(void);
+void i2c_on(uint32_t i2c_clk_freq);
+void i2c_off(void);
+/* Allow system to propagate main clock */
+void i2c_clock_update(void);
+
 
 
 #endif /* DRIVERS_I2C_H */

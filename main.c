@@ -99,7 +99,7 @@ void temp_display(void)
 /***************************************************************************** */
 /* EEPROM */
 #define DUMP_BUFF_SIZE 80
-void module_desc_dump()
+void module_desc_dump(void)
 {
 	char buff[DUMP_BUFF_SIZE];
 	int len = 0, ret = 0;

@@ -111,7 +111,9 @@ void I2C_0_Handler(void)
 			break;
 		case 0x10:  /* A repeated START has been transmitted. */
 			/* Setting read_index to 0 is usefull only if next data byte is
-			 *    Slave Address + Read (SLA + R), but it's OK if we will write too. */
+			 *    Slave Address + Read (SLA + R), but it's OK if we perform a write too, and
+			 *    is necessary for read with a null data length used to probe for devices.
+			 */
 			i2c->read_index = 0;
 			/* Send Slave Address and Read/Write bit (SLA + R/W)
 			 * Depending on R/W bit, Master Receive or master Transmit mode will be enterred. */
@@ -254,7 +256,6 @@ void I2C_0_Handler(void)
 
 
 
-
 /***************************************************************************** */
 /*                        I2C access                                           */
 /***************************************************************************** */
@@ -307,6 +308,7 @@ int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* i
 	/* read buffer */
 	mod_i2c.in_buff = inbuff;
 	mod_i2c.read_length = count;
+	mod_i2c.read_index = 0;
 
 	/* Start the process */
 	mod_i2c.state = I2C_BUSY;

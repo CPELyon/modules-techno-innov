@@ -159,7 +159,7 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 	char full_buff[(EEPROM_ID_MAX_PAGE_SIZE + MAX_CMD_SIZE)];
 	int eeprom_type = get_eeprom_type();
 
-	 switch (eeprom_type) {
+	switch (eeprom_type) {
 		case EEPROM_TYPE_SMALL:
 			cmd_size = CMD_SIZE_SMALL;
 			page_size = EEPROM_ID_SMALL_PAGE_SIZE;

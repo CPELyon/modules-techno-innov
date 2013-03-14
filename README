@@ -5,8 +5,10 @@ It has support for the LPC1224 as used on this development module, and
 for the peripherals found on the development module (Led, eeprom and
 temperature sensor).
 
-By default, both uarts are configured to send an initial character ('A' for
-UART 0 and 'Z' for UART 1) and echo any received character.
+By default, both uarts are configured to echo any received character.
+The programm will send the identification found in the EEPROM once and
+then send the temperature in an endless loop on UART1, while playing with
+the status LED.
 
 More usefull stuff is up to you.
 
@@ -45,8 +47,9 @@ See lpctools readme and lpcprog or isp help (-h) for more info.
 ********************
 TODO :
 
-I2C support not commited yet (not tested), so no support for eeprom or
-temperature sensor right now.
-
-Deep sleep mode support.
+- Deep sleep mode support.
+- ADC support
+- Test all the GPIO in different modes
+- Add support for SPI
+- Add support for SDCard over SPI
 

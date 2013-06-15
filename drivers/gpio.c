@@ -110,6 +110,11 @@ void PIO_2_Handler(void)
 {
 }
 
+#define LED_RED 5
+#define PIO_LED_RED pio1_5
+#define LED_GREEN 4
+#define PIO_LED_GREEN pio1_4
+
 
 /***************************************************************************** */
 /* Status LED */
@@ -120,13 +125,13 @@ void status_led_config(void)
 	struct lpc_gpio* gpio1 = LPC_GPIO_1;
 	uint32_t mode = (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL |LPC_IO_DRIVE_HIGHCURENT);
 	/* Status Led GPIO */
-	ioctrl->pio1_4 = (LPC_IO_FUNC_ALT(0) | mode);
-	ioctrl->pio1_5 = (LPC_IO_FUNC_ALT(0) | mode);
+	ioctrl->PIO_LED_GREEN = (LPC_IO_FUNC_ALT(0) | mode);
+	ioctrl->PIO_LED_RED = (LPC_IO_FUNC_ALT(0) | mode);
 	/* Configure both as output */
-	gpio1->data_dir = (1 << 4) | (1 << 5);
+	gpio1->data_dir = (1 << LED_GREEN) | (1 << LED_RED);
 	/* Turn both LEDs on */
-	//gpio1->set = (1 << 4) | (1 << 5);
-	gpio1->set = (1 << 4);
+	//gpio1->set = (1 << LED_GREEN) | (1 << LED_RED);
+	gpio1->set = (1 << LED_GREEN);
 }
 
 void status_led(uint32_t val)
@@ -135,40 +140,40 @@ void status_led(uint32_t val)
 
 	switch (val) {
 		case red_only:
-			gpio1->set = (1 << 5);
-			gpio1->clear = (1 << 4);
+			gpio1->set = (1 << LED_RED);
+			gpio1->clear = (1 << LED_GREEN);
 			break;
 		case red_on:
-			gpio1->set = (1 << 5);
+			gpio1->set = (1 << LED_RED);
 			break;
 		case red_off:
-			gpio1->clear = (1 << 5);
+			gpio1->clear = (1 << LED_RED);
 			break;
 		case red_toggle:
-			gpio1->invert = (1 << 5);
+			gpio1->invert = (1 << LED_RED);
 			break;
 		case green_only:
-			gpio1->set = (1 << 4);
-			gpio1->clear = (1 << 5);
+			gpio1->set = (1 << LED_GREEN);
+			gpio1->clear = (1 << LED_RED);
 			break;
 		case green_on:
-			gpio1->set = (1 << 4);
+			gpio1->set = (1 << LED_GREEN);
 			break;
 		case green_off:
-			gpio1->clear = (1 << 4);
+			gpio1->clear = (1 << LED_GREEN);
 			break;
 		case green_toggle:
-			gpio1->invert = (1 << 4);
+			gpio1->invert = (1 << LED_GREEN);
 			break;
 		case both:
-			gpio1->set = (1 << 4) | (1 << 5);
+			gpio1->set = (1 << LED_GREEN) | (1 << LED_RED);
 			break;
 		case toggle:
-			gpio1->invert = (1 << 4) | (1 << 5);
+			gpio1->invert = (1 << LED_GREEN) | (1 << LED_RED);
 			break;
 		case none:
 		default:
-			gpio1->clear = (1 << 4) | (1 << 5);
+			gpio1->clear = (1 << LED_GREEN) | (1 << LED_RED);
 			break;
 	}
 }

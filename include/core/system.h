@@ -96,12 +96,23 @@ void clkout_on(uint32_t src, uint32_t div);
 void clkout_off(void);
 
 
-/* This "sleep" is a simple wait routine but has no relation to
- * time in any way, it is highly dependent to CPU clock speed
+/* This "msleep" is a simple wait routine which is close to a millisecond sleep
+ * whith a CPU Clock of 24MHz, but has no exact relation to time.
+ * It is highly dependent to CPU clock speed anyway.
+ * Note : This is an active sleep !
  */
 static inline void msleep(uint32_t ms)
 {
-    volatile uint32_t dec = ms * 1000;
+    volatile uint32_t dec = ms * 2667;
+    while (dec--);
+}
+
+/* Something that's not too far from a microsecond sleep at 24MHz CPU Clock
+ * Note : This is an active sleep !
+ */
+static inline void usleep(uint32_t us)
+{
+    volatile uint32_t dec = us * 2;
     while (dec--);
 }
 

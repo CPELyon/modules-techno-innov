@@ -37,6 +37,7 @@ struct uart_device
 	uint32_t num;
 	struct lpc_uart* regs;
 	uint32_t baudrate;
+	uint32_t config;
 
 	/* Output buffer */
 	volatile char out_buff[SERIAL_OUT_BUFF_SIZE];
@@ -53,6 +54,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.num = 0,
 		.regs = (struct lpc_uart*)LPC_UART_0,
 		.baudrate = 0,
+		.config = (LPC_UART_8BIT | LPC_UART_NO_PAR | LPC_UART_1STOP),
 		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
@@ -61,6 +63,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.num = 1,
 		.regs = (struct lpc_uart*)LPC_UART_1,
 		.baudrate = 0,
+		.config = (LPC_UART_8BIT | LPC_UART_NO_PAR | LPC_UART_1STOP),
 		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
@@ -207,8 +210,8 @@ static uint32_t uart_mode_setup(uint32_t uart_num)
 {
 	struct lpc_uart* uart = uarts[uart_num].regs; /* Get the right registers */
 	uint32_t status = 0;
-	/* Set up UART mode : 8n1 */
-	uart->line_ctrl = (LPC_UART_8BIT | LPC_UART_NO_PAR | LPC_UART_1STOP);
+	/* Set up UART mode */
+	uart->line_ctrl = uarts[uart_num].config;;
 	/* Clear all fifo, reset and enable them */
 	/* Note : fifo trigger level is one bit */
 	uart->ctrl.fifo_ctrl = (LPC_UART_FIFO_EN | LPC_UART_TX_CLR | LPC_UART_RX_CLR);

@@ -502,9 +502,15 @@ struct lpc_uart
 #define LPC_UART_1        ((struct lpc_uart *) LPC_UART1_BASE)
 
 /* Line Control Register */
+#define LPC_UART_5BIT          (0x00 << 0)
+#define LPC_UART_6BIT          (0x01 << 0)
+#define LPC_UART_7BIT          (0x02 << 0)
 #define LPC_UART_8BIT          (0x03 << 0)
 #define LPC_UART_1STOP         (0x00 << 2)
+#define LPC_UART_2STOP         (0x01 << 2)
 #define LPC_UART_NO_PAR        (0x00 << 3)
+#define LPC_UART_ODD_PAR      ((0x01 << 3) | (0x00 << 4))
+#define LPC_UART_EVEN_PAR      ((0x01 << 3) | (0x01 << 4))
 #define LPC_UART_ENABLE_DLAB   (0x01 << 7)
 /* FIFO Control Register */
 #define LPC_UART_FIFO_EN       (0x01 << 0)

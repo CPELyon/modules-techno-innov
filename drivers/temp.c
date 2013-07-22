@@ -84,19 +84,12 @@ int probe_sensor(void)
 
 /* Convert raw temperature data (expressed as signed value of 16 times the
  * actual temperature in the twelve higher bits of a sixteen bits wide value)
- * into a decimal interger value of ten times the actual temperature.
+ * into a decimal integer value of ten times the actual temperature.
  * The value returned is thus in tenth of degrees centigrade.
  */
 int convert_to_deci_degrees(uint16_t raw)
 {
-	uint16_t val = ((raw >> 4) & 0x07FF);
-	int sign = 1;
-
-	if (raw & 0x8000) {
-		sign = -1;
-		val = ~(val) + 1;
-	}
-	return (sign * (((int)val * 10) / 16)); 
+	return (((int)raw * 10) >> 8); 
 }
 
 /* Temp Read

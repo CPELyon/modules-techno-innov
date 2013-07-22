@@ -196,16 +196,6 @@ static void uart_clk_off(uint32_t uart_num)
 	sys_ctrl->uart_clk_div[uart_num] = 0;
 }
 
-static void uart_power(uint32_t power_bit, uint32_t on_off)
-{
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
-	if (on_off == 1) {
-		sys_ctrl->sys_AHB_clk_ctrl |= power_bit;
-	} else {
-		sys_ctrl->sys_AHB_clk_ctrl &= ~(power_bit);
-	}
-}
-
 static uint32_t uart_mode_setup(uint32_t uart_num)
 {
 	struct lpc_uart* uart = uarts[uart_num].regs; /* Get the right registers */
@@ -294,10 +284,10 @@ int uart_on(uint32_t uart_num, uint32_t baudrate)
 	NVIC_DisableIRQ( uart->irq );
 	/* Setup pins, must be done before clock setup and with uart powered off. */
 	uart_clk_off(uart_num);
-	uart_power(uart->power_offset, 0);
+	subsystem_power(uart->power_offset, 0);
 	uart_set_pin_func(uart_num);
 	/* Turn On power */
-	uart_power(uart->power_offset, 1);
+	subsystem_power(uart->power_offset, 1);
 	/* Setup clock acording to baudrate */
 	uart_clk_on(uart_num, baudrate);
 	/* Setup mode, fifo, ... */
@@ -318,7 +308,7 @@ void uart_off(uint32_t uart_num)
 	NVIC_DisableIRQ( uart->irq );
 	uart_clk_off(uart_num);
 	/* Turn Off power */
-	uart_power(uart->power_offset, 0);
+	subsystem_power(uart->power_offset, 0);
 }
 
 

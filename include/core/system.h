@@ -61,6 +61,9 @@ void stop_watchdog(void);
 /***************************************************************************** */
 void enter_deep_sleep(void);
 
+/* Power on or off a subsystem */
+void subsystem_power(uint32_t power_bit, uint32_t on_off);
+
 /* Configure the brown-out detection */
 void system_brown_out_detection_config(uint32_t level);
 

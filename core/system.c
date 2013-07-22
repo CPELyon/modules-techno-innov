@@ -134,6 +134,17 @@ void enter_deep_sleep(void)
 	/* FIXME */
 }
 
+/* Power on or off a subsystem */
+void subsystem_power(uint32_t power_bit, uint32_t on_off)
+{
+	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	if (on_off == 1) {
+		sys_ctrl->sys_AHB_clk_ctrl |= power_bit;
+	} else {
+		sys_ctrl->sys_AHB_clk_ctrl &= ~(power_bit);
+	}
+}
+
 /***************************************************************************** */
 /*                      System Clock                                           */
 /***************************************************************************** */

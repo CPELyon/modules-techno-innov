@@ -449,25 +449,23 @@ static void i2c_clock_on(uint32_t i2c_clk_freq)
 
 void set_i2c_pins(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
 	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 
 	/* Make sure IO_Config is clocked */
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
 	ioctrl->pio0_10 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE; /* True open drain */
 	ioctrl->pio0_11 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE;
 	/* Config done, power off IO_CONFIG block */
-	sys_ctrl->sys_AHB_clk_ctrl &= ~LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 0);
 }
 
 void i2c_on(uint32_t i2c_clk_freq)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
 	struct lpc_i2c* i2c = LPC_I2C0;
 
 	NVIC_DisableIRQ(I2C0_IRQ);
 	/* Power on I2C 0 block */
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_I2C;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_I2C, 1);
 	/* Set clock */
 	i2c_clock_on(i2c_clk_freq);
 	mod_i2c.clock = i2c_clk_freq;
@@ -486,9 +484,8 @@ void i2c_on(uint32_t i2c_clk_freq)
 
 void i2c_off(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
 	NVIC_DisableIRQ(I2C0_IRQ);
-	sys_ctrl->sys_AHB_clk_ctrl &= ~(LPC_SYS_ABH_CLK_CTRL_I2C);
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_I2C, 0);
 	mod_i2c.clock = 0;
 }
 

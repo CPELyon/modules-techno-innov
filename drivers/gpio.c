@@ -36,39 +36,34 @@
 
 void config_gpio(volatile uint32_t* handle, uint32_t mode)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
-
 	/* Make sure IO_Config is clocked */
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
 	*handle = mode;
 	/* Config done, power off IO_CONFIG block */
-	sys_ctrl->sys_AHB_clk_ctrl &= ~LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 0);
 }
 
 void gpio_on(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
-	/* Provide power to IO ports */
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_GPIO0;
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_GPIO1;
+	/* Provide power to GPIO control blocks */
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO0, 1);
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO1, 1);
 }
 void gpio_off(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
-	/* Provide power to IO ports */
-	sys_ctrl->sys_AHB_clk_ctrl &= ~(LPC_SYS_ABH_CLK_CTRL_GPIO0);
-	sys_ctrl->sys_AHB_clk_ctrl &= ~(LPC_SYS_ABH_CLK_CTRL_GPIO1);
+	/* Remove power from GPIO control blocks */
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO0, 0);
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO1, 0);
 }
 
 
 /* Set all GPIO used on the GPIO_Demo module in a default state */
 void set_gpio_pins(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
 	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 
 	/* Make sure IO_Config is clocked */
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
 
 	/* Configure GPIO pins */
 	ioctrl->pio0_0 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
@@ -96,7 +91,7 @@ void set_gpio_pins(void)
 	ioctrl->pio1_3 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
 
 	/* Config done, power off IO_CONFIG block */
-	sys_ctrl->sys_AHB_clk_ctrl &= ~LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
 }
 
 /* Handlers */

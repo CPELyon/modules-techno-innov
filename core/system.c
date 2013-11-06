@@ -39,7 +39,7 @@ struct lpc_desc_private {
 	uint32_t main_clock;
 	uint32_t brown_out_detection_enabled;
 };
-struct lpc_desc_private global = {
+static struct lpc_desc_private lpc_private = {
 	.main_clock = LPC_IRC_OSC_CLK,
 	.brown_out_detection_enabled = 0,
 };
@@ -97,9 +97,9 @@ void system_brown_out_detection_config(uint32_t level)
 	if (level == 0) {
 		/* Disable Brown-Out Detection, power it down */
 		sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_BOD;
-		global.brown_out_detection_enabled = 0;
+		lpc_private.brown_out_detection_enabled = 0;
 	} else {
-		global.brown_out_detection_enabled = 1;
+		lpc_private.brown_out_detection_enabled = 1;
 		/* Configure Brown-Out Detection */
 		/* FIXME */
 	}
@@ -125,7 +125,7 @@ void enter_deep_sleep(void)
 	/* Ask for the same clock status when waking up */
 	sys_ctrl->powerdown_awake_cfg = sys_ctrl->powerdown_run_cfg;
 	/* Set deep_sleep config */
-	if (global.brown_out_detection_enabled) {
+	if (lpc_private.brown_out_detection_enabled) {
 		sys_ctrl->powerdown_sleep_cfg = LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_ON;
 	} else {
 		sys_ctrl->powerdown_sleep_cfg = LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_OFF;
@@ -189,7 +189,7 @@ void clock_config(uint32_t freq_sel)
 
 	/* If using only internal RC, we are done */
 	if (freq_sel == FREQ_SEL_IRC) {
-		global.main_clock = LPC_IRC_OSC_CLK;
+		lpc_private.main_clock = LPC_IRC_OSC_CLK;
 	} else {
 		uint32_t M = ((freq_sel >> 3) & 0xFF);
 		uint32_t N = 0; /* P = 2 ^ N */
@@ -204,7 +204,7 @@ void clock_config(uint32_t freq_sel)
 				N = 1;
 				break;
 		}
-		global.main_clock = (((freq_sel >> 3) & 0xFF) * 12 * 1000 * 1000);
+		lpc_private.main_clock = (((freq_sel >> 3) & 0xFF) * 12 * 1000 * 1000);
 		/* Setup PLL dividers */
 		sys_ctrl->sys_pll_ctrl = (((M - 1) & 0x1F) | (N << 5));
 		/* Set sys_pllclkin to internal RC */
@@ -230,7 +230,7 @@ void clock_config(uint32_t freq_sel)
 
 uint32_t get_main_clock(void)
 {
-	return global.main_clock;
+	return lpc_private.main_clock;
 }
 
 /***************************************************************************** */

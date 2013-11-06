@@ -71,6 +71,7 @@ void set_gpio_pins(void)
 	ioctrl->pio0_4 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_5 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_6 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+	ioctrl->pio0_15 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* SPI Chip Select */
 	ioctrl->pio0_19 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_20 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_21 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;

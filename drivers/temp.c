@@ -89,7 +89,7 @@ int probe_sensor(void)
  */
 int convert_to_deci_degrees(uint16_t raw)
 {
-	return (((int16_t)raw * 10) >> 8); 
+	return (((int16_t)raw * 10) >> 8);
 }
 
 /* Temp Read

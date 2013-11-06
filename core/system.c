@@ -251,6 +251,17 @@ static void propagate_main_clock(void)
 	spi_clk_update();
 }
 
+/* IO config clock */
+/* To change GPIO config the io config block must be powered on */
+void io_config_clk_on(void)
+{
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
+}
+void io_config_clk_off(void)
+{
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 0);
+}
+
 /***************************************************************************** */
 /*                    CLK Out                                                  */
 /***************************************************************************** */

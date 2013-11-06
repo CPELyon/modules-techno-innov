@@ -92,6 +92,10 @@ void clock_config(uint32_t freq_sel);
 /* return current main clock */
 uint32_t get_main_clock(void);
 
+/* IO config clock */
+/* To change GPIO config the io config block must be powered on */
+void io_config_clk_on(void);
+void io_config_clk_off(void);
 
 /* This is mainly a debug feature, but can be used to provide a clock to an
  * external peripheral */

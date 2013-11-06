@@ -37,10 +37,10 @@
 void config_gpio(volatile uint32_t* handle, uint32_t mode)
 {
 	/* Make sure IO_Config is clocked */
-	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
+	io_config_clk_on();
 	*handle = mode;
 	/* Config done, power off IO_CONFIG block */
-	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 0);
+	io_config_clk_off();
 }
 
 void gpio_on(void)
@@ -63,7 +63,7 @@ void set_gpio_pins(void)
 	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 
 	/* Make sure IO_Config is clocked */
-	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
+	io_config_clk_on();
 
 	/* Configure GPIO pins */
 	ioctrl->pio0_0 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
@@ -92,7 +92,7 @@ void set_gpio_pins(void)
 	ioctrl->pio1_3 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
 
 	/* Config done, power off IO_CONFIG block */
-	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
+	io_config_clk_off();
 }
 
 /* Handlers */

@@ -452,11 +452,11 @@ void set_i2c_pins(void)
 	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 
 	/* Make sure IO_Config is clocked */
-	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 1);
+	io_config_clk_on();
 	ioctrl->pio0_10 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE; /* True open drain */
 	ioctrl->pio0_11 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE;
 	/* Config done, power off IO_CONFIG block */
-	subsystem_power(LPC_SYS_ABH_CLK_CTRL_IO_CONFIG, 0);
+	io_config_clk_off();
 }
 
 void i2c_on(uint32_t i2c_clk_freq)

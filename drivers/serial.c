@@ -219,11 +219,10 @@ static uint32_t uart_mode_setup(uint32_t uart_num)
  */
 static void uart_set_pin_func(uint32_t uart_num)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
 	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 
 	/* Make sure IO_Config is clocked */
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	io_config_clk_on();
 	/* Configure UART pins (Only Rx and Tx) */
 	switch (uart_num) {
 		case 0:
@@ -236,7 +235,7 @@ static void uart_set_pin_func(uint32_t uart_num)
 			break;
 	}
 	/* Config done, power off IO_CONFIG block */
-	sys_ctrl->sys_AHB_clk_ctrl &= ~LPC_SYS_ABH_CLK_CTRL_IO_CONFIG;
+	io_config_clk_off();
 }
 struct uart_def
 {

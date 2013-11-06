@@ -78,8 +78,8 @@ void set_gpio_pins(void)
 	ioctrl->pio0_22 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_23 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_24 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
-	ioctrl->pio0_25 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
-	ioctrl->pio0_26 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+	ioctrl->pio0_25 = LPC_IO_FUNC_ALT(6) | LPC_IO_MODE_PULL_UP;
+	ioctrl->pio0_26 = LPC_IO_FUNC_ALT(6) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_27 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_28 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_29 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;

@@ -75,6 +75,7 @@ SUPPORTED FEATURES and INTERFACES
    - I²C
    - I²C EEPROM
    - TMP101 temperature sensor
+   - ADC
    - GPIO
 
 
@@ -82,7 +83,6 @@ SUPPORTED FEATURES and INTERFACES
 TODO :
 
 - Deep sleep mode support.
-- ADC support
 - Test all the GPIO in different modes
 - Add support for SPI
 - Add support for SDCard over SPI

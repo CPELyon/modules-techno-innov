@@ -640,18 +640,32 @@ struct lpc_adc
 };
 #define LPC_ADC         ((struct lpc_adc *) LPC_ADC_BASE)
 
+/* ADC Control register bits */
+/* LPC_ADC_CHANNEL_* are also used for interrupt register */
+#define LPC_ADC_CHANNEL_MASK (0xFF << 0)
+#define LPC_ADC_CHANNEL_0 (0x01 << 0)
+#define LPC_ADC_CHANNEL_1 (0x01 << 1)
+#define LPC_ADC_CHANNEL_2 (0x01 << 2)
+#define LPC_ADC_CHANNEL_3 (0x01 << 3)
+#define LPC_ADC_CHANNEL_4 (0x01 << 4)
+#define LPC_ADC_CHANNEL_5 (0x01 << 5)
+#define LPC_ADC_CHANNEL_6 (0x01 << 6)
+#define LPC_ADC_CHANNEL_7 (0x01 << 7)
+#define LPC_ADC_BURST     (0x01 << 16)
+/* These are unused for LPC1224 */
 #define LPC_ADC_10BITS  (0x00 << 17)
-#define LPC_ADC_9BITS  (0x01 << 17)
-#define LPC_ADC_8BITS  (0x02 << 17)
-#define LPC_ADC_7BITS  (0x03 << 17)
-#define LPC_ADC_6BITS  (0x04 << 17)
+#define LPC_ADC_9BITS   (0x01 << 17)
+#define LPC_ADC_8BITS   (0x02 << 17)
+#define LPC_ADC_7BITS   (0x03 << 17)
+#define LPC_ADC_6BITS   (0x04 << 17)
 #define LPC_ADC_START_CONV_NOW  (0x01 << 24)
 #define LPC_ADC_START_CONV_MASK (0x07 << 24)
-#define LPC_ADC_CONV_AD0   (0x01 << 0)
 
-#define LPC_ADC_INT_EN_AD0 (0x01 << 0)
-
-
+/* ADC Data register bits */
+#define LPC_ADC_RESULT_SHIFT  6
+#define LPC_ADC_RESULT_MASK   0x3FF
+#define LPC_ADC_OVERRUN    (0x01 << 30)
+#define LPC_ADC_CONV_DONE  (0x01 << 31)
 
 
 #endif  /* LPC_REGS_H */

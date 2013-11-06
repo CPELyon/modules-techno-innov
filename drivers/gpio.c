@@ -83,14 +83,14 @@ void set_gpio_pins(void)
 	ioctrl->pio0_27 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_28 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_29 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
-	/* Configure ADC pins */
-	ioctrl->pio0_30 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
-	ioctrl->pio0_31 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
-	ioctrl->pio1_0 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
-	ioctrl->pio1_1 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
-	ioctrl->pio1_2 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
-	ioctrl->pio1_3 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
-
+#if 0 /* ADC pins configured in ADC driver. Kept for info, for those not using them as ADC */
+-   ioctrl->pio0_30 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+-   ioctrl->pio0_31 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+-   ioctrl->pio1_0 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+-   ioctrl->pio1_1 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+-   ioctrl->pio1_2 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+-   ioctrl->pio1_3 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
+#endif
 	/* Config done, power off IO_CONFIG block */
 	io_config_clk_off();
 }

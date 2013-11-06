@@ -71,7 +71,6 @@ void set_gpio_pins(void)
 	ioctrl->pio0_4 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_5 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_6 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
-	ioctrl->pio0_15 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* SPI Chip Select */
 	ioctrl->pio0_19 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_20 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_21 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
@@ -83,14 +82,30 @@ void set_gpio_pins(void)
 	ioctrl->pio0_27 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_28 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
 	ioctrl->pio0_29 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
-#if 0 /* ADC pins configured in ADC driver. Kept for info, for those not using them as ADC */
--   ioctrl->pio0_30 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
--   ioctrl->pio0_31 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
--   ioctrl->pio1_0 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
--   ioctrl->pio1_1 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
--   ioctrl->pio1_2 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
--   ioctrl->pio1_3 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP;
-#endif
+	/* ADC pins configured in ADC driver. Kept for info, for those not using them as ADC */
+	ioctrl->pio0_30 = LPC_IO_FUNC_ALT(1) | LPC_IO_MODE_PULL_UP; /* AD0 */
+	ioctrl->pio0_31 = LPC_IO_FUNC_ALT(1) | LPC_IO_MODE_PULL_UP; /* AD1 */
+	ioctrl->pio1_0 = LPC_IO_FUNC_ALT(1) | LPC_IO_MODE_PULL_UP; /* AD2 */
+	ioctrl->pio1_1 = LPC_IO_FUNC_ALT(1) | LPC_IO_MODE_PULL_UP; /* AD3 */
+	ioctrl->pio1_2 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* AD4 */
+	ioctrl->pio1_3 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* AD5 */
+	/* Bicolor led */
+	ioctrl->pio1_4 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* Green LED */
+	ioctrl->pio1_5 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* Red LED */
+	/* SPI pins */
+	ioctrl->pio0_14 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* SPI Clock */
+	ioctrl->pio0_15 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* SPI Chip Select */
+	ioctrl->pio0_16 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* SPI MISO */
+	ioctrl->pio0_17 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* SPI MOSI */
+	/* UART pins */
+	ioctrl->pio0_1 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* UART0 RxD */
+	ioctrl->pio0_2 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* UART0 TxD */
+	ioctrl->pio0_8 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* UART1 RxD */
+	ioctrl->pio0_9 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* UART1 TxD */
+	/* I2C pins */
+	ioctrl->pio0_10 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* I2C SCL */
+	ioctrl->pio0_11 = LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP; /* I2C SDA */
+
 	/* Config done, power off IO_CONFIG block */
 	io_config_clk_off();
 }

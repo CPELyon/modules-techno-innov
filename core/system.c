@@ -292,9 +292,11 @@ void set_adc_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
 
 void system_set_default_pins(void)
 {
+	/* Set all pins as GPIO first, those used for something else will
+	   override the settings in corresponding pin setup functions. */
+	set_gpio_pins();
 	set_uarts_pins();
 	set_i2c_pins();
 	set_spi_pins();
-	set_gpio_pins();
 	set_adc_pins();
 }

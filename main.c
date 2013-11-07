@@ -41,6 +41,15 @@
 
 #define SELECTED_FREQ  FREQ_SEL_24MHz
 
+#ifdef DEBUG
+#define debug(uart_num, c) \
+	do { \
+		struct lpc_uart* uart = LPC_UART_ ## uart_num; \
+		uart->func.buffer = c; \
+	} while (0);
+#else
+#define debug(uart, c)
+#endif
 
 void system_init()
 {

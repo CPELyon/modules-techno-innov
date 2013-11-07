@@ -19,6 +19,9 @@ LINKOPTS = -nostartfiles -Wl,--gc-sections -Wl,--build-id=none \
 .PHONY: all
 all: $(NAME)
 
+prog: CFLAGS += -DEEPROM_WRITE
+prog: clean all
+
 
 INCLUDES = include/
 OBJDIR = objs

@@ -218,14 +218,9 @@ void TMP36_display(int adc_num)
 	}
 }
 
-#ifndef WRITE
-#define WRITE 0
-#endif
 
 /***************************************************************************** */
 int main(void) {
-	struct lpc_uart* uart1 = LPC_UART_1;
-
 	system_init();
 	uart_on(0, 115200);
 	uart_on(1, 115200);
@@ -234,16 +229,16 @@ int main(void) {
 	set_spi_cs_low();
 	i2c_on(I2C_CLK_100KHz);
 
-
-	if (WRITE) {
-		if (module_desc_set(MODULE_NAME) <= 0) {
-			uart1->func.buffer = 'E';
-		} else {
-			uart1->func.buffer = 'O';
-		}
+	/* Set or read Module identification header in EEPROM */
+#ifdef EEPROM_WRITE
+	if (module_desc_set(MODULE_NAME) <= 0) {
+		debug(0, 'E');
 	} else {
-		module_desc_dump();
+		debug(0, 'O');
 	}
+#else
+	module_desc_dump();
+#endif
 
 	temp_config();
 	temp_display();

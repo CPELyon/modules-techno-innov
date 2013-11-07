@@ -29,7 +29,7 @@
 /*   Public access to GPIO setup   */
 
 
-void config_gpio(volatile uint32_t* handle, uint32_t mode);
+void config_gpio(uint8_t port, uint8_t pin, uint32_t mode);
 
 void gpio_on(void);
 void gpio_off(void);

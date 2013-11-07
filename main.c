@@ -62,13 +62,13 @@ void system_init()
 void WAKEUP_Handler(void)
 {
 }
+
 void temp_config(void)
 {
-	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 	int ret = 0;
 
 	/* Temp Alert */
-	config_gpio(&ioctrl->pio0_7, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP));
+	config_gpio(0, 7, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP));
 
 	/* Temp sensor */
 	ret = sensor_config(TMP_RES_ELEVEN_BITS);
@@ -151,13 +151,13 @@ int module_desc_set(char* name)
 }
 
 /***************************************************************************** */
-/* GPIO */
+/* Set SPI Chip Select Low for I2C */
+/* Temporary hack, should be shared with SPI */
 void set_spi_cs_low(void)
 {
-	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 
-	config_gpio(&ioctrl->pio0_15, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	config_gpio(0, 15, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
 
 	/* Configure SPI_CS as output and set it low. */
 	gpio0->data_dir |= (1 << 15);
@@ -176,9 +176,7 @@ int main(void) {
 	uart_on(0, 115200);
 	uart_on(1, 115200);
 
-	/* Temporary hack to set SPI_CS low, should be shared with SPI */
 	set_spi_cs_low();
-
 	i2c_on(I2C_CLK_100KHz);
 
 

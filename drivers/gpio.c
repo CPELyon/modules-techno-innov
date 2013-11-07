@@ -206,23 +206,21 @@ void PIO_2_Handler(void)
 {
 }
 
-#define LED_RED 5
-#define PIO_LED_RED pio1_5
-#define LED_GREEN 4
-#define PIO_LED_GREEN pio1_4
-
 
 /***************************************************************************** */
 /* Status LED */
+
+#define LED_RED 5
+#define LED_GREEN 4
+
 /* The status LED is on GPIO Port 1, pin 4 (PIO1_4) and Port 1, pin 5 (PIO1_5) */
 void status_led_config(void)
 {
-	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
 	struct lpc_gpio* gpio1 = LPC_GPIO_1;
-	uint32_t mode = (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL |LPC_IO_DRIVE_HIGHCURENT);
+	uint32_t mode = (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT);
 	/* Status Led GPIO */
-	ioctrl->PIO_LED_GREEN = (LPC_IO_FUNC_ALT(0) | mode);
-	ioctrl->PIO_LED_RED = (LPC_IO_FUNC_ALT(0) | mode);
+	config_gpio(1, LED_GREEN, (LPC_IO_FUNC_ALT(0) | mode));
+	config_gpio(1, LED_RED, (LPC_IO_FUNC_ALT(0) | mode));
 	/* Configure both as output */
 	gpio1->data_dir = (1 << LED_GREEN) | (1 << LED_RED);
 	/* Turn both LEDs on */

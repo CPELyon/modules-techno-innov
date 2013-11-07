@@ -605,6 +605,50 @@ struct lpc_timer
 #define LPC_TMR32B0     ((struct lpc_timer *) LPC_TIMER2_BASE)
 #define LPC_TMR32B1     ((struct lpc_timer *) LPC_TIMER3_BASE)
 
+#define LPC_TIMER_COUNTER_ENABLE (1 << 0) /* CEN */
+#define LPC_TIMER_COUNTER_RESET  (1 << 1) /* CRST */
+
+/* Match internal configuration */
+#define LPC_TIMER_INTERRUPT_ON_MATCH   0x01
+#define LPC_TIMER_RESET_ON_MATCH       0x02
+#define LPC_TIMER_STOP_ON_MATCH        0x04
+#define LPC_TIMER_MATCH_ERASE(x)       (0x07 << ((x) * 3))
+#define LPC_TIMER_MATCH_SHIFT(x)       ((x) * 3)
+/* Capture internal configuration */
+#define LPC_TIMER_CAP_ON_RISING_EDGE   0x01
+#define LPC_TIMER_CAP_ON_FALLING_EDGE  0x02
+#define LPC_TIMER_INTERRUPT_ON_CAPTURE 0x04
+#define LPC_TIMER_CAPTURE_ERASE(x)     (0x07 << ((x) * 3))
+#define LPC_TIMER_CAPTURE_SHIFT(x)     ((x) * 3)
+/* Match external configuration */
+#define LPC_TIMER_NOTHING_ON_MATCH     0x00
+#define LPC_TIMER_CLEAR_ON_MATCH       0x01
+#define LPC_TIMER_SET_ON_MATCH         0x02
+#define LPC_TIMER_TOGGLE_ON_MATCH      0x03
+#define LPC_TIMER_EXT_MATCH0_SHIFT     4
+#define LPC_TIMER_EXT_MATCH1_SHIFT     6
+#define LPC_TIMER_EXT_MATCH2_SHIFT     8
+#define LPC_TIMER_EXT_MATCH3_SHIFT     10
+/* Counter */
+#define LPC_COUNTER_IS_TIMER           0x00
+#define LPC_COUNTER_INC_ON_RISING      0x01
+#define LPC_COUNTER_INC_ON_FALLING     0x02
+#define LPC_COUNTER_INC_ON_BOTH        0x03
+#define LPC_COUNTER_INC_INPUT_SHIFT    2
+#define LPC_COUNTER_INC_INPUT(x)       (((x) & 0x03) << LPC_COUNTER_INC_INPUT_SHIFT)
+#define LPC_COUNTER_CLEAR_ON_EVENT_EN  (0x01 << 4)
+#define LPC_COUNTER_CLEAR_ON_EVENT_SHIFT  5
+#define LPC_COUNTER_CLEAR_ON_CHAN0_RISE   0x00
+#define LPC_COUNTER_CLEAR_ON_CHAN0_FALL   0x01
+#define LPC_COUNTER_CLEAR_ON_CHAN1_RISE   0x02
+#define LPC_COUNTER_CLEAR_ON_CHAN1_FALL   0x03
+#define LPC_COUNTER_CLEAR_ON_CHAN2_RISE   0x04
+#define LPC_COUNTER_CLEAR_ON_CHAN2_FALL   0x05
+#define LPC_COUNTER_CLEAR_ON_CHAN3_RISE   0x06
+#define LPC_COUNTER_CLEAR_ON_CHAN3_FALL   0x07
+/* PWM */
+#define LPC_PWM_CHANNEL_ENABLE(x)    (0x01 << (x))
+
 
 
 /***************************************************************************** */

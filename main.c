@@ -1,7 +1,7 @@
 /****************************************************************************
  *   main.c
  *
- * 
+ *
  *
  * Copyright 2013 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -36,7 +36,7 @@
 #ifndef MODULE_SERIAL_NUM
 #define MODULE_SERIAL_NUM 1
 #define MODULE_VERSION    0x02
-#define MODULE_NAME "GPIO Mod demo"
+#define MODULE_NAME "GPIO Demo Module"
 #endif
 
 #define SELECTED_FREQ  FREQ_SEL_24MHz

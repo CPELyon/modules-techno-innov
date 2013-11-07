@@ -106,6 +106,111 @@ void temp_display(void)
 	}
 }
 
+
+
+/***************************************************************************** */
+/* DHT11 Humidity and temp sensor */
+
+#define TH_PIN 0
+void TH_config(void)
+{
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+
+	config_gpio(0, 0, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+
+	/* Configure as output and set it low. */
+	/* This is the "do nothing" state */
+	gpio0->data_dir |= (1 << TH_PIN);
+	gpio0->set = (1 << TH_PIN);
+}
+
+unsigned char read_dht11_dat()
+{
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	int i = 0;
+	unsigned char val = 0;
+	for (i = 0; i < 8; i++) {
+		/* Wait end of 'low' */
+		while(!(gpio0->in & (1 << TH_PIN))) {
+			nop();
+		}
+		/* Wait 30ms */
+		usleep(35);
+
+		/* read one bit */
+		if (gpio0->in & (1 << TH_PIN)) {
+			val |= (1 << (7-i));
+		}
+
+		/* Wait end of bit */
+		while (gpio0->in & (1 << TH_PIN)) {
+			nop();
+		}
+	}
+	return val;
+}
+
+void TH_display(void)
+{
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	unsigned char data[5];
+	unsigned char checksum = 0;
+	int i = 0;
+
+	/* Set pin as output */
+	gpio0->data_dir |= (1 << TH_PIN);
+
+	/* Send the "start" bit */
+	gpio0->clear = (1 << TH_PIN);
+	msleep(50);
+	gpio0->set = (1 << TH_PIN);
+
+	/* Set pin as input */
+	gpio0->data_dir &= ~(1 << TH_PIN);
+
+	/* Wait for start conditions */
+	debug(0, 'S');
+	status_led(both);
+	while (gpio0->in & (1 << TH_PIN)) {
+		nop();
+	}
+	status_led(none);
+	debug(0, 'c');
+	while (!(gpio0->in & (1 << TH_PIN))) {
+		nop();
+	}
+	status_led(both);
+	debug(0, 'C');
+	while (gpio0->in & (1 << TH_PIN)) {
+		nop();
+	}
+	status_led(none);
+	debug(0, 'D');
+
+	/* Start reading data : 40 bits */
+	for (i = 0; i < 5; i++){
+	    data[i] = read_dht11_dat();
+		if (i < 4) {
+			checksum += data[i];
+		}
+    }
+
+	if ((checksum & 0xFF) != data[4]) {
+		char buff[60];
+		int len = 0;
+		status_led(red_only);
+		len = snprintf(buff, 60, "TH_ERR - H: 0x%02x,0x%02x - T: 0x%02x,0x%02x - C: 0x%02x\r\n", data[0], data[1], data[2], data[3], data[4]);
+		serial_write(1, buff, len);
+	} else {
+		char buff[25];
+		int len = 0;
+		len = snprintf(buff, 25, "H: %d,%d - T: %d,%d\r\n", data[0], data[1], data[2], data[3]);
+		serial_write(1, buff, len);
+		status_led(green_only);
+	}
+
+}
+
 /***************************************************************************** */
 /* EEPROM */
 #define DUMP_BUFF_SIZE 80
@@ -238,12 +343,15 @@ int main(void) {
 	module_desc_dump();
 #endif
 
+	/* Configure the DHT11 and the onboard temp sensor */
+	TH_config();
 	temp_config();
 	temp_display();
 
 	while (1) {
 		chenillard(250);
 		luminosity_display(1);
+		/* TH_display(); */
 		TMP36_display(0);
 		temp_display();
 	}

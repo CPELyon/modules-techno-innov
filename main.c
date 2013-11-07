@@ -190,7 +190,6 @@ void luminosity_display(int adc_num)
 		int len = 0;
 		len = snprintf(buff, 40, "L(%d): %d (raw: %04x)\r\n", adc_num, val, val);
 		serial_write(1, buff, len);
-		serial_write(0, buff, len);
 	}
 }
 
@@ -214,7 +213,6 @@ void TMP36_display(int adc_num)
 		len = snprintf(buff, 60, "TMP36: %d,%d (orig: %d, raw: %04x)\r\n",
 						(converted / 100), (converted % 100), val, val);
 		serial_write(1, buff, len);
-		serial_write(0, buff, len);
 	}
 }
 

@@ -31,6 +31,7 @@
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
 #include "drivers/temp.h"
+#include "drivers/adc.h"
 
 
 #ifndef MODULE_SERIAL_NUM
@@ -173,6 +174,50 @@ void set_spi_cs_low(void)
 	gpio0->clear = (1 << 15);
 }
 
+/***************************************************************************** */
+void luminosity_display(int adc_num)
+{
+	uint16_t val = 0;
+	int ret = 0;
+
+	adc_start_convertion_once(adc_num, 0);
+	msleep(5);
+	ret = adc_get_value(&val, adc_num);
+	if (ret == 0) {
+		debug(0, 'n');
+	} else {
+		char buff[40];
+		int len = 0;
+		len = snprintf(buff, 40, "L(%d): %d (raw: %04x)\r\n", adc_num, val, val);
+		serial_write(1, buff, len);
+		serial_write(0, buff, len);
+	}
+}
+
+void TMP36_display(int adc_num)
+{
+	uint16_t val = 0;
+	int ret = 0;
+
+	adc_start_convertion_once(adc_num, 0);
+	msleep(5);
+	ret = adc_get_value(&val, adc_num);
+	if (ret == 0) {
+		debug(0, 'm');
+	} else {
+		char buff[60];
+		int len = 0;
+		int micro_volts = 0;
+		/* depends on vref, should use a precise 3.0V Vref and multiply by 3000 */
+		micro_volts = (val * 3200);
+		int converted = ((micro_volts / 100) - 5000);
+		len = snprintf(buff, 60, "TMP36: %d,%d (orig: %d, raw: %04x)\r\n",
+						(converted / 100), (converted % 100), val, val);
+		serial_write(1, buff, len);
+		serial_write(0, buff, len);
+	}
+}
+
 #ifndef WRITE
 #define WRITE 0
 #endif
@@ -184,6 +229,7 @@ int main(void) {
 	system_init();
 	uart_on(0, 115200);
 	uart_on(1, 115200);
+	adc_on();
 
 	set_spi_cs_low();
 	i2c_on(I2C_CLK_100KHz);
@@ -204,6 +250,8 @@ int main(void) {
 
 	while (1) {
 		chenillard(250);
+		luminosity_display(1);
+		TMP36_display(0);
 		temp_display();
 	}
 	return 0;

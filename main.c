@@ -32,6 +32,7 @@
 #include "drivers/gpio.h"
 #include "drivers/temp.h"
 #include "drivers/adc.h"
+#include "drivers/timers.h"
 
 
 #ifndef MODULE_SERIAL_NUM
@@ -322,12 +323,36 @@ void TMP36_display(int adc_num)
 }
 
 
+/* RGB Led */
+#define LED_RGB_RED   23
+#define LED_RGB_GREEN 24
+#define LED_RGB_BLUE  25
+void RGB_Led_config(void)
+{
+	/* Timer configuration */
+	struct timer_config timer_conf = {
+		.mode = LPC_TIMER_MODE_PWM,
+		.config = { (LPC_PWM_CHANNEL_ENABLE(0) | LPC_PWM_CHANNEL_ENABLE(1) | LPC_PWM_CHANNEL_ENABLE(2)), 0, 0, 0 },
+		.match = { 20, 125, 200, 200 },
+	};
+	timer_setup(LPC_TIMER_32B1, &timer_conf);
+
+	/* Configure the pins as match output */
+	timer_pins_setup(0, LED_RGB_GREEN, LPC_TIMER_PIN_FUNC_MATCH);
+	timer_pins_setup(0, LED_RGB_RED, LPC_TIMER_PIN_FUNC_MATCH);
+	timer_pins_setup(0, LED_RGB_BLUE, LPC_TIMER_PIN_FUNC_MATCH);
+
+	/* Start the timer */
+	timer_start(LPC_TIMER_32B1);
+}
+
 /***************************************************************************** */
 int main(void) {
 	system_init();
 	uart_on(0, 115200);
 	uart_on(1, 115200);
 	adc_on();
+	timer_on(LPC_TIMER_32B1, 0);
 
 	set_spi_cs_low();
 	i2c_on(I2C_CLK_100KHz);
@@ -346,6 +371,8 @@ int main(void) {
 	/* Configure the DHT11 and the onboard temp sensor */
 	TH_config();
 	temp_config();
+
+	RGB_Led_config();
 	temp_display();
 
 	while (1) {

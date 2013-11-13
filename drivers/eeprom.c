@@ -27,6 +27,32 @@
 #include "core/system.h"
 #include "lib/string.h"
 #include "drivers/i2c.h"
+#include "drivers/gpio.h"
+
+
+/***************************************************************************** */
+/*       EEPROM Chip select for the GPIO Demo module                           */
+/*******************************************************************************/
+/* These are place-holders to set the SPI chip select low if the SPI driver is not used.
+ * These dummy functions will be over-ridden by SPI ones if the SPI driver is used.
+ */
+#define I2C_CS_PIN 15
+void I2C_CS_Default_Set(void)
+{
+    struct lpc_gpio* gpio0 = LPC_GPIO_0;
+    config_gpio(0, I2C_CS_PIN, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+    /* Configure SPI_CS as output and set it low. */
+    gpio0->data_dir |= (1 << I2C_CS_PIN);
+    gpio0->clear = (1 << I2C_CS_PIN);
+}
+void I2C_CS_Default_Release(void)
+{
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+    gpio0->set = (1 << I2C_CS_PIN);
+}
+
+void spi_cs_pull_low(void) __attribute__ ((weak, alias ("I2C_CS_Default_Set")));
+void spi_cs_release(void) __attribute__ ((weak, alias ("I2C_CS_Default_Release")));
 
 
 /***************************************************************************** */
@@ -44,6 +70,7 @@
 #define EEPROM_ID_BIG_ADDR  0xA8
 #define EEPROM_ID_BIG_I2C_SIZE  16*1024
 #define EEPROM_ID_BIG_PAGE_SIZE 64
+
 
 
 /* Detect the eeprom size */
@@ -108,7 +135,10 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 	int ret = 0;
 	char cmd_buf[CMD_BUF_SIZE] = { EEPROM_ID_BIG_ADDR, 0, 0, (EEPROM_ID_BIG_ADDR | 0x01), };
 	char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
-	int eeprom_type = get_eeprom_type();
+	int eeprom_type = 0;
+
+	spi_cs_pull_low();
+	eeprom_type = get_eeprom_type();
 
 	/* Read the requested data */
 	switch (eeprom_type) {
@@ -127,6 +157,7 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 			ret = -1;
 			break;
 	}
+	spi_cs_release();
 
 	return ret;
 }
@@ -157,7 +188,10 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 	int write_count = 0, size = 0;
 	char cmd[MAX_CMD_SIZE] = { EEPROM_ID_BIG_ADDR, 0, 0 };
 	char full_buff[(EEPROM_ID_MAX_PAGE_SIZE + MAX_CMD_SIZE)];
-	int eeprom_type = get_eeprom_type();
+	int eeprom_type = 0;
+
+	spi_cs_pull_low();
+	eeprom_type = get_eeprom_type();
 
 	switch (eeprom_type) {
 		case EEPROM_TYPE_SMALL:
@@ -209,6 +243,7 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 
 		write_count += size;
 	}
+	spi_cs_release();
 
 	if (write_count != count)
 		return ret;

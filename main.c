@@ -266,19 +266,6 @@ int module_desc_set(char* name)
 	return ret;
 }
 
-/***************************************************************************** */
-/* Set SPI Chip Select Low for I2C */
-/* Temporary hack, should be shared with SPI */
-void set_spi_cs_low(void)
-{
-	struct lpc_gpio* gpio0 = LPC_GPIO_0;
-
-	config_gpio(0, 15, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
-
-	/* Configure SPI_CS as output and set it low. */
-	gpio0->data_dir |= (1 << 15);
-	gpio0->clear = (1 << 15);
-}
 
 /***************************************************************************** */
 void luminosity_display(int adc_num)
@@ -354,7 +341,6 @@ int main(void) {
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
 
-	set_spi_cs_low();
 	i2c_on(I2C_CLK_100KHz);
 
 	/* Set or read Module identification header in EEPROM */

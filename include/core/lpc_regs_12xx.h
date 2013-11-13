@@ -578,6 +578,40 @@ struct lpc_ssp
 };
 #define LPC_SSP0        ((struct lpc_ssp *) LPC_SSP0_BASE)
 
+/* SSP Control 0 register */
+#define LPC_SSP_DATA_WIDTH(x)    (((x) - 1) & 0x0F) /* Use 4 for 4 bits, 5 for 5 bits, .... */
+#define LPC_SSP_FRAME_SPI        (0x00 << 4)
+#define LPC_SSP_FRAME_TI         (0x01 << 4)
+#define LPC_SSP_FRAME_MICROWIRE  (0x02 << 4)
+#define LPC_SSP_SPI_CLK_LOW      (0x00 << 6)
+#define LPC_SSP_SPI_CLK_HIGH     (0x01 << 6)
+#define LPC_SSP_SPI_CLK_FIRST    (0x00 << 7)
+#define LPC_SSP_SPI_CLK_LAST     (0x01 << 7)
+#define LPC_SSP_SPI_CLK_RATE_DIV(x) (((x) & 0xFF) << 8)
+/* SSP Control 1 register */
+#define LPC_SSP_LOOPBACK_MODE      (0x01 << 0)
+#define LPC_SSP_ENABLE             (0x01 << 1)
+#define LPC_SSP_MASTER_MODE        (0x00 << 2)
+#define LPC_SSP_SLAVE_MODE         (0x01 << 2)
+#define LPC_SSP_SLAVE_OUT_DISABLE  (0x01 << 3)
+
+/* SSP Status register */
+#define LPC_SSP_ST_TX_EMPTY      (0x01 << 0)
+#define LPC_SSP_ST_TX_NOT_FULL   (0x01 << 1)
+#define LPC_SSP_ST_RX_NOT_EMPTY  (0x01 << 2)
+#define LPC_SSP_ST_RX_FULL       (0x01 << 3)
+#define LPC_SSP_ST_BUSY          (0x01 << 4)
+
+/* SSP Interrupt Mask, Raw, Status, Clear */
+#define LPC_SSP_INTR_RX_OVERRUN      (0x01 << 0)
+#define LPC_SSP_INTR_RX_TIMEOUT      (0x01 << 1)
+#define LPC_SSP_INTR_RX_HALF_FULL    (0x01 << 2)
+#define LPC_SSP_INTR_TX_HALF_EMPTY   (0x01 << 3)
+
+/* SSP DMA Control */
+#define LPC_SSP_RX_DMA_EN   (0x01 << 0)
+#define LPC_SSP_TX_DMA_EN   (0x01 << 1)
+
 
 
 /***************************************************************************** */

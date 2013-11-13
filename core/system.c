@@ -242,14 +242,14 @@ void Dummy_Clk_Updater(void) {
 
 void uart_clk_update(void) __attribute__ ((weak, alias ("Dummy_Clk_Updater")));
 void i2c_clock_update(void) __attribute__ ((weak, alias ("Dummy_Clk_Updater")));
-void spi_clk_update(void) __attribute__ ((weak, alias ("Dummy_Clk_Updater")));
+void ssp_clk_update(void) __attribute__ ((weak, alias ("Dummy_Clk_Updater")));
 void adc_clk_update(void) __attribute__ ((weak, alias ("Dummy_Clk_Updater")));
 
 static void propagate_main_clock(void)
 {
 	uart_clk_update();
 	i2c_clock_update();
-	spi_clk_update();
+	ssp_clk_update();
 	adc_clk_update();
 }
 
@@ -285,7 +285,7 @@ void Dummy_Pin_Config(void) {
 }
 
 void set_i2c_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
-void set_spi_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
+void set_ssp_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
 void set_uarts_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
 void set_gpio_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
 void set_adc_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
@@ -297,6 +297,6 @@ void system_set_default_pins(void)
 	set_gpio_pins();
 	set_uarts_pins();
 	set_i2c_pins();
-	set_spi_pins();
+	set_ssp_pins();
 	set_adc_pins();
 }

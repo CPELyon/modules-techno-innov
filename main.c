@@ -37,8 +37,8 @@
 
 
 #ifndef MODULE_SERIAL_NUM
-#define MODULE_SERIAL_NUM 1
-#define MODULE_VERSION    0x02
+#define MODULE_SERIAL_NUM 10
+#define MODULE_VERSION    0x04
 #define MODULE_NAME "GPIO Demo Module"
 #endif
 

@@ -33,6 +33,7 @@
 #include "drivers/temp.h"
 #include "drivers/adc.h"
 #include "drivers/timers.h"
+#include "drivers/ssp.h"
 
 
 #ifndef MODULE_SERIAL_NUM
@@ -333,6 +334,27 @@ void RGB_Led_config(void)
 	timer_start(LPC_TIMER_32B1);
 }
 
+
+/***************************************************************************** */
+/* Maxim's MAX31855 themocouple to digital converter */
+uint16_t Thermocouple_Read(void)
+{
+	char buff[50];
+	int len = 0;
+	uint16_t data[2];
+	int temp = 0, deci = 0;
+
+	spi_read(data, 2, SPI_USE_FIFO);
+	temp = (data[0] >> 4) & 0x07FF;
+	/* * ((data & 0x2000) * -1);*/
+	deci = 25 * ((data[0] >> 2) & 0x03);
+	len = snprintf(buff, 50, "TC: raw(0x%04x - 0x%04x) - deg: %d,%d\r\n", data[0], data[1], temp, deci);
+	serial_write(1, buff, len);
+
+	return temp;
+}
+
+
 /***************************************************************************** */
 int main(void) {
 	system_init();
@@ -340,6 +362,7 @@ int main(void) {
 	uart_on(1, 115200);
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
+	ssp_master_on(LPC_SSP_FRAME_SPI, 16, 0, 1*1000*1000);
 
 	i2c_on(I2C_CLK_100KHz);
 
@@ -366,6 +389,7 @@ int main(void) {
 		luminosity_display(1);
 		/* TH_display(); */
 		TMP36_display(0);
+		Thermocouple_Read();
 		temp_display();
 	}
 	return 0;

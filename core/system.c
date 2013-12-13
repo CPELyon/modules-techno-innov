@@ -300,3 +300,36 @@ void system_set_default_pins(void)
 	set_ssp_pins();
 	set_adc_pins();
 }
+
+/* FIXME: We should add some system-wide way to "reserve" a pin.
+     This would not prevent anyone from configuring the same pin for two diferent
+     functions.
+ */
+
+
+/***************************************************************************** */
+/* Note that if the systick core functions are used these will be overridden */
+
+/* This "msleep" is a simple wait routine which is close to a millisecond sleep
+ * whith a CPU Clock of 24MHz, but has no exact relation to time.
+ * It is highly dependent to CPU clock speed anyway.
+ * Note : This is an active sleep !
+ */
+static void def_msleep(uint32_t ms)
+{
+	volatile uint32_t dec = ms * 2667;
+	while (dec--);
+}
+
+/* Something that's not too far from a microsecond sleep at 24MHz CPU Clock
+ * Note : This is an active sleep !
+ */
+static inline void def_usleep(uint32_t us)
+{
+	volatile uint32_t dec = us * 2;
+	while (dec--);
+}
+
+void msleep(uint32_t ms) __attribute__ ((weak, alias ("def_msleep")));
+void usleep(uint32_t ms) __attribute__ ((weak, alias ("def_usleep")));
+

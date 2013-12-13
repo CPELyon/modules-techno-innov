@@ -47,10 +47,6 @@ void PendSV_Handler(void)
 {
 	fault_info(__FUNCTION__, sizeof(__FUNCTION__));
 }
-void SysTick_Handler(void)
-{
-	fault_info(__FUNCTION__, sizeof(__FUNCTION__));
-}
 
 
 

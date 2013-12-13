@@ -103,24 +103,51 @@ void clkout_on(uint32_t src, uint32_t div);
 void clkout_off(void);
 
 
-/* This "msleep" is a simple wait routine which is close to a millisecond sleep
- * whith a CPU Clock of 24MHz, but has no exact relation to time.
- * It is highly dependent to CPU clock speed anyway.
- * Note : This is an active sleep !
- */
-static inline void msleep(uint32_t ms)
-{
-    volatile uint32_t dec = ms * 2667;
-    while (dec--);
-}
 
-/* Something that's not too far from a microsecond sleep at 24MHz CPU Clock
- * Note : This is an active sleep !
+/***************************************************************************** */
+/*               System Tick Timer                                             */
+/***************************************************************************** */
+
+/* Start the system tick timer */
+void systick_start(void);
+/* Stop the system tick timer */
+void systick_stop(void);
+/* Reset the system tick timer, making it count down from the reload value again */
+void systick_reset(void);
+/* Get system tick timer current value */
+uint32_t systick_get_timer_val(void);
+
+/* Get the system tick */
+uint32_t systick_get_tick_count(void);
+
+/* Power up the system tick timer.
+ * ms is the interval between system tick timer interrupts. If set to 0, the default
+ *     value is used, which should provide a 1ms period.
  */
-static inline void usleep(uint32_t us)
-{
-    volatile uint32_t dec = us * 2;
-    while (dec--);
-}
+void systick_timer_on(uint32_t ms);
+
+/* Removes the main clock from the selected timer block */
+void systick_timer_off(void);
+
+
+/* Sleeping functions */
+
+/* Set the sleep countdown value
+ * A sleep will end when this value reaches 0
+ * Note that calls to this function while a sleep() has been initiated will change the
+ *   sleep duration ....
+ */
+void set_sleep(uint32_t ticks);
+/* Return current sleep count_down counter */
+uint32_t get_sleep(void);
+
+/* Actual sleep function, checks that system tick counter is configured to generate
+ * an interrupt to move sleep_count down to 0
+ */
+uint32_t sleep(void);
+
+void msleep(uint32_t ms);
+void usleep(uint32_t ms);
+
 
 #endif /* CORE_SYSTEM_H */

@@ -72,14 +72,22 @@ void timer_start(uint32_t timer_num)
 	/* Remove reset flag and set timer enable flag */
 	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_ENABLE;
 }
-/* Stops the timer counter
- * FIXME: Does not issue reset ... need to check whether it is reseted or not.
- */
+void timer_continue(uint32_t timer_num) __attribute__ ((alias ("timer_start")));
+/* Pause the timer counter, does not reset */
+void timer_pause(uint32_t timer_num)
+{
+	if (timer_num >= NUM_TIMERS)
+		return;
+	/* Remove timer enable flag */
+	timer_devices[timer_num].regs->timer_ctrl = 0;
+}
+/* Stops and resets the timer counter */
 void timer_stop(uint32_t timer_num)
 {
 	if (timer_num >= NUM_TIMERS)
 		return;
 	/* Remove timer enable flag */
+	timer_devices[timer_num].regs->timer_ctrl |= LPC_TIMER_COUNTER_RESET;
 	timer_devices[timer_num].regs->timer_ctrl = 0;
 }
 /* Resets the timer and lets it count again imediately */
@@ -98,6 +106,12 @@ uint32_t timer_get_capture_val(uint32_t timer_num, uint32_t channel)
 		return 0;
 	/* FIXME */
 	return 0;
+}
+uint32_t timer_get_counter_val(uint32_t timer_num)
+{
+	if (timer_num >= NUM_TIMERS)
+		return 0;
+	return timer_devices[timer_num].regs->timer_counter;
 }
 
 /* Change the match value of a single timer channel */
@@ -133,12 +147,18 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf)
 	}
 
 	switch (conf->mode) {
+		case LPC_TIMER_MODE_TIMER:
+			timer->regs->capture_ctrl = 0; /* Timer mode ! */
+			timer->regs->count_ctrl = LPC_COUNTER_IS_TIMER;
+			break;
 		case LPC_TIMER_MODE_COUNTER:
 			if ((conf->config[0] & 0x03) == 0x00) {
 				return -EINVAL;
 			}
 			/* Must set capture chanel N config to 0b000 in capture control register,
-			   (see remarks in user manual UM10441 page 268 section 14.7.11) */
+			 * (see remarks in user manual UM10441 page 268 section 14.7.11)
+			 * Use the LPC_COUNTER_INC_INPUT(x) set by the user to do so automatically
+			 */
 			timer->regs->capture_ctrl &= ~LPC_TIMER_CAPTURE_ERASE(((conf->config[0] >> LPC_COUNTER_INC_INPUT_SHIFT) & 0x03) * 3);
 			/* Configure the counter */
 			timer->regs->count_ctrl |= (conf->config[0] & 0x0F);

@@ -40,11 +40,14 @@
 
 
 /* Timer modes for the "mode" timer config structure field */
-#define LPC_TIMER_MODE_COUNTER  1
-#define LPC_TIMER_MODE_CAPTURE  2
-#define LPC_TIMER_MODE_MATCH    3
-#define LPC_TIMER_MODE_PWM      4  /* Pulse Width Modulation */
-#define LPC_TIMER_MODE_PWD      5  /* Pulse Width Demodulation */
+enum lpc_timer_mode {
+	LPC_TIMER_MODE_TIMER = 0,
+	LPC_TIMER_MODE_COUNTER,
+	LPC_TIMER_MODE_CAPTURE,
+	LPC_TIMER_MODE_MATCH,
+	LPC_TIMER_MODE_PWM,  /* Pulse Width Modulation */
+	LPC_TIMER_MODE_PWD,  /* Pulse Width Demodulation */
+};
 
 /* Structure used to pass parameters to configure a timer */
 /* Notes:
@@ -68,10 +71,12 @@ struct timer_config
  * Timer must be turned on and configured (no checks done here).
  */
 void timer_start(uint32_t timer_num);
+void timer_continue(uint32_t timer_num);
 
-/* Stops the timer counter
- * FIXME: Does not issue reset ... need to check whether it is reseted or not.
- */
+/* Pause the timer counter, does not reset */
+void timer_pause(uint32_t timer_num);
+
+/* Stop and reset the timer counter */
 void timer_stop(uint32_t timer_num);
 
 /* Resets the timer and lets it count again imediately */
@@ -79,6 +84,7 @@ void timer_restart(uint32_t timer_num);
 
 uint32_t timer_get_capture_val(uint32_t timer_num, uint32_t channel);
 
+uint32_t timer_get_counter_val(uint32_t timer_num);
 
 /* Change the match value of a single timer channel */
 void timer_set_match(uint32_t timer_num, uint32_t channel, uint32_t val);

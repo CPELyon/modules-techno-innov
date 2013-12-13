@@ -360,7 +360,7 @@ static inline void NVIC_SystemReset(void)
 {
 	struct syst_ctrl_block_regs* scb = LPC_SCB;
 	dsb(); /* Ensure all outstanding memory accesses included buffered write are completed before reset */
-	scb->aircr = ((0x5FA << SCB_AIRCR_VECTKEY_Pos) | SCB_AIRCR_SYSRESETREQ_Msk);
+	scb->aircr = ((0x5FA << SCB_AIRCR_VECTKEY_OFFSET) | SCB_AIRCR_SYSRESETREQ);
 	dsb();  /* Ensure completion of memory access */
 	while (1); /* wait until reset */
 }

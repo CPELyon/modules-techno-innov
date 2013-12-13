@@ -253,39 +253,39 @@ struct syst_ctrl_block_regs {
 #define LPC_SCB       ((struct syst_ctrl_block_regs *) LPC_SCB_BASE) /* SCB configuration struct */
 
 /* SCB CPUID Register Definitions */
-#define SCB_CPUID_IMPLEMENTER_Msk      (0xFFUL << 24)     /* SCB CPUID: IMPLEMENTER Mask */
-#define SCB_CPUID_VARIANT_Msk          (0xFUL << 20)      /* SCB CPUID: VARIANT Mask */
-#define SCB_CPUID_ARCHITECTURE_Msk     (0xFUL << 16)      /* SCB CPUID: ARCHITECTURE Mask */
-#define SCB_CPUID_PARTNO_Msk           (0xFFFUL << 4)     /* SCB CPUID: PARTNO Mask */
-#define SCB_CPUID_REVISION_Msk         (0xFUL << 0)       /* SCB CPUID: REVISION Mask */
+#define SCB_CPUID_IMPLEMENTER      (0xFFUL << 24)     /* SCB CPUID: IMPLEMENTER Mask */
+#define SCB_CPUID_VARIANT          (0xFUL << 20)      /* SCB CPUID: VARIANT Mask */
+#define SCB_CPUID_ARCHITECTURE     (0xFUL << 16)      /* SCB CPUID: ARCHITECTURE Mask */
+#define SCB_CPUID_PARTNO           (0xFFFUL << 4)     /* SCB CPUID: PARTNO Mask */
+#define SCB_CPUID_REVISION         (0xFUL << 0)       /* SCB CPUID: REVISION Mask */
 
 /* SCB Interrupt Control State Register Definitions */
-#define SCB_ICSR_NMIPENDSET_Msk        (1UL << 31)        /* SCB ICSR: NMIPENDSET Mask */
-#define SCB_ICSR_PENDSVSET_Msk         (1UL << 28)        /* SCB ICSR: PENDSVSET Mask */
-#define SCB_ICSR_PENDSVCLR_Msk         (1UL << 27)        /* SCB ICSR: PENDSVCLR Mask */
-#define SCB_ICSR_PENDSTSET_Msk         (1UL << 26)        /* SCB ICSR: PENDSTSET Mask */
-#define SCB_ICSR_PENDSTCLR_Msk         (1UL << 25)        /* SCB ICSR: PENDSTCLR Mask */
-#define SCB_ICSR_ISRPREEMPT_Msk        (1UL << 23)        /* SCB ICSR: ISRPREEMPT Mask */
-#define SCB_ICSR_ISRPENDING_Msk        (1UL << 22)        /* SCB ICSR: ISRPENDING Mask */
-#define SCB_ICSR_VECTPENDING_Msk       (0x1FFUL << 12)    /* SCB ICSR: VECTPENDING Mask */
-#define SCB_ICSR_VECTACTIVE_Msk        (0x1FFUL << 0)     /* SCB ICSR: VECTACTIVE Mask */
+#define SCB_ICSR_NMIPENDSET        (1UL << 31)        /* SCB ICSR: NMIPENDSET Mask */
+#define SCB_ICSR_PENDSVSET         (1UL << 28)        /* SCB ICSR: PENDSVSET Mask */
+#define SCB_ICSR_PENDSVCLR         (1UL << 27)        /* SCB ICSR: PENDSVCLR Mask */
+#define SCB_ICSR_PENDSTSET         (1UL << 26)        /* SCB ICSR: PENDSTSET Mask */
+#define SCB_ICSR_PENDSTCLR         (1UL << 25)        /* SCB ICSR: PENDSTCLR Mask */
+#define SCB_ICSR_ISRPREEMPT        (1UL << 23)        /* SCB ICSR: ISRPREEMPT Mask */
+#define SCB_ICSR_ISRPENDING        (1UL << 22)        /* SCB ICSR: ISRPENDING Mask */
+#define SCB_ICSR_VECTPENDING       (0x1FFUL << 12)    /* SCB ICSR: VECTPENDING Mask */
+#define SCB_ICSR_VECTACTIVE        (0x1FFUL << 0)     /* SCB ICSR: VECTACTIVE Mask */
 
 /* SCB Application Interrupt and Reset Control Register Definitions */
-#define SCB_AIRCR_VECTKEY_Pos  16
-#define SCB_AIRCR_VECTKEY_Msk          (0xFFFFUL << 16)   /* SCB AIRCR: VECTKEY Mask */
-#define SCB_AIRCR_VECTKEYSTAT_Msk      (0xFFFFUL << 16)   /* SCB AIRCR: VECTKEYSTAT Mask */
-#define SCB_AIRCR_ENDIANESS_Msk        (1UL << 15)        /* SCB AIRCR: ENDIANESS Mask */
-#define SCB_AIRCR_SYSRESETREQ_Msk      (1UL << 2)         /* SCB AIRCR: SYSRESETREQ Mask */
-#define SCB_AIRCR_VECTCLRACTIVE_Msk    (1UL << 1)         /* SCB AIRCR: VECTCLRACTIVE Mask */
+#define SCB_AIRCR_VECTKEY_OFFSET   16
+#define SCB_AIRCR_VECTKEY          (0xFFFFUL << 16)   /* SCB AIRCR: VECTKEY Mask */
+#define SCB_AIRCR_VECTKEYSTAT      (0xFFFFUL << 16)   /* SCB AIRCR: VECTKEYSTAT Mask */
+#define SCB_AIRCR_ENDIANESS        (1UL << 15)        /* SCB AIRCR: ENDIANESS Mask */
+#define SCB_AIRCR_SYSRESETREQ      (1UL << 2)         /* SCB AIRCR: SYSRESETREQ Mask */
+#define SCB_AIRCR_VECTCLRACTIVE    (1UL << 1)         /* SCB AIRCR: VECTCLRACTIVE Mask */
 
 /* SCB System Control Register Definitions */
-#define SCB_SCR_SEVONPEND_Msk          (1UL << 4)         /* SCB SCR: SEVONPEND Mask */
-#define SCB_SCR_SLEEPDEEP_Msk          (1UL << 2)         /* SCB SCR: SLEEPDEEP Mask */
-#define SCB_SCR_SLEEPONEXIT_Msk        (1UL << 1)         /* SCB SCR: SLEEPONEXIT Mask */
+#define SCB_SCR_SEVONPEND          (1UL << 4)         /* SCB SCR: SEVONPEND Mask */
+#define SCB_SCR_SLEEPDEEP          (1UL << 2)         /* SCB SCR: SLEEPDEEP Mask */
+#define SCB_SCR_SLEEPONEXIT        (1UL << 1)         /* SCB SCR: SLEEPONEXIT Mask */
 
 /* SCB Configuration Control Register Definitions */
-#define SCB_CCR_STKALIGN_Msk           (1UL << 9)         /* SCB CCR: STKALIGN Mask */
-#define SCB_CCR_UNALIGN_TRP_Msk        (1UL << 3)         /* SCB CCR: UNALIGN_TRP Mask */
+#define SCB_CCR_STKALIGN           (1UL << 9)         /* SCB CCR: STKALIGN Mask */
+#define SCB_CCR_UNALIGN_TRP        (1UL << 3)         /* SCB CCR: UNALIGN_TRP Mask */
 
 
 

@@ -114,7 +114,7 @@ uint16_t spi_transfer_single_frame(uint16_t data)
 	struct lpc_ssp* ssp = LPC_SSP0;
 	ssp->data = data;
 	/* Wait until the busy bit is cleared */
-	do {} while (ssp->status & LPC_SSP_ST_BUSY);
+	while (ssp->status & LPC_SSP_ST_BUSY);
 	return ssp->data;
 }
 

@@ -37,6 +37,18 @@
 void spi_cs_pull_low(void);
 void spi_cs_release(void);
 
+
+/***************************************************************************** */
+/* This function is used to transfer a byte to AND from a device
+ * As the SPI bus is full duplex, data can flow in both directions, but the clock is
+ *   always provided by the master. The SPI clock cannont be activated without sending
+ *   data, which means we must send data to the device when we want to read data from
+ *   the device.
+ * This function does not take care of the SPI chip select.
+ */
+uint16_t spi_transfer_single_frame(uint16_t data);
+
+
 /***************************************************************************** */
 /* Write data to the SPI bus.
  * Any data received while sending is discarded.

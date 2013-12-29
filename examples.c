@@ -288,7 +288,9 @@ void TMP36_display(int adc_num)
 
 
 /***************************************************************************** */
-/* RGB Led */
+/* RGB Led
+ * All pins must be on port 0
+ */
 #define LED_RGB_RED   23
 #define LED_RGB_GREEN 24
 #define LED_RGB_BLUE  25

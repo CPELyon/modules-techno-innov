@@ -18,6 +18,8 @@
  *
  *************************************************************************** */
 
+#ifndef DRIVERS_SSP_H
+#define DRIVERS_SSP_H
 
 
 /***************************************************************************** */
@@ -93,3 +95,7 @@ int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_
 
 /* Turn off the SSP block */
 void ssp_off(void);
+
+
+#endif /* DRIVERS_SSP_H */
+

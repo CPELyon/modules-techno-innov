@@ -18,6 +18,8 @@
  *
  *************************************************************************** */
 
+#ifndef DRIVERS_TIMERS_H
+#define DRIVERS_TIMERS_H
 
 #include <stdint.h>
 #include "core/lpc_regs_12xx.h"
@@ -166,3 +168,6 @@ void timer_on(uint32_t timer_num, uint32_t clkrate);
 
 /* Removes the main clock from the selected timer block */
 void timer_off(uint32_t timer_num);
+
+#endif /* DRIVERS_TIMERS_H */
+

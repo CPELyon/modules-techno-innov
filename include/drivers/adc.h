@@ -18,6 +18,8 @@
  *
  *************************************************************************** */
 
+#ifndef DRIVERS_ADC_H
+#define DRIVERS_ADC_H
 
 
 /***************************************************************************** */
@@ -62,4 +64,6 @@ void set_adc_pins(void);
 void adc_clk_update(void);
 void adc_on(void);
 void adc_off(void);
+
+#endif /* DRIVERS_ADC_H */
 

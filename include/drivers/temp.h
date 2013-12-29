@@ -20,6 +20,9 @@
  *
  *************************************************************************** */
 
+#ifndef DRIVERS_TEMP_H
+#define DRIVERS_TEMP_H
+
 #include <stdint.h>
 
 
@@ -95,4 +98,6 @@ int sensor_config(uint32_t resolution);
 /* Start a conversion when the sensor is in shutdown mode. */
 int sensor_start_conversion(void);
 
+
+#endif /* DRIVERS_TEMP_H */
 

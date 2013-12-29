@@ -31,6 +31,7 @@
 #include "core/system.h"
 #include "lib/string.h"
 #include "drivers/timers.h"
+#include "drivers/gpio.h"
 
 #define SERIAL_OUT_BUFF_SIZE 64
 struct uart_device
@@ -226,23 +227,17 @@ static uint32_t uart_mode_setup(uint32_t uart_num)
  */
 static void uart_set_pin_func(uint32_t uart_num)
 {
-	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
-
-	/* Make sure IO_Config is clocked */
-	io_config_clk_on();
 	/* Configure UART pins (Only Rx and Tx) */
 	switch (uart_num) {
 		case 0:
-			ioctrl->pio0_1 = LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL;
-			ioctrl->pio0_2 = LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL;
+			config_gpio(0, 1, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
+			config_gpio(0, 2, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
 			break;
 		case 1:
-			ioctrl->pio0_8 = LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL;
-			ioctrl->pio0_9 = LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL;
+			config_gpio(0, 8, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
+			config_gpio(0, 9, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
 			break;
 	}
-	/* Config done, power off IO_CONFIG block */
-	io_config_clk_off();
 }
 struct uart_def
 {

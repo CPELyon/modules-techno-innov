@@ -26,6 +26,7 @@
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "lib/string.h"
+#include "drivers/gpio.h"
 #include "drivers/i2c.h"
 
 
@@ -449,14 +450,8 @@ static void i2c_clock_on(uint32_t i2c_clk_freq)
 
 void set_i2c_pins(void)
 {
-	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
-
-	/* Make sure IO_Config is clocked */
-	io_config_clk_on();
-	ioctrl->pio0_10 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE; /* True open drain */
-	ioctrl->pio0_11 = LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE;
-	/* Config done, power off IO_CONFIG block */
-	io_config_clk_off();
+	config_gpio(0, 10, (LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE)); /* True open drain */
+	config_gpio(0, 11, (LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE));
 }
 
 void i2c_on(uint32_t i2c_clk_freq)

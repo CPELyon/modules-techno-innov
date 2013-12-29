@@ -28,6 +28,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "drivers/gpio.h"
 
 /* Should be as near to 9MHz as possible */
 #define adc_clk_Val  9000000
@@ -125,19 +126,13 @@ void adc_set_resolution(int bits)
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
 void set_adc_pins(void)
 {
-	struct lpc_io_control* ioctrl = LPC_IO_CONTROL;
-
-	/* Make sure IO_Config is clocked */
-	io_config_clk_on();
 	/* Configure ADC pins */
-	ioctrl->pio0_30 = LPC_IO_FUNC_ALT(3) | LPC_IO_ANALOG;
-	ioctrl->pio0_31 = LPC_IO_FUNC_ALT(3) | LPC_IO_ANALOG;
-	ioctrl->pio1_0 = LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG;
-	ioctrl->pio1_1 = LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG;
-	ioctrl->pio1_2 = LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG;
-	ioctrl->pio1_3 = LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG;
-	/* Config done, power off IO_CONFIG block */
-	io_config_clk_off();
+	config_gpio(0, 30, (LPC_IO_FUNC_ALT(3) | LPC_IO_ANALOG));
+	config_gpio(0, 31, (LPC_IO_FUNC_ALT(3) | LPC_IO_ANALOG));
+	config_gpio(1, 0, (LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG));
+	config_gpio(1, 1, (LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG));
+	config_gpio(1, 2, (LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG));
+	config_gpio(1, 3, (LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG));
 }
 
 void adc_clk_update(void)

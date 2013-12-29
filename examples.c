@@ -327,9 +327,7 @@ uint16_t Thermocouple_Read(uint8_t slave_sel_pin)
 	int temp = 0, deci = 0;
 
 	/* Configure slave select pin as GPIO */
-	io_config_clk_on();
 	config_gpio(0, slave_sel_pin, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
-	io_config_clk_off();
 
 	/* Activate slave (active low), transfer data, and release slave */
 	gpio0->clear = (1 << slave_sel_pin);

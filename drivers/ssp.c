@@ -101,9 +101,7 @@ int spi_device_cs_pull_low(void)
 	}
 
 	/* Configure pin as GPIO */
-    io_config_clk_on();
 	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
-    io_config_clk_off();
 	/* Configure pin as output and set it low */
 	gpio0->data_dir |= (1 << SPI_CS_PIN);
     gpio0->clear = (1 << SPI_CS_PIN);
@@ -116,9 +114,7 @@ void spi_device_cs_release(void)
 	/* Set pin high */
     gpio0->set = (1 << SPI_CS_PIN);
 	/* Configure pin as SPI again */
-    io_config_clk_on();
 	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Chip Select */
-    io_config_clk_off();
 }
 
 
@@ -251,14 +247,10 @@ void ssp_clk_update(void)
  */
 void set_ssp_pins(void)
 {
-	/* Make sure IO_Config is clocked */
-	io_config_clk_on();
 	/* Main SPI pins */
 	config_gpio(0, 14, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Clock */
 	config_gpio(0, 16, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI MISO */
 	config_gpio(0, 17, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI MOSI */
-	/* Config done, power off IO_CONFIG block */
-	io_config_clk_off();
 }
 
 
@@ -321,10 +313,7 @@ int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_
 	}
 
 	/* Use SPI as Device : configure the SSEL pin */
-	/* Make sure IO_Config is clocked */
-	io_config_clk_on();
 	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Chip Select */
-	io_config_clk_off();
 
 	/* Configure the clock : done after basic configuration.
 	 * Our clock must be at least 12 times the master clock */

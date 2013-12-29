@@ -225,7 +225,7 @@ void status_led_config(void)
 	config_gpio(1, LED_GREEN, (LPC_IO_FUNC_ALT(0) | mode));
 	config_gpio(1, LED_RED, (LPC_IO_FUNC_ALT(0) | mode));
 	/* Configure both as output */
-	gpio1->data_dir = (1 << LED_GREEN) | (1 << LED_RED);
+	gpio1->data_dir |= (1 << LED_GREEN) | (1 << LED_RED);
 	/* Turn both LEDs on */
 	//gpio1->set = (1 << LED_GREEN) | (1 << LED_RED);
 	gpio1->set = (1 << LED_GREEN);

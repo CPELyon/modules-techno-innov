@@ -39,6 +39,7 @@
 #include "drivers/timers.h"
 #include "drivers/ssp.h"
 
+#include "examples.h"
 
 /***************************************************************************** */
 /* Temperature */

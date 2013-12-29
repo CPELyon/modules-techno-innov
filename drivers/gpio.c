@@ -133,12 +133,15 @@ void gpio_on(void)
 	/* Provide power to GPIO control blocks */
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO0, 1);
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO1, 1);
+	/* FIXME : Power this one two if you use LQFP64 or LQFP100 packages */
+	/* subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO2, 1); */
 }
 void gpio_off(void)
 {
 	/* Remove power from GPIO control blocks */
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO0, 0);
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO1, 0);
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO2, 0);
 }
 
 

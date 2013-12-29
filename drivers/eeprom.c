@@ -37,13 +37,14 @@
  * These dummy functions will be over-ridden by SPI ones if the SPI driver is used.
  */
 #define I2C_CS_PIN 15
-void I2C_CS_Default_Set(void)
+int I2C_CS_Default_Set(void)
 {
     struct lpc_gpio* gpio0 = LPC_GPIO_0;
     config_gpio(0, I2C_CS_PIN, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
     /* Configure SPI_CS as output and set it low. */
     gpio0->data_dir |= (1 << I2C_CS_PIN);
     gpio0->clear = (1 << I2C_CS_PIN);
+	return 1;
 }
 void I2C_CS_Default_Release(void)
 {
@@ -51,8 +52,8 @@ void I2C_CS_Default_Release(void)
     gpio0->set = (1 << I2C_CS_PIN);
 }
 
-void spi_cs_pull_low(void) __attribute__ ((weak, alias ("I2C_CS_Default_Set")));
-void spi_cs_release(void) __attribute__ ((weak, alias ("I2C_CS_Default_Release")));
+int spi_device_cs_pull_low(void) __attribute__ ((weak, alias ("I2C_CS_Default_Set")));
+void spi_device_cs_release(void) __attribute__ ((weak, alias ("I2C_CS_Default_Release")));
 
 
 /***************************************************************************** */
@@ -92,7 +93,7 @@ int eeprom_detect(void)
 	}
 
 	if (ret > 0) {
-		return -1;
+		return -EIO;
 	} else if (ret == -EREMOTEIO) {
 		return EEPROM_TYPE_NONE; /* No module */
 	}
@@ -137,7 +138,9 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 	char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
 	int eeprom_type = 0;
 
-	spi_cs_pull_low();
+	if (spi_device_cs_pull_low() == 0) {
+		return -EBUSY;
+	}
 	eeprom_type = get_eeprom_type();
 
 	/* Read the requested data */
@@ -157,7 +160,7 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 			ret = -1;
 			break;
 	}
-	spi_cs_release();
+	spi_device_cs_release();
 
 	return ret;
 }
@@ -190,7 +193,9 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 	char full_buff[(EEPROM_ID_MAX_PAGE_SIZE + MAX_CMD_SIZE)];
 	int eeprom_type = 0;
 
-	spi_cs_pull_low();
+	if (spi_device_cs_pull_low() == 0) {
+		return -EBUSY;
+	}
 	eeprom_type = get_eeprom_type();
 
 	switch (eeprom_type) {
@@ -243,7 +248,7 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 
 		write_count += size;
 	}
-	spi_cs_release();
+	spi_device_cs_release();
 
 	if (write_count != count)
 		return ret;

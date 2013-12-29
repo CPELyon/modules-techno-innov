@@ -82,7 +82,7 @@ void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin);
 
 /***************************************************************************** */
 /* Maxim's MAX31855 themocouple to digital converter */
-uint16_t Thermocouple_Read(void);
+uint16_t Thermocouple_Read(uint8_t slave_sel_pin);
 
 #endif /* EXAMPLE_H */
 

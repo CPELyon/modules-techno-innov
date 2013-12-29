@@ -35,10 +35,6 @@
 
 /* Store our current SPI clock rate */
 static uint32_t ssp_current_clk = 0;
-/* Device configured ? */
-static uint32_t spi_device_pins_in_use = 0;
-/* Do we use SPI to handle chip-select or a GPIO ? */
-static uint32_t use_spi_cs = 1;
 
 
 /* Handlers */
@@ -54,29 +50,55 @@ void SSP_0_Handler(void)
 
 
 /***************************************************************************** */
-/* SPI SSEL */
+/* SPI Bus mutex */
 
-/* SPI ssel mutex for SPI bus */
-static uint32_t spi_cs_mutex = 0;
-static void spi_get_cs_mutex(void)
+/* SPI global mutex for SPI bus */
+static uint32_t spi_mutex = 0;
+
+#if MULTITASKING == 1
+int spi_get_mutex(void)
 {
-	do {} while (sync_lock_test_and_set(&spi_cs_mutex, 1) == 1);
+	/* Note : a multitasking OS should call the scheduler here. Any other system
+	 *   will get frozen, unless some interrupt routine has been set to release
+	 *   the mutex.
+	 */
+	do {} while (sync_lock_test_and_set(&spi_mutex, 1) == 1);
+	return 1;
 }
-static void spi_release_cs_mutex(void)
+#else
+int spi_get_mutex(void)
 {
-	sync_lock_release(&spi_cs_mutex);
+	if (sync_lock_test_and_set(&spi_mutex, 1) == 1) {
+		return -EBUSY;
+	}
+	return 1;
+}
+#endif
+void spi_release_mutex(void)
+{
+	sync_lock_release(&spi_mutex);
 }
 
-/* SSEL Alternative:
- * Set SPI Chip Select Low using GPIO (for I2C or to prevent CS going high between frames
+/***************************************************************************** */
+/* SPI device SSEL:
+ * Set SPI Chip Select Low using GPIO mode when SPI driver is in use
  */
-#define SPI_CS_PIN 15
-void spi_cs_pull_low(void)
+
+/* SPI slave select mutex for SPI bus */
+static uint32_t spi_cs_mutex = 0;
+
+/* Use this function when you need to enable access to the module EEPROM on the
+ * GPIO Demo Module from Techno-Innov but the micro-controller acts as a slave on the
+ * SPI bus.
+ * Any data sent by the master on the SPI bus while the spi_cs_mutex is held will be lost.
+ */
+int spi_device_cs_pull_low(void)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 
-	/* Get SPI chip select mutex */
-	spi_get_cs_mutex();
+	if (sync_lock_test_and_set(&spi_cs_mutex, 1) == 1) {
+		return -EBUSY;
+	}
 
 	/* Configure pin as GPIO */
     io_config_clk_on();
@@ -85,25 +107,24 @@ void spi_cs_pull_low(void)
 	/* Configure pin as output and set it low */
 	gpio0->data_dir |= (1 << SPI_CS_PIN);
     gpio0->clear = (1 << SPI_CS_PIN);
+
+	return 0;
 }
-void spi_cs_release(void)
+void spi_device_cs_release(void)
 {
-	if (spi_device_pins_in_use == 1) {
-    	io_config_clk_on();
-		/* Configure pin as SPI */
-		config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
-    	io_config_clk_off();
-	} else {
-		struct lpc_gpio* gpio0 = LPC_GPIO_0;
-		/* Set pin high */
-    	gpio0->set = (1 << SPI_CS_PIN);
-	}
-	spi_release_cs_mutex();
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	/* Set pin high */
+    gpio0->set = (1 << SPI_CS_PIN);
+	/* Configure pin as SPI again */
+    io_config_clk_on();
+	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Chip Select */
+    io_config_clk_off();
 }
+
 
 
 /***************************************************************************** */
-/* This function is used to transfer a byte to AND from a device
+/* This function is used to transfer a word (4 to 16 bits) to AND from a device
  * As the SPI bus is full duplex, data can flow in both directions, but the clock is
  *   always provided by the master. The SPI clock cannont be activated without sending
  *   data, which means we must send data to the device when we want to read data from
@@ -118,13 +139,35 @@ uint16_t spi_transfer_single_frame(uint16_t data)
 	return ssp->data;
 }
 
-/* Note: there's no need to count Rx data as it is equal to Tx data */
+/* Multiple words (4 to 16 bits) transfer function on the SPI bus.
+ * The SSP fifo is used to leave as little time between frames as possible.
+ * Parameters :
+ *  size is the number of frames, each one having the configured data width (4 to 16 bits).
+ *  data_out : data to be sent. Data will be read in the lower bits of the 16 bits values
+ *             pointed by "data_out" for each frame. If NULL, then the content of data_in
+               will be used.
+ *  data_in : buffer for read data. If NULL, read data will be discarded.
+ * As the SPI bus is full duplex, data can flow in both directions, but the clock is
+ *   always provided by the master. The SPI clock cannont be activated without sending
+ *   data, which means we must send data to the device when we want to read data from
+ *   the device.
+ * This function does not take care of the SPI chip select.
+ * Note: there's no need to count Rx data as it is equal to Tx data
+ */
 int spi_transfer_multiple_frames(uint16_t* data_out, int size, uint16_t* data_in)
 {
 	struct lpc_ssp* ssp = LPC_SSP0;
 	int count = 0;
-	uint16_t data_drop = 0; /* Used to store unused SPI Rx data */
+	uint16_t data_read = 0; /* Used to store SPI Rx data */
 
+	/* Did the user provide a buffer to send data ? */
+	if (data_out == NULL) {
+		if (data_in == NULL) {
+			return 0;
+		}
+		data_out = data_in;
+	}
+	/* Transfer */
 	do {
 		/* Fill Tx fifo with available data, but stop if rx fifo is full */
 		while ((count < size) &&
@@ -134,92 +177,24 @@ int spi_transfer_multiple_frames(uint16_t* data_out, int size, uint16_t* data_in
 			data_out++;
 		}
 
-		/* Read some of the replies, but stop if there's still data to send and the fifo is running short */
+		/* Read some of the replies, but stop if there's still data to send and the fifo
+		 *  is running short */
 		while ((ssp->status & LPC_SSP_ST_RX_NOT_EMPTY) &&
 				!((count < size) && (ssp->raw_int_status & LPC_SSP_INTR_TX_HALF_EMPTY))) {
+			/* Read the data (mandatory) */
+			data_read = ssp->data;
 			if (data_in != NULL) {
-				/* Store them ... */
-				*data_in = ssp->data;
+				/* And store when requested */
+				*data_in = data_read;
 				data_in++;
-			} else {
-				/* ... or drop them */
-				data_drop = ssp->data;
 			}
 		}
 	/* Go on till both all data is sent and all data is received */
 	} while ((count < size) || (ssp->status & (LPC_SSP_ST_BUSY | LPC_SSP_ST_RX_NOT_EMPTY)));
 
-	return (data_drop - data_drop); /* 0, but then data_drop is used :) */
+	return count;
 }
 
-
-/* Handle diferent kind of chip-select methods.
- * Some devices require that the CS be maintained low between frames, a high on chip select
- *   meaning a reset on the SPI communication (MAX31855 thermocouple to digital converter for
- *   example).
- */
-static void spi_cs_get(void)
-{
-	if (use_spi_cs == 1) {
-		spi_get_cs_mutex();
-	} else {
-		spi_cs_pull_low();
-	}
-}
-void spi_cs_put(void)
-{
-	if (use_spi_cs == 1) {
-		spi_release_cs_mutex();
-	} else {
-		spi_cs_release();
-	}
-}
-/* Write data to the SPI bus.
- * Any data received while sending is discarded.
- * Data will be read in the lower bits of the 16 bits values pointed by "data" for each frame.
- * size is the number of frames, each one having the configured data width (4 to 16 bits).
- * If use_fifo is 0 frames are received one at a time, otherise the fifo is used to leave
- *   as little time between frames as possible.
- */
-int spi_write(uint16_t *data, int size, int use_fifo)
-{
-	int i;
-	spi_cs_get();
-	if (use_fifo == 0) {
-		for (i = 0; i < size; i++) {
-			spi_transfer_single_frame(*data);
-			data++;
-		}
-	} else {
-		spi_transfer_multiple_frames(data, size, NULL);
-	}
-	spi_cs_put();
-	return size;
-}
-
-/* Read data from the SPI bus.
- * Data will be stored in the lower bits of the 16 bits values pointed by "data" for each frame.
- * size is the number of frames, each one having the configured data width (4 to 16 bits).
- * In order to activate the bus clock a default "all ones" frame is sent for each frame we
- *   want to read.
- * If use_fifo is 0 frames are received one at a time, otherise the fifo is used to leave
- *   as little time between frames as possible.
- */
-int spi_read(uint16_t *data, int size, int use_fifo)
-{
-	int i;
-	spi_cs_get();
-	if (use_fifo == 0) {
-		for (i = 0; i < size; i++) {
-			*data = spi_transfer_single_frame(0xFFFF);
-			data++;
-		}
-	} else {
-		spi_transfer_multiple_frames(data, size, data);
-	}
-	spi_cs_put();
-	return size;
-}
 
 
 /***************************************************************************** */
@@ -270,20 +245,18 @@ void ssp_clk_update(void)
 	}
 }
 
+/* Configure main SPI pins, used in both master and device mode.
+ * The slave select is not configured here as it's use is implementation dependant in master
+ *  mode. In slave mode it is configured in the ssp_slave_on() function.
+ */
 void set_ssp_pins(void)
 {
 	/* Make sure IO_Config is clocked */
 	io_config_clk_on();
-
-	/* We need this as we share the chip-select with the I2C bus. */
-	spi_device_pins_in_use = 1;
-
-	/* SPI pins */
+	/* Main SPI pins */
 	config_gpio(0, 14, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Clock */
-	config_gpio(0, 15, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Chip Select */
 	config_gpio(0, 16, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI MISO */
 	config_gpio(0, 17, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI MOSI */
-
 	/* Config done, power off IO_CONFIG block */
 	io_config_clk_off();
 }
@@ -294,14 +267,15 @@ void set_ssp_pins(void)
 /***************************************************************************** */
 /* SSP Setup as master */
 /* Returns 0 on success
- * frame_type is SPI, TI or MICROWIRE (use apropriate defines for this one).
- * data_width is a number between 4 and 16.
- * spi_cs_spi: set to 0 handle Slave select as a GPIO and keep it loww during the whole
- *    data transaction (do not pull high between frame). This is required by some slave
- *    devices.
- * rate : The bit rate, in Hz.
+ * Parameters :
+ *  frame_type is SPI, TI or MICROWIRE (use apropriate defines for this one).
+ *  data_width is a number between 4 and 16.
+ *  rate : The bit rate, in Hz.
+ * The SPI Chip Select is not handled by the SPI driver in master SPI mode as it's
+ *   handling highly depends on the device on the other end of the wires. Use a GPIO
+ *   to activate the device's chip select (usually active low)
  */
-int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint8_t spi_cs_spi, uint32_t rate )
+int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint32_t rate )
 {
 	struct lpc_ssp* ssp = LPC_SSP0;
 
@@ -317,12 +291,6 @@ int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint8_t spi_cs_spi, ui
 	/* Configure the clock : done after basic configuration */
 	ssp_current_clk = ssp_clk_on(rate);
 
-	if (spi_cs_spi == 0) {
-		use_spi_cs = 0;
-	} else {
-		use_spi_cs = 1;
-	}
-
 	/* Enable SSP */
 	ssp->ctrl_1 |= LPC_SSP_ENABLE;
 
@@ -333,6 +301,12 @@ int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint8_t spi_cs_spi, ui
 int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_t max_rate)
 {
 	struct lpc_ssp* ssp = LPC_SSP0;
+
+	/* Is the slave select pin available ?
+	 * We need this as we share the chip-select with the I2C bus. */
+	if (sync_lock_test_and_set(&spi_cs_mutex, 1) == 1) {
+		return -EBUSY;
+	}
 
 	NVIC_DisableIRQ(SSP0_IRQ);
 	/* Power up the ssp block */
@@ -346,6 +320,12 @@ int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_
 		ssp->ctrl_1 |= LPC_SSP_SLAVE_OUT_DISABLE;
 	}
 
+	/* Use SPI as Device : configure the SSEL pin */
+	/* Make sure IO_Config is clocked */
+	io_config_clk_on();
+	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Chip Select */
+	io_config_clk_off();
+
 	/* Configure the clock : done after basic configuration.
 	 * Our clock must be at least 12 times the master clock */
 	ssp_current_clk = ssp_clk_on(max_rate * 16);
@@ -355,7 +335,6 @@ int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_
 
 	NVIC_EnableIRQ(SSP0_IRQ);
 	return 0; /* Config OK */
-
 }
 
 /* Turn off the SSP block */
@@ -364,4 +343,7 @@ void ssp_off(void)
 	ssp_current_clk = 0;
 	NVIC_DisableIRQ(SSP0_IRQ);
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_SSP0, 0);
+	/* Can be done even if we don't hold the mutex */
+	sync_lock_release(&spi_cs_mutex);
 }
+

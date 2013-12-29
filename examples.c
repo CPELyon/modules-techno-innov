@@ -315,15 +315,28 @@ void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
 
 
 /***************************************************************************** */
-/* Maxim's MAX31855 themocouple to digital converter */
-uint16_t Thermocouple_Read(void)
+/* Maxim's MAX31855 themocouple to digital converter
+ * Slave select pin must be on port 0
+ */
+uint16_t Thermocouple_Read(uint8_t slave_sel_pin)
 {
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 	char buff[50];
 	int len = 0;
 	uint16_t data[2];
 	int temp = 0, deci = 0;
 
-	spi_read(data, 2, SPI_USE_FIFO);
+	/* Configure slave select pin as GPIO */
+	io_config_clk_on();
+	config_gpio(0, slave_sel_pin, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	io_config_clk_off();
+
+	/* Activate slave (active low), transfer data, and release slave */
+	gpio0->clear = (1 << slave_sel_pin);
+	spi_transfer_multiple_frames(NULL, 2, data);
+	gpio0->set = (1 << slave_sel_pin);
+
+	/* Convert data */
 	temp = (data[0] >> 4) & 0x07FF;
 	/* * ((data & 0x2000) * -1);*/
 	deci = 25 * ((data[0] >> 2) & 0x03);

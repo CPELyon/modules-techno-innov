@@ -29,15 +29,33 @@
 #include <stdint.h>
 #include "drivers/gpio.h"
 
-#define SPI_USE_FIFO  1
+
+/* Set this to 1 for use of this driver in a multitasking OS, it will activate the SPI Mutex */
+#define MULTITASKING 0
+
+enum spi_fifo_or_pooling {
+	SPI_NO_FIFO = 0,
+	SPI_USE_FIFO = 1,
+};
+
+#define SPI_CS_PIN 15
+
+/***************************************************************************** */
+/* SPI device mode slave select sharing.
+ * Note: Used only by non SPI functions to request the SSEL pin when SPI driver is used.
+ */
+int spi_device_cs_pull_low(void);
+void spi_device_cs_release(void);
 
 
 /***************************************************************************** */
-/* SPI slave select / activate
- * Note: Used only by non SPI functions to request the SSEL pin when SPI driver is used.
+/* SPI Bus mutex */
+/* In multitasking environment spi_get_mutex will block until mutex is available and always
+ *  return 1. In non multitasking environments spi_get_mutex returns either 1 (got mutex)
+ *  or -EBUSY (SPI bus in use)
  */
-void spi_cs_pull_low(void);
-void spi_cs_release(void);
+int spi_get_mutex(void);
+void spi_release_mutex(void);
 
 
 /***************************************************************************** */
@@ -52,24 +70,22 @@ uint16_t spi_transfer_single_frame(uint16_t data);
 
 
 /***************************************************************************** */
-/* Write data to the SPI bus.
- * Any data received while sending is discarded.
- * Data will be read in the lower bits of the 16 bits values pointed by "data" for each frame.
- * size is the number of frames, each one having the configured data width (4 to 16 bits).
- * If use_fifo is 0 frames are received one at a time, otherise the fifo is used to leave
- *   as little time between frames as possible.
+/* Multiple words (4 to 16 bits) transfer function on the SPI bus.
+ * The SSP fifo is used to leave as little time between frames as possible.
+ * Parameters :
+ *  size is the number of frames, each one having the configured data width (4 to 16 bits).
+ *  data_out : data to be sent. Data will be read in the lower bits of the 16 bits values
+ *             pointed by "data_out" for each frame. If NULL, then the content of data_in
+               will be used.
+ *  data_in : buffer for read data. If NULL, read data will be discarded.
+ * As the SPI bus is full duplex, data can flow in both directions, but the clock is
+ *   always provided by the master. The SPI clock cannont be activated without sending
+ *   data, which means we must send data to the device when we want to read data from
+ *   the device.
+ * This function does not take care of the SPI chip select.
+ * Note: there's no need to count Rx data as it is equal to Tx data
  */
-int spi_write(uint16_t *data, int size, int use_fifo);
-
-/* Read data from the SPI bus.
- * Data will be stored in the lower bits of the 16 bits values pointed by "data" for each frame.
- * size is the number of frames, each one having the configured data width (4 to 16 bits).
- * In order to activate the bus clock a default "all ones" frame is sent for each frame we
- *   want to read.
- * If use_fifo is 0 frames are received one at a time, otherise the fifo is used to leave
- *   as little time between frames as possible.
- */
-int spi_read(uint16_t *data, int size, int use_fifo);
+int spi_transfer_multiple_frames(uint16_t* data_out, int size, uint16_t* data_in);
 
 
 /***************************************************************************** */
@@ -82,14 +98,15 @@ void set_ssp_pins(void);
 /***************************************************************************** */
 /* SSP Setup as master */
 /* Returns 0 on success
- * frame_type is SPI, TI or MICROWIRE (use apropriate defines for this one).
- * data_width is a number between 4 and 16.
- * spi_cs_spi: set to 0 handle Slave select as a GPIO and keep it loww during the whole
- *    data transaction (do not pull high between frame). This is required by some slave
- *    devices.
- * rate : The bit rate, in Hz.
+ * Parameters :
+ *  frame_type is SPI, TI or MICROWIRE (use apropriate defines for this one).
+ *  data_width is a number between 4 and 16.
+ *  rate : The bit rate, in Hz.
+ * The SPI Chip Select is not handled by the SPI driver in master SPI mode as it's
+ *   handling highly depends on the device on the other end of the wires. Use a GPIO
+ *   to activate the device's chip select (usually active low)
  */
-int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint8_t spi_cs_spi, uint32_t rate);
+int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint32_t rate);
 
 int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_t max_rate);
 

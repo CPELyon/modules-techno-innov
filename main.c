@@ -74,7 +74,7 @@ int main(void) {
 	uart_on(1, 115200);
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
-	ssp_master_on(LPC_SSP_FRAME_SPI, 16, 0, 1*1000*1000);
+	ssp_master_on(LPC_SSP_FRAME_SPI, 8, 8*1000*1000); /* frame_type, data_width, rate */
 
 	i2c_on(I2C_CLK_100KHz);
 
@@ -100,7 +100,7 @@ int main(void) {
 		luminosity_display(1);
 		/* TH_display(); */
 		TMP36_display(0);
-		Thermocouple_Read();
+		Thermocouple_Read(SPI_CS_PIN); /* SPI_CS_PIN is defined in spi.h (required for SPI */
 		temp_display();
 	}
 	return 0;

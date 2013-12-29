@@ -64,6 +64,9 @@ SUPPORTED FEATURES and INTERFACES
    - watchdog (stop)
    - clock / PLL config
    - call of existing/used drivers configuration routines
+   - systick
+   - precise msleep and usleep functions (using systick)
+   - counter / timers
 
 - Simple C Library
    - memcpy and memset
@@ -74,9 +77,10 @@ SUPPORTED FEATURES and INTERFACES
    - UART
    - I²C
    - I²C EEPROM
-   - TMP101 temperature sensor
+   - TMP101 I²C temperature sensor
    - ADC
    - GPIO
+   - GPIO interrupts
    - SPI (SSP)
 
 
@@ -86,5 +90,8 @@ TODO :
 - Deep sleep mode support.
 - Test all the GPIO in different modes
 - Add support for SDCard over SPI
-- Add transfer function for full duplex SPI when using fifo
-    actually implemented in the transfer functions but not in the read/write functions
+- RTC Support
+- Comparator support
+- Watchdog support
+- Flash IAP support
+- CRC engine support

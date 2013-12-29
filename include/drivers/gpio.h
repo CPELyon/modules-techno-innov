@@ -31,6 +31,17 @@
 
 void config_gpio(uint8_t port, uint8_t pin, uint32_t mode);
 
+enum gpio_interrupt_senses {
+	EDGES_BOTH = 0,
+	EDGE_FALLING,
+	EDGE_RISING,
+	LEVEL_HIGH,
+	LEVEL_LOW,
+};
+
+int set_gpio_callback(void (*callback) (uint32_t), uint8_t port, uint8_t pin, uint8_t sense);
+void remove_gpio_callback(uint8_t port, uint8_t pin);
+
 void gpio_on(void);
 void gpio_off(void);
 

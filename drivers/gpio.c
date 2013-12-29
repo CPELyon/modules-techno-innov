@@ -198,15 +198,184 @@ void set_gpio_pins(void)
 	io_config_clk_off();
 }
 
-/* Handlers */
+
+static void (*gpio_calbacks_port0[PORT0_NB_PINS]) (uint32_t);
+static void (*gpio_calbacks_port1[PORT1_NB_PINS]) (uint32_t);
+static void (*gpio_calbacks_port2[PORT2_NB_PINS]) (uint32_t);
+
+
+int set_gpio_callback(void (*callback) (uint32_t), uint8_t port, uint8_t pin, uint8_t sense)
+{
+	struct lpc_gpio* gpio_port = NULL;
+	uint32_t irq = 0;
+
+	/* Register the callback */
+	/* FIXME : we should check that there were none registered for the selected pin */
+	switch (port) {
+		case 0:
+			if (pin >= PORT0_NB_PINS)
+				return -EINVAL;
+			gpio_calbacks_port0[pin] = callback;
+			gpio_port = LPC_GPIO_0;
+			irq = PIO_0_IRQ;
+			break;
+		case 1:
+			if (pin >= PORT1_NB_PINS)
+				return -EINVAL;
+			gpio_calbacks_port1[pin] = callback;
+			gpio_port = LPC_GPIO_1;
+			irq = PIO_1_IRQ;
+			break;
+		case 2:
+			if (pin >= PORT2_NB_PINS)
+				return -EINVAL;
+			gpio_calbacks_port2[pin] = callback;
+			gpio_port = LPC_GPIO_2;
+			irq = PIO_2_IRQ;
+			break;
+		default:
+			return -EINVAL;
+	}
+
+	/* Configure the pin as interrupt source */
+	gpio_port->data_dir &= ~(1 << pin); /* Input */
+	config_gpio(port, pin, (LPC_IO_FUNC_ALT(0) | LPC_IO_DIGITAL));
+	switch (sense) {
+		case EDGES_BOTH:
+			gpio_port->int_sense &= ~(1 << pin);
+			gpio_port->int_both_edges |= (1 << pin);
+			break;
+		case EDGE_RISING:
+			gpio_port->int_sense &= ~(1 << pin);
+			gpio_port->int_both_edges &= ~(1 << pin);
+			gpio_port->int_event |= (1 << pin);
+			break;
+		case EDGE_FALLING:
+			gpio_port->int_sense &= ~(1 << pin);
+			gpio_port->int_both_edges &= ~(1 << pin);
+			gpio_port->int_event &= ~(1 << pin);
+			break;
+		case LEVEL_LOW:
+			gpio_port->int_sense |= (1 << pin);
+			gpio_port->int_both_edges &= ~(1 << pin);
+			gpio_port->int_event &= ~(1 << pin);
+			break;
+		case LEVEL_HIGH:
+			gpio_port->int_sense |= (1 << pin);
+			gpio_port->int_both_edges &= ~(1 << pin);
+			gpio_port->int_event |= (1 << pin);
+			break;
+		default: /* Not handled, do not activate the interrupt */
+			return -EINVAL;
+	}
+	gpio_port->int_enable |= (1 << pin);
+	NVIC_EnableIRQ(irq);
+	return 0;
+}
+void remove_gpio_callback(uint8_t port, uint8_t pin)
+{
+	struct lpc_gpio* gpio_port = NULL;
+	uint32_t irq = 0;
+
+	/* Remove the handler */
+	switch (port) {
+		case 0:
+			if (pin >= PORT0_NB_PINS)
+				return;
+			gpio_calbacks_port0[pin] = NULL;
+			gpio_port = LPC_GPIO_0;
+			irq = PIO_0_IRQ;
+			break;
+		case 1:
+			if (pin >= PORT1_NB_PINS)
+				return;
+			gpio_calbacks_port1[pin] = NULL;
+			gpio_port = LPC_GPIO_1;
+			irq = PIO_1_IRQ;
+			break;
+		case 2:
+			if (pin >= PORT2_NB_PINS)
+				return;
+			gpio_calbacks_port2[pin] = NULL;
+			gpio_port = LPC_GPIO_2;
+			irq = PIO_2_IRQ;
+			break;
+		default:
+			return;
+	}
+	/* And disable the interrupt */
+	gpio_port->int_enable &= ~(1 << pin);
+	if (gpio_port->int_enable == 0) {
+		NVIC_DisableIRQ(irq);
+	}
+}
+
+
+/* Interrupt Handlers */
+/* Those handlers are far from the most effective if used without concertation
+ * with the people doing the electronic design.
+ * Use them if you place the signals generating interrupts on low numbered pins
+ */
+#include "drivers/serial.h"
 void PIO_0_Handler(void)
 {
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	uint32_t status = gpio0->masked_int_status;
+	uint32_t i = 0;
+
+	/* Call interrupt handlers */
+	while (status) {
+		if (status & 1) {
+			/* Is there an handler for this one ? */
+			if (gpio_calbacks_port0[i] != NULL) {
+				gpio_calbacks_port0[i](i);
+			}
+			/* Clear edge detection logic */
+			gpio0->int_clear |= (1 << i);
+		}
+		status >>= 1;
+		i++;
+	}
 }
 void PIO_1_Handler(void)
 {
+	struct lpc_gpio* gpio1 = LPC_GPIO_1;
+	uint32_t status = gpio1->masked_int_status;
+	uint32_t i = 0;
+
+	/* Call interrupt handlers */
+	while (status) {
+		if (status & 1) {
+			/* Is there an handler for this one ? */
+			if (gpio_calbacks_port1[i] != NULL) {
+				gpio_calbacks_port1[i](i);
+			}
+			/* Clear pending interrupt */
+			gpio1->int_clear |= (1 << i);
+		}
+		status >>= 1;
+		i++;
+	}
 }
 void PIO_2_Handler(void)
 {
+	struct lpc_gpio* gpio2 = LPC_GPIO_2;
+	uint32_t status = gpio2->masked_int_status;
+	uint32_t i = 0;
+
+	/* Call interrupt handlers */
+	while (status) {
+		if (status & 1) {
+			/* Is there an handler for this one ? */
+			if (gpio_calbacks_port2[i] != NULL) {
+				gpio_calbacks_port2[i](i);
+			}
+			/* Clear pending interrupt */
+			gpio2->int_clear |= (1 << i);
+		}
+		status >>= 1;
+		i++;
+	}
 }
 
 

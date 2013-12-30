@@ -84,5 +84,18 @@ void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin);
 /* Maxim's MAX31855 themocouple to digital converter */
 uint16_t Thermocouple_Read(uint8_t slave_sel_pin);
 
+
+
+/***************************************************************************** */
+/* Simple GPIO interrupt example: toggle a led when you push the switch.
+ * Connect a switch and a pull down resistor to "INT_PIN" (connect the other end of
+ *   the switch to +Vcc), and a Led to "LED_PIN" (You can add a resistor to limit the
+ *   current in the Led).
+ * Add a 10uF capacitor between "INT_PIN" and ground to prevent rebounds and thus
+ *   multiple interrupts for each push of the switch.
+ * Note: should also be used without the capacitor to test the input filter ?
+ */
+void gpio_intr_toggle_config(void);
+
 #endif /* EXAMPLE_H */
 

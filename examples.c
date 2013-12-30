@@ -345,3 +345,41 @@ uint16_t Thermocouple_Read(uint8_t slave_sel_pin)
 }
 
 
+/***************************************************************************** */
+/* Simple GPIO interrupt example: toggle a led when you push the switch.
+ * Connect a switch and a pull down resistor to "INT_PIN" (connect the other end of
+ *   the switch to +Vcc), and a Led to "LED_PIN" (You can add a resistor to limit the
+ *   current in the Led).
+ * Add a 10uF capacitor between "INT_PIN" and ground to prevent rebounds and thus
+ *   multiple interrupts for each push of the switch.
+ * Note: should also be used without the capacitor to test the input filter ?
+ */
+#define LED_PIN 27
+#define INT_PIN 0
+void callback(uint32_t pin_num)
+{
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	static int state = 0;
+	if (state) {
+		gpio0->clear = (1 << LED_PIN);
+		state = 0;
+	} else {
+		gpio0->set = (1 << LED_PIN);
+		state = 1;
+	}
+}
+void gpio_intr_toggle_config(void)
+{
+	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	int ret = 0;
+	config_gpio(0, LED_PIN, (LPC_IO_FUNC_ALT(0) | LPC_IO_DIGITAL));
+	gpio0->data_dir |= (1 << LED_PIN);
+	ret = set_gpio_callback(callback, 0, INT_PIN, EDGE_FALLING);
+	if (ret != 0) {
+		serial_write(1, "GPIO INTR config error\r\n", 24);
+	}
+}
+
+
+
+

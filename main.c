@@ -93,6 +93,9 @@ int main(void) {
 	TH_config(0);
 	temp_config();
 
+	/* GPIO interrupt test */
+	gpio_intr_toggle_config();
+
 	RGB_Led_config(LED_RGB_RED, LED_RGB_GREEN, LED_RGB_BLUE);
 
 	while (1) {

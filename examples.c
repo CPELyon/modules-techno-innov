@@ -317,6 +317,7 @@ void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
 /***************************************************************************** */
 /* Maxim's MAX31855 themocouple to digital converter
  * Slave select pin must be on port 0
+ * SPI must be configured with 16 bits data and data rate of 1MHz.
  */
 uint16_t Thermocouple_Read(uint8_t slave_sel_pin)
 {

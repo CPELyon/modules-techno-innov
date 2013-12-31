@@ -58,7 +58,7 @@ void system_init()
 	gpio_on();
 	status_led_config();
 	system_set_default_pins();
-	systick_timer_on(1);
+	systick_timer_on(1); /* 1ms */
 }
 
 

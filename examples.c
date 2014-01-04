@@ -388,5 +388,43 @@ void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin)
 }
 
 
+/***************************************************************************** */
+/* Servo motor position control.
+ * Actually only one channel is supported.
+ * Timer must be initialised prior to calls to voltage_to_position_config() (it means that
+ *    timer_on(timer_num, 0) must be called before using this function.
+ * Parameters :
+ *  - timer : one of LPC_TIMER_32B0, LPC_TIMER_32B1, LPC_TIMER_16B0 or LPC_TIMER_16B1
+ *  - pwm_pin : pin number for PWM output. It must be located on port 0.
+ *  - channel is the timer channel corresponding to the pin.
+ */
+void voltage_to_position_config(uint8_t timer, uint8_t pwm_pin, uint8_t channel)
+{
+	/* Timer configuration */
+	struct timer_config timer_conf = {
+		.mode = LPC_TIMER_MODE_PWM,
+		.config = { LPC_PWM_CHANNEL_ENABLE(channel), 0, 0, 0 },
+		.match = { 0, 0, 0, 400*1000 },
+	};
+	timer_setup(timer, &timer_conf);
 
+	/* Configure the pin as match output */
+	timer_pins_setup(0, pwm_pin, LPC_TIMER_PIN_FUNC_MATCH);
+
+	/* Start the timer */
+	timer_start(timer);
+}
+
+/* Change the angle of the servo on the selected channel.
+ *  - timer : the timer used for voltage_to_position_config()
+ *  - channel : channel used for voltage_to_position_config()
+ *  - angle : between 0 and 180 : servo angle in degrees.
+ */
+void pwm_update(uint8_t timer, uint8_t channel, uint8_t angle)
+{
+	uint32_t val = 12500; /* minimum pulse width */
+	val += (angle * 250);
+	/* Change pwm value */
+	timer_set_match(timer, channel, val);
+}
 

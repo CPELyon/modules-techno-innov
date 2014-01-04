@@ -68,6 +68,9 @@ void system_init()
 #define LED_RGB_GREEN LPC_TIMER_32B1_CHANNEL_1_PIO_24
 #define LED_RGB_BLUE  LPC_TIMER_32B1_CHANNEL_2_PIO_25
 
+#define PWM_PIN   LPC_TIMER_32B0_CHANNEL_1_PIO_19
+#define PWM_CHAN  1
+
 #define DHT11_PIN 6
 
 #define BUTTON_IRQ_PIN 0
@@ -82,6 +85,7 @@ int main(void) {
 	uart_on(1, 115200);
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
+	timer_on(LPC_TIMER_32B0, 0);
 	ssp_master_on(LPC_SSP_FRAME_SPI, 8, 8*1000*1000); /* frame_type, data_width, rate */
 
 	i2c_on(I2C_CLK_100KHz);
@@ -104,12 +108,21 @@ int main(void) {
 	/* GPIO interrupt test */
 	gpio_intr_toggle_config(BUTTON_IRQ_PIN, LED_PIN);
 
+	/* Servo motor PWM control test */
+	voltage_to_position_config(LPC_TIMER_32B0, PWM_PIN, PWM_CHAN);
+
 	RGB_Led_config(LPC_TIMER_32B1, LED_RGB_RED, LED_RGB_GREEN, LED_RGB_BLUE);
 
 	while (1) {
-		chenillard(250);
 		uint16_t val = 0;
+		char buff[50];
+		int len = 0;
+		chenillard(25);
 		val = adc_display(LPC_ADC_NUM(1));
+		val = (((val - 480) & ~(0x03)) / 3);
+		len = snprintf(buff, 50, "Angle: %d/180\r\n", val);
+		serial_write(1, buff, len);
+		pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
 		/* TH_display(); */
 		TMP36_display(LPC_ADC_NUM(0));
 		Thermocouple_Read(SPI_CS_PIN); /* SPI_CS_PIN is defined in spi.h (required for SPI */

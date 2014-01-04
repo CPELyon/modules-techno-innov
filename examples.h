@@ -113,5 +113,27 @@ uint16_t Thermocouple_Read(uint8_t slave_sel_pin);
  */
 void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin);
 
+
+
+/***************************************************************************** */
+/* Servo motor position control.
+ * Actually only one channel is supported.
+ * Timer must be initialised prior to calls to voltage_to_position() (it means that
+ *    timer_on(timer_num, 0) must be called before using this function.
+ * Parameters :
+ *  - timer : one of LPC_TIMER_32B0, LPC_TIMER_32B1, LPC_TIMER_16B0 or LPC_TIMER_16B1
+ *  - pwm_pin : pin number for PWM output. It must be the match 0 pin, and must be located
+ *     on port 0.
+ *  - channel is the timer channel corresponding to the pin.
+ */
+void voltage_to_position_config(uint8_t timer, uint8_t pwm_pin, uint8_t channel);
+
+/* Change the angle of the servo on the selected channel.
+ *  - timer : the timer used for voltage_to_position_config()
+ *  - channel : channel used for voltage_to_position_config()
+ *  - angle : between 0 and 180 : servo angle in degrees.
+ */
+void pwm_update(uint8_t timer, uint8_t channel, uint8_t val);
+
 #endif /* EXAMPLE_H */
 

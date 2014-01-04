@@ -70,7 +70,16 @@ int module_desc_set(char* name, uint8_t module_version, uint16_t serial_num);
 
 
 /***************************************************************************** */
-void luminosity_display(int adc_num);
+/* ADC Examples */
+
+/* This will display the integer value read on the ADC, between 0 and 1024.
+ * ADC must be initialised prior to calls to voltage_to_position() (it means that
+ *    adc_on() must be called before using this function.
+ * adc_num is an ADC channel number (integer between 0 and 7)
+ *  use LPC_ADC_NUM(x) for channel selection.
+ * returns ADC convertion value or negative value on error.
+ */
+int adc_display(int adc_num);
 
 void TMP36_display(int adc_num);
 

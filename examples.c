@@ -245,22 +245,31 @@ int module_desc_set(char* name, uint8_t module_version, uint16_t serial_num)
 
 
 /***************************************************************************** */
-void luminosity_display(int adc_num)
+/* This will display the integer value read on the ADC, between 0 and 1024.
+ * ADC must be initialised prior to calls to voltage_to_position() (it means that
+ *    adc_on() must be called before using this function.
+ * adc_num is an ADC channel number (integer between 0 and 7)
+ *    use LPC_ADC_NUM(x) for channel selection.
+ * returns ADC convertion value or negative value on error.
+ */
+int adc_display(int adc_num)
 {
 	uint16_t val = 0;
 	int ret = 0;
 
 	adc_start_convertion_once(adc_num, 0);
-	msleep(5);
+	msleep(10);
 	ret = adc_get_value(&val, adc_num);
-	if (ret == 0) {
-		debug(0, 'n');
+	if (ret < 0) {
+		return ret;
 	} else {
+		/* Always display, even if value has already been read */
 		char buff[40];
 		int len = 0;
-		len = snprintf(buff, 40, "L(%d): %d (raw: %04x)\r\n", adc_num, val, val);
+		len = snprintf(buff, 40, "ADC(%d): %d (raw: 0x%04x)\r\n", adc_num, val, val);
 		serial_write(1, buff, len);
 	}
+	return val;
 }
 
 void TMP36_display(int adc_num)

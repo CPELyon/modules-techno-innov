@@ -62,9 +62,9 @@ void system_init()
 }
 
 
-#define LED_RGB_RED   23
-#define LED_RGB_GREEN 24
-#define LED_RGB_BLUE  25
+#define LED_RGB_RED   LPC_TIMER_32B1_CHANNEL_0_PIO_23
+#define LED_RGB_GREEN LPC_TIMER_32B1_CHANNEL_1_PIO_24
+#define LED_RGB_BLUE  LPC_TIMER_32B1_CHANNEL_2_PIO_25
 
 #define DHT11_PIN 6
 

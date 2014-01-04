@@ -103,7 +103,7 @@ int main(void) {
 		uint16_t val = 0;
 		val = adc_display(LPC_ADC_NUM(1));
 		/* TH_display(); */
-		TMP36_display(0);
+		TMP36_display(LPC_ADC_NUM(0));
 		Thermocouple_Read(SPI_CS_PIN); /* SPI_CS_PIN is defined in spi.h (required for SPI */
 		temp_display();
 	}

@@ -81,6 +81,13 @@ int module_desc_set(char* name, uint8_t module_version, uint16_t serial_num);
  */
 int adc_display(int adc_num);
 
+/* Display the temperature computed from adc convertion of the voltage output of
+ * a TMP36 analog temperature sensor
+ * ADC must be initialised prior to calls to voltage_to_position() (it means that
+ *    adc_on() must be called before using this function.
+ * adc_num is an ADC channel number (integer between 0 and 7)
+ *  use LPC_ADC_NUM(x) for channel selection.
+ */
 void TMP36_display(int adc_num);
 
 

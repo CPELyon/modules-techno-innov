@@ -58,6 +58,8 @@ void system_init()
 	gpio_on();
 	status_led_config();
 	system_set_default_pins();
+	/* System tick timer MUST be configured and running in order to use the sleeping
+	 * functions */
 	systick_timer_on(1); /* 1ms */
 }
 

@@ -44,7 +44,7 @@ int adc_get_value(uint16_t * val, int channel);
 
 /* Start burst conversions.
  * channels is a bit mask of requested channels.
- * Use LPC_ADC_CHANNEL_0 .. 7
+ * Use LPC_ADC_CHANNEL(x) (x = 0 .. 7) for channels selection.
  */
 void adc_start_burst_conversion(uint8_t channels);
 

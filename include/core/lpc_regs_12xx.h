@@ -721,15 +721,10 @@ struct lpc_adc
 /* ADC Control register bits */
 /* LPC_ADC_CHANNEL_* are also used for interrupt register */
 #define LPC_ADC_CHANNEL_MASK (0xFF << 0)
-#define LPC_ADC_CHANNEL_0 (0x01 << 0)
-#define LPC_ADC_CHANNEL_1 (0x01 << 1)
-#define LPC_ADC_CHANNEL_2 (0x01 << 2)
-#define LPC_ADC_CHANNEL_3 (0x01 << 3)
-#define LPC_ADC_CHANNEL_4 (0x01 << 4)
-#define LPC_ADC_CHANNEL_5 (0x01 << 5)
-#define LPC_ADC_CHANNEL_6 (0x01 << 6)
-#define LPC_ADC_CHANNEL_7 (0x01 << 7)
+#define LPC_ADC_CHANNEL(x)  (0x01 << ((x) & 0x07))
 #define LPC_ADC_BURST     (0x01 << 16)
+/* For more readability when selecting a channel number */
+#define LPC_ADC_NUM(x)    (x)
 /* These are unused for LPC1224 */
 #define LPC_ADC_10BITS  (0x00 << 17)
 #define LPC_ADC_9BITS   (0x01 << 17)

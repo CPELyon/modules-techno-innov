@@ -55,10 +55,10 @@ void adc_start_convertion_once(unsigned int channel, int use_int)
 		return;
 
 	/* Set conversion channel bit */
-	adc->ctrl = ((adc->ctrl & ~LPC_ADC_CHANNEL_MASK) | (0x01 << channel));
+	adc->ctrl = ((adc->ctrl & ~LPC_ADC_CHANNEL_MASK) | LPC_ADC_CHANNEL(channel));
 	if (use_int) {
 		/* Set interrupt Bit */
-		adc->int_en = (0x01 << channel);
+		adc->int_en = LPC_ADC_CHANNEL(channel);
 	} else {
 		adc->int_en = 0;
 	}
@@ -95,7 +95,7 @@ int adc_get_value(uint16_t * val, int channel)
 
 /* Start burst conversions.
  * channels is a bit mask of requested channels.
- * Use LPC_ADC_CHANNEL_0 .. 7
+ * Use LPC_ADC_CHANNEL(x) (x = 0 .. 7) for channels selection.
  */
 void adc_start_burst_conversion(uint8_t channels)
 {

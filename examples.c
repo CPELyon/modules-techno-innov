@@ -368,27 +368,20 @@ uint16_t Thermocouple_Read(uint8_t slave_sel_pin)
  *   multiple interrupts for each push of the switch.
  * Note: should also be used without the capacitor to test the input filter ?
  */
-#define LED_PIN 27
-#define INT_PIN 0
+static uint8_t led_pin_toggle = 0;
 void callback(uint32_t pin_num)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
-	static int state = 0;
-	if (state) {
-		gpio0->clear = (1 << LED_PIN);
-		state = 0;
-	} else {
-		gpio0->set = (1 << LED_PIN);
-		state = 1;
-	}
+	gpio0->invert = (1 << led_pin_toggle);
 }
-void gpio_intr_toggle_config(void)
+void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 	int ret = 0;
-	config_gpio(0, LED_PIN, (LPC_IO_FUNC_ALT(0) | LPC_IO_DIGITAL));
-	gpio0->data_dir |= (1 << LED_PIN);
-	ret = set_gpio_callback(callback, 0, INT_PIN, EDGE_FALLING);
+	config_gpio(0, led_pin, (LPC_IO_FUNC_ALT(0) | LPC_IO_DIGITAL));
+	gpio0->data_dir |= (1 << led_pin);
+	led_pin_toggle = led_pin;
+	ret = set_gpio_callback(callback, 0, irq_pin, EDGE_FALLING);
 	if (ret != 0) {
 		serial_write(1, "GPIO INTR config error\r\n", 24);
 	}

@@ -65,6 +65,9 @@ void system_init()
 #define LED_RGB_RED   23
 #define LED_RGB_GREEN 24
 #define LED_RGB_BLUE  25
+#define BUTTON_IRQ_PIN 0
+#define LED_PIN 27
+
 
 
 /***************************************************************************** */
@@ -94,7 +97,7 @@ int main(void) {
 	temp_config();
 
 	/* GPIO interrupt test */
-	gpio_intr_toggle_config();
+	gpio_intr_toggle_config(BUTTON_IRQ_PIN, LED_PIN);
 
 	RGB_Led_config(LPC_TIMER_32B1, LED_RGB_RED, LED_RGB_GREEN, LED_RGB_BLUE);
 

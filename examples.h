@@ -111,7 +111,7 @@ uint16_t Thermocouple_Read(uint8_t slave_sel_pin);
  *   multiple interrupts for each push of the switch.
  * Note: should also be used without the capacitor to test the input filter ?
  */
-void gpio_intr_toggle_config(void);
+void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin);
 
 #endif /* EXAMPLE_H */
 

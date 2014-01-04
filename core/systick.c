@@ -38,15 +38,54 @@ static volatile uint32_t systick_running = 0;
 /* Wraps every 50 days or so with a 1ms tick */
 static volatile uint32_t global_wrapping_system_ticks = 0;
 
+
+struct systick_callback {
+	void (*callback) (uint32_t);
+	uint16_t period;
+	uint16_t countdown;
+};
+static volatile struct systick_callback cbs[MAX_SYSTICK_CALLBACKS] = {};
+
 /* System Tick Timer Interrupt Handler */
 void SysTick_Handler(void)
 {
+	int i = 0;
 	global_wrapping_system_ticks++;
 	if (sleep_count != 0) {
 		sleep_count--;
 	}
+	for (i = 0; i < MAX_SYSTICK_CALLBACKS; i++) {
+		if (cbs[i].callback != NULL) {
+			cbs[i].countdown--;
+			if (cbs[i].countdown == 0) {
+				cbs[i].countdown = cbs[i].period;
+				cbs[i].callback(global_wrapping_system_ticks);
+			}
+		}
+	}
 }
 
+
+/* Register a callback to be called every 'period' system ticks with 'param' parameter.
+ * returns the callback number, to be used to remove the callback from the table of callbacks.
+ * returns negative value on error.
+ */
+int add_systick_callback(void (*callback) (uint32_t), uint16_t period)
+{
+	int i = 0;
+	if (period == 0) {
+		return -EINVAL;
+	}
+	for (i = 0; i < MAX_SYSTICK_CALLBACKS; i++) {
+		if (cbs[i].callback == NULL) {
+			cbs[i].callback = callback;
+			cbs[i].period = period;
+			cbs[i].countdown = period;
+			return i;
+		}
+	}
+	return -EBUSY;
+}
 
 
 /***************************************************************************** */

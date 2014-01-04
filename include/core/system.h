@@ -135,6 +135,12 @@ void systick_timer_on(uint32_t ms);
 /* Removes the main clock from the selected timer block */
 void systick_timer_off(void);
 
+/* Register a callback to be called every 'period' system ticks with 'param' parameter.
+ * returns the callback number, to be used to remove the callback from the table of callbacks.
+ * returns negative value on error.
+ */
+#define MAX_SYSTICK_CALLBACKS  4
+int add_systick_callback(void (*callback) (uint32_t), uint16_t period);
 
 /***************************************************************************** */
 /* Sleeping functions : these use systick */

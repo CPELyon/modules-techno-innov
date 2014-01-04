@@ -65,6 +65,9 @@ void system_init()
 #define LED_RGB_RED   23
 #define LED_RGB_GREEN 24
 #define LED_RGB_BLUE  25
+
+#define DHT11_PIN 6
+
 #define BUTTON_IRQ_PIN 0
 #define LED_PIN 27
 
@@ -93,7 +96,7 @@ int main(void) {
 #endif
 
 	/* Configure the DHT11 and the onboard temp sensor */
-	TH_config(0);
+	TH_config(DHT11_PIN);
 	temp_config();
 
 	/* GPIO interrupt test */

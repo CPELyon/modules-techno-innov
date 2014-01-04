@@ -136,7 +136,8 @@ void systick_timer_on(uint32_t ms);
 void systick_timer_off(void);
 
 
-/* Sleeping functions */
+/***************************************************************************** */
+/* Sleeping functions : these use systick */
 
 /* Set the sleep countdown value
  * A sleep will end when this value reaches 0

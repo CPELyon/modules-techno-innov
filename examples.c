@@ -307,9 +307,6 @@ void TMP36_display(int adc_num)
 /* RGB Led
  * All pins must be on port 0
  */
-#define LED_RGB_RED   23
-#define LED_RGB_GREEN 24
-#define LED_RGB_BLUE  25
 void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
 {
 	/* Timer configuration */

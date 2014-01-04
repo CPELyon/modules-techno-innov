@@ -78,15 +78,9 @@ static void UART_Handler(struct uart_device* uart)
 	uint32_t intr = uart->regs->func.intr_pending;
 
 	if ((intr & LPC_UART_INT_MASK) == LPC_UART_INT_RX) {
-		static int i = 0;
 		uint8_t data = uart->regs->func.buffer;
 		/* Echo */
 		uart->regs->func.buffer = data;
-		/* Change RGB Led color */
-		timer_set_match(LPC_TIMER_32B1, i++, data);
-		if (i > 2) {
-			i = 0;
-		}
 	}
 	/* We are currently sending, send next char */
 	if ((intr & LPC_UART_INT_MASK) == LPC_UART_INT_TX) {

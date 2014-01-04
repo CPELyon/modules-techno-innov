@@ -93,7 +93,7 @@ void TMP36_display(int adc_num);
 
 /***************************************************************************** */
 /* RGB Led */
-void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin);
+void RGB_Led_config(uint8_t timer, uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin);
 
 
 /***************************************************************************** */

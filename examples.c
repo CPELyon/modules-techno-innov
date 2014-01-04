@@ -307,7 +307,7 @@ void TMP36_display(int adc_num)
 /* RGB Led
  * All pins must be on port 0
  */
-void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
+void RGB_Led_config(uint8_t timer, uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
 {
 	/* Timer configuration */
 	struct timer_config timer_conf = {
@@ -315,7 +315,7 @@ void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
 		.config = { (LPC_PWM_CHANNEL_ENABLE(0) | LPC_PWM_CHANNEL_ENABLE(1) | LPC_PWM_CHANNEL_ENABLE(2)), 0, 0, 0 },
 		.match = { 20, 125, 200, 200 },
 	};
-	timer_setup(LPC_TIMER_32B1, &timer_conf);
+	timer_setup(timer, &timer_conf);
 
 	/* Configure the pins as match output */
 	timer_pins_setup(0, green_pin, LPC_TIMER_PIN_FUNC_MATCH);
@@ -323,7 +323,7 @@ void RGB_Led_config(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
 	timer_pins_setup(0, blue_pin, LPC_TIMER_PIN_FUNC_MATCH);
 
 	/* Start the timer */
-	timer_start(LPC_TIMER_32B1);
+	timer_start(timer);
 }
 
 

@@ -96,7 +96,7 @@ int main(void) {
 	/* GPIO interrupt test */
 	gpio_intr_toggle_config();
 
-	RGB_Led_config(LED_RGB_RED, LED_RGB_GREEN, LED_RGB_BLUE);
+	RGB_Led_config(LPC_TIMER_32B1, LED_RGB_RED, LED_RGB_GREEN, LED_RGB_BLUE);
 
 	while (1) {
 		chenillard(250);

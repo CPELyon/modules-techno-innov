@@ -3,7 +3,7 @@
  *
  *
  *
- * Copyright 2013 Nathael Pajani <nathael.pajani@ed3l.fr>
+ * Copyright 2013-2014 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  *
  * This program is free software: you can redistribute it and/or modify

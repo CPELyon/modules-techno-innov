@@ -111,6 +111,10 @@ int spi_device_cs_pull_low(void)
 void spi_device_cs_release(void)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+
+	/* Release mutex */
+	sync_lock_release(&spi_cs_mutex);
+
 	/* Set pin high */
     gpio0->set = (1 << SPI_CS_PIN);
 	/* Configure pin as SPI again */

@@ -44,7 +44,7 @@ int I2C_CS_Default_Set(void)
     /* Configure SPI_CS as output and set it low. */
     gpio0->data_dir |= (1 << I2C_CS_PIN);
     gpio0->clear = (1 << I2C_CS_PIN);
-	return 1;
+	return 0;
 }
 void I2C_CS_Default_Release(void)
 {
@@ -138,7 +138,7 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 	char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
 	int eeprom_type = 0;
 
-	if (spi_device_cs_pull_low() == 0) {
+	if (spi_device_cs_pull_low() != 0) {
 		return -EBUSY;
 	}
 	eeprom_type = get_eeprom_type();
@@ -193,7 +193,7 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 	char full_buff[(EEPROM_ID_MAX_PAGE_SIZE + MAX_CMD_SIZE)];
 	int eeprom_type = 0;
 
-	if (spi_device_cs_pull_low() == 0) {
+	if (spi_device_cs_pull_low() != 0) {
 		return -EBUSY;
 	}
 	eeprom_type = get_eeprom_type();

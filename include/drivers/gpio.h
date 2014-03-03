@@ -39,66 +39,11 @@ enum gpio_interrupt_senses {
 	LEVEL_LOW,
 };
 
-#define LPC_IO_FUNC_GPIO_0_0    0
-#define LPC_IO_FUNC_GPIO_0_1    0
-#define LPC_IO_FUNC_GPIO_0_2    0
-#define LPC_IO_FUNC_GPIO_0_3    0
-#define LPC_IO_FUNC_GPIO_0_4    0
-#define LPC_IO_FUNC_GPIO_0_5    0
-#define LPC_IO_FUNC_GPIO_0_6    0
-#define LPC_IO_FUNC_GPIO_0_7    0
-#define LPC_IO_FUNC_GPIO_0_8    0
-#define LPC_IO_FUNC_GPIO_0_9    0
-#define LPC_IO_FUNC_GPIO_0_10   0
-#define LPC_IO_FUNC_GPIO_0_11   0
-#define LPC_IO_FUNC_GPIO_0_12   0
-#define LPC_IO_FUNC_GPIO_0_13   1
-#define LPC_IO_FUNC_GPIO_0_14   0
-#define LPC_IO_FUNC_GPIO_0_15   0
-#define LPC_IO_FUNC_GPIO_0_16   0
-#define LPC_IO_FUNC_GPIO_0_17   0
-#define LPC_IO_FUNC_GPIO_0_18   0
-#define LPC_IO_FUNC_GPIO_0_19   0
-#define LPC_IO_FUNC_GPIO_0_20   0
-#define LPC_IO_FUNC_GPIO_0_21   0
-#define LPC_IO_FUNC_GPIO_0_22   0
-#define LPC_IO_FUNC_GPIO_0_23   0
-#define LPC_IO_FUNC_GPIO_0_24   0
-#define LPC_IO_FUNC_GPIO_0_25   6
-#define LPC_IO_FUNC_GPIO_0_26   6
-#define LPC_IO_FUNC_GPIO_0_27   0
-#define LPC_IO_FUNC_GPIO_0_28   0
-#define LPC_IO_FUNC_GPIO_0_29   0
-#define LPC_IO_FUNC_GPIO_0_30   1
-#define LPC_IO_FUNC_GPIO_0_31   1
 
-#define LPC_IO_FUNC_GPIO_1_0   1
-#define LPC_IO_FUNC_GPIO_1_1   1
-#define LPC_IO_FUNC_GPIO_1_2   0
-#define LPC_IO_FUNC_GPIO_1_3   0
-#define LPC_IO_FUNC_GPIO_1_4   0
-#define LPC_IO_FUNC_GPIO_1_5   0
-#define LPC_IO_FUNC_GPIO_1_6   0
-
-#define LPC_IO_FUNC_GPIO_2_0    0
-#define LPC_IO_FUNC_GPIO_2_1    0
-#define LPC_IO_FUNC_GPIO_2_2    0
-#define LPC_IO_FUNC_GPIO_2_3    0
-#define LPC_IO_FUNC_GPIO_2_4    0
-#define LPC_IO_FUNC_GPIO_2_5    0
-#define LPC_IO_FUNC_GPIO_2_6    0
-#define LPC_IO_FUNC_GPIO_2_7    0
-#define LPC_IO_FUNC_GPIO_2_8    0
-#define LPC_IO_FUNC_GPIO_2_9    0
-#define LPC_IO_FUNC_GPIO_2_10   0
-#define LPC_IO_FUNC_GPIO_2_11   0
-#define LPC_IO_FUNC_GPIO_2_12   0
-#define LPC_IO_FUNC_GPIO_2_13   0
-#define LPC_IO_FUNC_GPIO_2_14   0
-#define LPC_IO_FUNC_GPIO_2_15   0
-
-#define LPC_IO_FUNC_GPIO(port, pin)  LPC_IO_FUNC_GPIO_ ## port ## _ ## pin
-
+/* Most pins have GPIO function on function 0, but a few have it on another function ...
+ * Return the function number for the GPIO function.
+ */
+uint8_t lpc_io_func_gpio(uint8_t port, uint8_t pin);
 
 int set_gpio_callback(void (*callback) (uint32_t), uint8_t port, uint8_t pin, uint8_t sense);
 void remove_gpio_callback(uint8_t port, uint8_t pin);

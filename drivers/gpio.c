@@ -199,6 +199,33 @@ void set_gpio_pins(void)
 }
 
 
+/* Most pins have GPIO function on function 0, but a few have it on another function ...
+ * Return the function number for the GPIO function.
+ */
+uint8_t lpc_io_func_gpio(uint8_t port, uint8_t pin){
+	switch (port) {
+		case 1:
+			switch (pin) {
+				case 0:
+				case 1:
+					return 1;
+			}
+			break;
+		case 0:
+			switch (pin) {
+				case 13:
+				case 30:
+				case 31:
+					return 1;
+				case 25:
+				case 26:
+					return 6;
+			}
+			break;
+	}
+	return 0;
+}
+
 static void (*gpio_calbacks_port0[PORT0_NB_PINS]) (uint32_t);
 static void (*gpio_calbacks_port1[PORT1_NB_PINS]) (uint32_t);
 static void (*gpio_calbacks_port2[PORT2_NB_PINS]) (uint32_t);
@@ -239,7 +266,7 @@ int set_gpio_callback(void (*callback) (uint32_t), uint8_t port, uint8_t pin, ui
 
 	/* Configure the pin as interrupt source */
 	gpio_port->data_dir &= ~(1 << pin); /* Input */
-	config_gpio(port, pin, (LPC_IO_FUNC_ALT(0) | LPC_IO_DIGITAL));
+	config_gpio(port, pin, (lpc_io_func_gpio(port, pin) | LPC_IO_DIGITAL));
 	switch (sense) {
 		case EDGES_BOTH:
 			gpio_port->int_sense &= ~(1 << pin);
@@ -391,8 +418,8 @@ void status_led_config(void)
 	struct lpc_gpio* gpio1 = LPC_GPIO_1;
 	uint32_t mode = (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT);
 	/* Status Led GPIO */
-	config_gpio(1, LED_GREEN, (LPC_IO_FUNC_ALT(0) | mode));
-	config_gpio(1, LED_RED, (LPC_IO_FUNC_ALT(0) | mode));
+	config_gpio(1, LED_GREEN, (lpc_io_func_gpio(1, LED_GREEN) | mode));
+	config_gpio(1, LED_RED, (lpc_io_func_gpio(1, LED_RED) | mode));
 	/* Configure both as output */
 	gpio1->data_dir |= (1 << LED_GREEN) | (1 << LED_RED);
 	/* Turn both LEDs on */

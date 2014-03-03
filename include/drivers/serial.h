@@ -51,8 +51,7 @@ void set_uarts_pins(void);
 void uart_clk_update(void);
 
 /* Do we need to allow setting of other parameters ? (Other than 8n1) */
-/* Do we need to allow specifying an interrupt handler ? */
-void uart_on(uint32_t uart_num, uint32_t baudrate);
+void uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char));
 
 void uart_off(uint32_t uart_num);
 

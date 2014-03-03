@@ -81,8 +81,8 @@ void system_init()
 /***************************************************************************** */
 int main(void) {
 	system_init();
-	uart_on(0, 115200);
-	uart_on(1, 115200);
+	uart_on(0, 115200, NULL);
+	uart_on(1, 115200, NULL);
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
 	timer_on(LPC_TIMER_32B0, 0);

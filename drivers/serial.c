@@ -47,7 +47,8 @@ struct uart_device
 	volatile uint32_t out_lock;
 	volatile uint32_t out_length; /* actual position to add in out buffer */
 
-	/* Input buffer */
+	/* Input */
+	void (*rx_callback)(char); /* Possible RX callback */
 };
 
 #define NUM_UARTS 2
@@ -60,6 +61,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
+		.rx_callback = 0,
 	},
 	{
 		.num = 1,
@@ -69,6 +71,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
+		.rx_callback = 0,
 	},
 };
 
@@ -79,8 +82,13 @@ static void UART_Handler(struct uart_device* uart)
 
 	if ((intr & LPC_UART_INT_MASK) == LPC_UART_INT_RX) {
 		uint8_t data = uart->regs->func.buffer;
-		/* Echo */
-		uart->regs->func.buffer = data;
+		if (uart->rx_callback != NULL) {
+			/* Call the Rx callback */
+			uart->rx_callback(data);
+		} else {
+			/* Echo */
+			uart->regs->func.buffer = data;
+		}
 	}
 	/* We are currently sending, send next char */
 	if ((intr & LPC_UART_INT_MASK) == LPC_UART_INT_TX) {
@@ -145,6 +153,7 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 	}
 
 	/* If UART is sending wait for buffer empty */
+	/* FIXME : be smart for OS, call scheduler or return */
 	do {} while (uart->sending != 0);
 
 	if (length > SERIAL_OUT_BUFF_SIZE) {
@@ -267,7 +276,7 @@ void uart_clk_update(void)
 
 /* Do we need to allow setting of other parameters ? (Other than 8n1) */
 /* Do we need to allow specifying an interrupt handler ? */
-int uart_on(uint32_t uart_num, uint32_t baudrate)
+int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char))
 {
 	struct uart_def* uart = NULL;
 	uint32_t status = 0;
@@ -275,6 +284,7 @@ int uart_on(uint32_t uart_num, uint32_t baudrate)
 	if (uart_num >= NUM_UARTS)
 		return -EINVAL;
 	uart = &uart_defs[uart_num];
+	uarts[uart_num].rx_callback = rx_callback;
 
 	NVIC_DisableIRQ( uart->irq );
 	/* Setup pins, must be done before clock setup and with uart powered off. */

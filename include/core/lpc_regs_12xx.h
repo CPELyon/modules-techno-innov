@@ -151,7 +151,6 @@ struct lpc_sys_control
 #define LPC_SYS_CONTROL ((struct lpc_sys_control *) LPC_SYSCON_BASE)
 
 /* AHB control bits
- * Note : 14 is reserved
  *   0 (System (cortexM0, syscon, PMU, ...)) is a read only bit (system cannot be disabled)
  */
 #define LPC_SYS_ABH_CLK_CTRL_SYSTEM     (1 <<  0) /* Read only */

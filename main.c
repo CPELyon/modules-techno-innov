@@ -30,6 +30,7 @@
 #include "drivers/i2c.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
+#include "drivers/status_led.h"
 #include "drivers/temp.h"
 #include "drivers/adc.h"
 #include "drivers/timers.h"
@@ -47,6 +48,69 @@
 
 #define SELECTED_FREQ  FREQ_SEL_24MHz
 
+/***************************************************************************** */
+/* Pins configuration */
+struct pio uart0_pins[] = {
+	LPC_UART0_RX_PIO_0_1,
+	LPC_UART0_TX_PIO_0_2,
+	ARRAY_LAST_PIN,
+};
+struct pio uart1_pins[] = {
+	LPC_UART1_RX_PIO_0_8,
+	LPC_UART1_TX_PIO_0_9,
+	ARRAY_LAST_PIN,
+};
+struct pio i2c0_pins[] = {
+	LPC_I2C0_SCL_PIO_0_10,
+	LPC_I2C0_SDA_PIO_0_11,
+	ARRAY_LAST_PIN,
+};
+struct pio ssp0_pins[] = {
+	LPC_SSP0_SCLK_PIO_0_14,
+	LPC_SSP0_MOSI_PIO_0_17,
+	LPC_SSP0_MISO_PIO_0_16,
+	LPC_GPIO_0_15, /* Use the GPIO config for the pin when SPI is configured as master */
+/*	LPC_SSP0_SSEL_PIO_0_15, */
+	ARRAY_LAST_PIN,
+};
+struct pio timer0_pins[] = { /* TIMER_16B0 */
+	ARRAY_LAST_PIN,
+};
+struct pio timer1_pins[] = { /* TIMER_16B1 */
+	ARRAY_LAST_PIN,
+};
+struct pio timer2_pins[] = { /* TIMER_32B0 */
+	LPC_TIMER_32B0_M2_PIO_0_20, /* PWM out for Servo Motor */
+	ARRAY_LAST_PIN,
+};
+struct pio timer3_pins[] = { /* TIMER_32B1 */
+	LPC_TIMER_32B1_C0_PIO_0_23, /* RGB Led Red */
+	LPC_TIMER_32B1_C1_PIO_0_24, /* RGB Led Green */
+	LPC_TIMER_32B1_C2_PIO_0_25, /* RGB Led Blue */
+	ARRAY_LAST_PIN,
+};
+struct pio adc_pins[] = {
+	LPC_ADC_AD0_PIO_0_30,
+	LPC_ADC_AD1_PIO_0_31,
+	LPC_ADC_AD2_PIO_1_0,
+	LPC_ADC_AD3_PIO_1_1,
+	LPC_ADC_AD4_PIO_1_2,
+	LPC_ADC_AD5_PIO_1_3,
+	ARRAY_LAST_PIN,
+};
+struct pio gpio_pins[] = {
+	LPC_GPIO_0_7, /* Temp Alert, hard-wired on the board */
+	LPC_GPIO_0_6, /* Used for DTH11 */
+	LPC_GPIO_0_12, /* ISP Used as button */
+	LPC_GPIO_0_4, /* Led toggle on ISP button press */
+	LPC_GPIO_0_19, /* Used as SPI chip select for Thermocouple reading */
+	ARRAY_LAST_PIN,
+};
+#define DTH11_GPIO  (&gpio_pins[1])
+#define BUTTON_GPIO (&gpio_pins[2])
+#define LED_GPIO    (&gpio_pins[3])
+#define THERMOCOUPLE_SLAVE_SEL   (&gpio_pins[4])
+
 void system_init()
 {
 	/* Stop the watchdog */
@@ -57,7 +121,6 @@ void system_init()
 	clock_config(SELECTED_FREQ);
 	gpio_on();
 	status_led_config();
-	system_set_default_pins();
 	/* System tick timer MUST be configured and running in order to use the sleeping
 	 * functions */
 	systick_timer_on(1); /* 1ms */
@@ -71,17 +134,7 @@ void fault_info(const char* name, uint32_t len)
 }
 
 
-#define LED_RGB_RED   LPC_TIMER_32B1_CHANNEL_0_PIO_23
-#define LED_RGB_GREEN LPC_TIMER_32B1_CHANNEL_1_PIO_24
-#define LED_RGB_BLUE  LPC_TIMER_32B1_CHANNEL_2_PIO_25
-
-#define PWM_PIN   LPC_TIMER_32B0_CHANNEL_1_PIO_19
 #define PWM_CHAN  1
-
-#define DHT11_PIN 6
-
-#define BUTTON_IRQ_PIN 0
-#define LED_PIN 27
 
 
 
@@ -109,16 +162,16 @@ int main(void) {
 #endif
 
 	/* Configure the DHT11 and the onboard temp sensor */
-	TH_config(DHT11_PIN);
+	dth11_config(DTH11_GPIO);
 	temp_config();
 
 	/* GPIO interrupt test */
-	gpio_intr_toggle_config(BUTTON_IRQ_PIN, LED_PIN);
+	gpio_intr_toggle_config(BUTTON_GPIO, LED_GPIO);
 
 	/* Servo motor PWM control test */
-	voltage_to_position_config(LPC_TIMER_32B0, PWM_PIN, PWM_CHAN);
+	voltage_to_position_config(LPC_TIMER_32B0, PWM_CHAN);
 
-	RGB_Led_config(LPC_TIMER_32B1, LED_RGB_RED, LED_RGB_GREEN, LED_RGB_BLUE);
+	RGB_Led_config(LPC_TIMER_32B1);
 
 	while (1) {
 		uint16_t val = 0;
@@ -132,7 +185,7 @@ int main(void) {
 		pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
 		/* TH_display(); */
 		TMP36_display(LPC_ADC_NUM(0));
-		Thermocouple_Read(SPI_CS_PIN); /* SPI_CS_PIN is defined in spi.h (required for SPI */
+		Thermocouple_Read(THERMOCOUPLE_SLAVE_SEL);
 		temp_display();
 	}
 	return 0;

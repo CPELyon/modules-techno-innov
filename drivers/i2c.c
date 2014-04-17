@@ -448,10 +448,15 @@ static void i2c_clock_on(uint32_t i2c_clk_freq)
 	i2c->clk_duty_low = (scl_clk - i2c->clk_duty_high);
 }
 
+extern struct pio i2c0_pins[];
+
 void set_i2c_pins(void)
 {
-	config_gpio(0, 10, (LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE)); /* True open drain */
-	config_gpio(0, 11, (LPC_IO_FUNC_ALT(2) | LPC_IO_OPEN_DRAIN_ENABLE));
+	int i = 0;
+	/* Configure I2C pins */
+	for (i = 0; i2c0_pins[i].port != 0xFF; i++) {
+		config_pio(&i2c0_pins[i], (LPC_IO_ANALOG | LPC_IO_OPEN_DRAIN_ENABLE));
+	}
 }
 
 void i2c_on(uint32_t i2c_clk_freq)

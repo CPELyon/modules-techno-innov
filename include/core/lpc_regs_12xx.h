@@ -444,7 +444,7 @@ struct lpc_gpio
 	volatile uint32_t out;        /* 0x08 : Port output Register (R/W) */
 	volatile uint32_t set;        /* 0x0C : Port output set Register (-/W) */
 	volatile uint32_t clear;      /* 0x10 : Port output clear Register (-/W) */
-	volatile uint32_t invert;     /* 0x14 : Port output invert Register (-/W) */
+	volatile uint32_t toggle;     /* 0x14 : Port output invert Register (-/W) */
 	uint32_t reserved_1[2];
 	volatile uint32_t data_dir;   /* 0x20 : Data direction Register (R/W) */
 	volatile uint32_t int_sense;  /* 0x24 : Interrupt sense Register (R/W) */

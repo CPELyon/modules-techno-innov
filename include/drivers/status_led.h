@@ -1,5 +1,5 @@
 /****************************************************************************
- *  drivers/gpio.h
+ *  drivers/status_led.h
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -18,32 +18,35 @@
  *
  *************************************************************************** */
 
-#ifndef DRIVERS_GPIO_H
-#define DRIVERS_GPIO_H
+#ifndef DRIVERS_STATUS_LED_H
+#define DRIVERS_STATUS_LED_H
 
 
 #include <stdint.h>
-#include "core/pio.h"
 
 
 /***************************************************************************** */
-/*   Public access to GPIO setup   */
+/* Status LED */
+/* The status LED is on GPIO Port 1, pin 4 (PIO1_4) and Port 1, pin 5 (PIO1_5) */
+void status_led_config(void);
 
+void status_led(uint32_t val);
 
-enum gpio_interrupt_senses {
-	EDGES_BOTH = 0,
-	EDGE_FALLING,
-	EDGE_RISING,
-	LEVEL_HIGH,
-	LEVEL_LOW,
+void chenillard(uint32_t ms);
+
+enum led_status {
+	none = 0,
+	red_only,
+	red_on,
+	red_off,
+	red_toggle,
+	green_only,
+	green_on,
+	green_off,
+	green_toggle,
+	both,
+	toggle,
 };
 
 
-int set_gpio_callback(void (*callback) (uint32_t), struct pio* gpio, uint8_t sense);
-void remove_gpio_callback(struct pio* gpio);
-
-void gpio_on(void);
-void gpio_off(void);
-
-
-#endif /* DRIVERS_GPIO_H */
+#endif /* DRIVERS_STATUS_LED_H */

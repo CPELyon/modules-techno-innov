@@ -28,6 +28,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "core/pio.h"
 #include "lib/string.h"
 #include "drivers/ssp.h"
 #include "drivers/gpio.h"
@@ -92,33 +93,34 @@ static uint32_t spi_cs_mutex = 0;
  * SPI bus.
  * Any data sent by the master on the SPI bus while the spi_cs_mutex is held will be lost.
  */
+#define SPI_CS_PIN  LPC_GPIO_0_15
 int spi_device_cs_pull_low(void)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	struct pio spi_cs = SPI_CS_PIN;
 
 	if (sync_lock_test_and_set(&spi_cs_mutex, 1) == 1) {
 		return -EBUSY;
 	}
 
 	/* Configure pin as GPIO */
-	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	config_pio(&spi_cs, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
 	/* Configure pin as output and set it low */
-	gpio0->data_dir |= (1 << SPI_CS_PIN);
-    gpio0->clear = (1 << SPI_CS_PIN);
+	gpio0->data_dir |= (1 << spi_cs.pin);
+    gpio0->clear = (1 << spi_cs.pin);
 
 	return 0;
 }
 void spi_device_cs_release(void)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	struct pio spi_cs = SPI_CS_PIN;
 
 	/* Release mutex */
 	sync_lock_release(&spi_cs_mutex);
 
 	/* Set pin high */
-    gpio0->set = (1 << SPI_CS_PIN);
-	/* Configure pin as SPI again */
-	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Chip Select */
+    gpio0->set = (1 << spi_cs.pin);
 }
 
 
@@ -245,16 +247,18 @@ void ssp_clk_update(void)
 	}
 }
 
-/* Configure main SPI pins, used in both master and device mode.
- * The slave select is not configured here as it's use is implementation dependant in master
- *  mode. In slave mode it is configured in the ssp_slave_on() function.
- */
-void set_ssp_pins(void)
+/* Configure all SPI pins. */
+extern struct pio ssp0_pins[];
+static void ssp_set_pin_func(uint32_t ssp_num)
 {
-	/* Main SPI pins */
-	config_gpio(0, 14, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Clock */
-	config_gpio(0, 16, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI MISO */
-	config_gpio(0, 17, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI MOSI */
+	int i = 0;
+	switch (ssp_num) {
+		case 0:
+			for (i = 0; ssp0_pins[i].port != 0xFF; i++) {
+				config_pio(&ssp0_pins[i], LPC_IO_DIGITAL);
+			}
+			break;
+	}
 }
 
 
@@ -276,6 +280,10 @@ int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint32_t rate )
 	struct lpc_ssp* ssp = LPC_SSP0;
 
 	NVIC_DisableIRQ(SSP0_IRQ);
+
+	/* Configure pins first */
+	ssp_set_pin_func(0); /* Only one SPI on the LPC1224 */
+
 	/* Power up the ssp block */
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_SSP0, 1);
 
@@ -316,15 +324,14 @@ int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_
 		ssp->ctrl_1 |= LPC_SSP_SLAVE_OUT_DISABLE;
 	}
 
-	/* Use SPI as Device : configure the SSEL pin */
-	config_gpio(0, SPI_CS_PIN, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL)); /* SPI Chip Select */
-
 	/* Configure the clock : done after basic configuration.
 	 * Our clock must be at least 12 times the master clock */
 	ssp_current_clk = ssp_clk_on(max_rate * 16);
 
 	/* Enable SSP */
 	ssp->ctrl_1 |= LPC_SSP_ENABLE;
+
+	ssp_set_pin_func(0);
 
 	NVIC_EnableIRQ(SSP0_IRQ);
 	return 0; /* Config OK */

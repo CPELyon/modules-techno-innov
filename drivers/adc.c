@@ -28,7 +28,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
-#include "drivers/gpio.h"
+#include "core/pio.h"
 
 /* Should be as near to 9MHz as possible */
 #define adc_clk_Val  9000000
@@ -124,15 +124,15 @@ void adc_set_resolution(int bits)
 
 /***************************************************************************** */
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
+extern struct pio adc_pins[];
+
 void set_adc_pins(void)
 {
+	int i = 0;
 	/* Configure ADC pins */
-	config_gpio(0, 30, (LPC_IO_FUNC_ALT(3) | LPC_IO_ANALOG));
-	config_gpio(0, 31, (LPC_IO_FUNC_ALT(3) | LPC_IO_ANALOG));
-	config_gpio(1, 0, (LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG));
-	config_gpio(1, 1, (LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG));
-	config_gpio(1, 2, (LPC_IO_FUNC_ALT(2) | LPC_IO_ANALOG));
-	config_gpio(1, 3, (LPC_IO_FUNC_ALT(1) | LPC_IO_ANALOG));
+	for (i = 0; adc_pins[i].port != 0xFF; i++) {
+		config_pio(&adc_pins[i], LPC_IO_ANALOG);
+	}
 }
 
 void adc_clk_update(void)

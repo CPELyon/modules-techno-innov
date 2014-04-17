@@ -30,6 +30,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/i2c.h"
 #include "drivers/serial.h"
@@ -38,6 +39,7 @@
 #include "drivers/adc.h"
 #include "drivers/timers.h"
 #include "drivers/ssp.h"
+#include "drivers/status_led.h"
 
 #include "examples.h"
 
@@ -52,9 +54,10 @@ void WAKEUP_Handler(void)
 void temp_config(void)
 {
 	int ret = 0;
+	struct pio temp_alert = LPC_GPIO_0_7;
 
 	/* Temp Alert */
-	config_gpio(0, 7, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP));
+	config_pio(&temp_alert, LPC_IO_MODE_PULL_UP);
 
 	/* Temp sensor */
 	ret = sensor_config(TMP_RES_ELEVEN_BITS);
@@ -86,49 +89,47 @@ void temp_display(void)
 
 /***************************************************************************** */
 /* DHT11 Humidity and temp sensor */
-static uint8_t th_pin_num = 0;
-void TH_config(uint8_t pin_num)
+static struct pio dth11_gpio;
+void dth11_config(struct pio* gpio)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 
-	if (pin_num > 31)
-		return;
-
-	config_gpio(0, th_pin_num, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	config_pio(gpio, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	pio_copy(&dth11_gpio, gpio);
 
 	/* Configure as output and set it low. */
 	/* This is the "do nothing" state */
-	gpio0->data_dir |= (1 << th_pin_num);
-	gpio0->set = (1 << th_pin_num);
+	gpio0->data_dir |= (1 << gpio->pin);
+	gpio0->set = (1 << gpio->pin);
 }
 
-unsigned char read_dht11_dat()
+unsigned char dht11_read_dat()
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 	int i = 0;
 	unsigned char val = 0;
 	for (i = 0; i < 8; i++) {
 		/* Wait end of 'low' */
-		while(!(gpio0->in & (1 << th_pin_num))) {
+		while(!(gpio0->in & (1 << dth11_gpio.pin))) {
 			nop();
 		}
 		/* Wait 30ms */
 		usleep(35);
 
 		/* read one bit */
-		if (gpio0->in & (1 << th_pin_num)) {
+		if (gpio0->in & (1 << dth11_gpio.pin)) {
 			val |= (1 << (7-i));
 		}
 
 		/* Wait end of bit */
-		while (gpio0->in & (1 << th_pin_num)) {
+		while (gpio0->in & (1 << dth11_gpio.pin)) {
 			nop();
 		}
 	}
 	return val;
 }
 
-void TH_display(void)
+void dth11_display(void)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 	unsigned char data[5];
@@ -136,30 +137,30 @@ void TH_display(void)
 	int i = 0;
 
 	/* Set pin as output */
-	gpio0->data_dir |= (1 << th_pin_num);
+	gpio0->data_dir |= (1 << dth11_gpio.pin);
 
 	/* Send the "start" bit */
-	gpio0->clear = (1 << th_pin_num);
+	gpio0->clear = (1 << dth11_gpio.pin);
 	msleep(50);
-	gpio0->set = (1 << th_pin_num);
+	gpio0->set = (1 << dth11_gpio.pin);
 
 	/* Set pin as input */
-	gpio0->data_dir &= ~(1 << th_pin_num);
+	gpio0->data_dir &= ~(1 << dth11_gpio.pin);
 
 	/* Wait for start conditions */
 	debug(0, 'S');
 	status_led(both);
-	while (gpio0->in & (1 << th_pin_num)) {
+	while (gpio0->in & (1 << dth11_gpio.pin)) {
 		nop();
 	}
 	status_led(none);
 	debug(0, 'c');
-	while (!(gpio0->in & (1 << th_pin_num))) {
+	while (!(gpio0->in & (1 << dth11_gpio.pin))) {
 		nop();
 	}
 	status_led(both);
 	debug(0, 'C');
-	while (gpio0->in & (1 << th_pin_num)) {
+	while (gpio0->in & (1 << dth11_gpio.pin)) {
 		nop();
 	}
 	status_led(none);
@@ -167,7 +168,7 @@ void TH_display(void)
 
 	/* Start reading data : 40 bits */
 	for (i = 0; i < 5; i++){
-	    data[i] = read_dht11_dat();
+	    data[i] = dht11_read_dat();
 		if (i < 4) {
 			checksum += data[i];
 		}
@@ -304,10 +305,8 @@ void TMP36_display(int adc_num)
 
 
 /***************************************************************************** */
-/* RGB Led
- * All pins must be on port 0
- */
-void RGB_Led_config(uint8_t timer, uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin)
+/* RGB Led */
+void RGB_Led_config(uint8_t timer)
 {
 	/* Timer configuration */
 	struct timer_config timer_conf = {
@@ -316,11 +315,6 @@ void RGB_Led_config(uint8_t timer, uint8_t red_pin, uint8_t green_pin, uint8_t b
 		.match = { 20, 125, 200, 200 },
 	};
 	timer_setup(timer, &timer_conf);
-
-	/* Configure the pins as match output */
-	timer_pins_setup(0, green_pin, LPC_TIMER_PIN_FUNC_MATCH);
-	timer_pins_setup(0, red_pin, LPC_TIMER_PIN_FUNC_MATCH);
-	timer_pins_setup(0, blue_pin, LPC_TIMER_PIN_FUNC_MATCH);
 
 	/* Start the timer */
 	timer_start(timer);
@@ -332,7 +326,7 @@ void RGB_Led_config(uint8_t timer, uint8_t red_pin, uint8_t green_pin, uint8_t b
  * Slave select pin must be on port 0
  * SPI must be configured with 16 bits data and data rate of 1MHz.
  */
-uint16_t Thermocouple_Read(uint8_t slave_sel_pin)
+uint16_t Thermocouple_Read(struct pio* slave_sel)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 	char buff[50];
@@ -341,12 +335,12 @@ uint16_t Thermocouple_Read(uint8_t slave_sel_pin)
 	int temp = 0, deci = 0;
 
 	/* Configure slave select pin as GPIO */
-	config_gpio(0, slave_sel_pin, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	config_pio(slave_sel, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
 
 	/* Activate slave (active low), transfer data, and release slave */
-	gpio0->clear = (1 << slave_sel_pin);
+	gpio0->clear = (1 << slave_sel->pin);
 	spi_transfer_multiple_frames(NULL, 2, data);
-	gpio0->set = (1 << slave_sel_pin);
+	gpio0->set = (1 << slave_sel->pin);
 
 	/* Convert data */
 	temp = (data[0] >> 4) & 0x07FF;
@@ -372,16 +366,16 @@ static uint8_t led_pin_toggle = 0;
 void callback(uint32_t pin_num)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
-	gpio0->invert = (1 << led_pin_toggle);
+	gpio0->toggle = (1 << led_pin_toggle);
 }
-void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin)
+void gpio_intr_toggle_config(struct pio* irq_gpio, struct pio* led)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
 	int ret = 0;
-	config_gpio(0, led_pin, (LPC_IO_FUNC_ALT(0) | LPC_IO_DIGITAL));
-	gpio0->data_dir |= (1 << led_pin);
-	led_pin_toggle = led_pin;
-	ret = set_gpio_callback(callback, 0, irq_pin, EDGE_FALLING);
+	config_pio(led, LPC_IO_DIGITAL);
+	gpio0->data_dir |= (1 << led->pin);
+	led_pin_toggle = led->pin;
+	ret = set_gpio_callback(callback, irq_gpio, EDGE_FALLING);
 	if (ret != 0) {
 		serial_write(1, "GPIO INTR config error\r\n", 24);
 	}
@@ -395,10 +389,9 @@ void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin)
  *    timer_on(timer_num, 0) must be called before using this function.
  * Parameters :
  *  - timer : one of LPC_TIMER_32B0, LPC_TIMER_32B1, LPC_TIMER_16B0 or LPC_TIMER_16B1
- *  - pwm_pin : pin number for PWM output. It must be located on port 0.
  *  - channel is the timer channel corresponding to the pin.
  */
-void voltage_to_position_config(uint8_t timer, uint8_t pwm_pin, uint8_t channel)
+void voltage_to_position_config(uint8_t timer, uint8_t channel)
 {
 	/* Timer configuration */
 	struct timer_config timer_conf = {
@@ -407,9 +400,6 @@ void voltage_to_position_config(uint8_t timer, uint8_t pwm_pin, uint8_t channel)
 		.match = { 0, 0, 0, 400*1000 },
 	};
 	timer_setup(timer, &timer_conf);
-
-	/* Configure the pin as match output */
-	timer_pins_setup(0, pwm_pin, LPC_TIMER_PIN_FUNC_MATCH);
 
 	/* Start the timer */
 	timer_start(timer);

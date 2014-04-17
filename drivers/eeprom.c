@@ -25,9 +25,9 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "core/pio.h"
 #include "lib/string.h"
 #include "drivers/i2c.h"
-#include "drivers/gpio.h"
 
 
 /***************************************************************************** */
@@ -36,20 +36,22 @@
 /* These are place-holders to set the SPI chip select low if the SPI driver is not used.
  * These dummy functions will be over-ridden by SPI ones if the SPI driver is used.
  */
-#define I2C_CS_PIN 15
+#define I2C_CS_GPIO   LPC_GPIO_0_15
 int I2C_CS_Default_Set(void)
 {
     struct lpc_gpio* gpio0 = LPC_GPIO_0;
-    config_gpio(0, I2C_CS_PIN, (LPC_IO_FUNC_ALT(0) | LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	struct pio i2c_eeprom_cs = I2C_CS_GPIO;
+    config_pio(&i2c_eeprom_cs, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
     /* Configure SPI_CS as output and set it low. */
-    gpio0->data_dir |= (1 << I2C_CS_PIN);
-    gpio0->clear = (1 << I2C_CS_PIN);
+    gpio0->data_dir |= (1 << i2c_eeprom_cs.pin);
+    gpio0->clear = (1 << i2c_eeprom_cs.pin);
 	return 0;
 }
 void I2C_CS_Default_Release(void)
 {
 	struct lpc_gpio* gpio0 = LPC_GPIO_0;
-    gpio0->set = (1 << I2C_CS_PIN);
+	struct pio i2c_eeprom_cs = I2C_CS_GPIO;
+    gpio0->set = (1 << i2c_eeprom_cs.pin);
 }
 
 int spi_device_cs_pull_low(void) __attribute__ ((weak, alias ("I2C_CS_Default_Set")));

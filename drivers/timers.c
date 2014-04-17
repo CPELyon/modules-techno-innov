@@ -198,18 +198,36 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf)
 }
 
 
-/* Setup one pin to use as match or capture pin
- * This configure function can be used only for pins on port 0.
- * Use LPC_TIMER_*B*_CHANNEL_*_PIN_* definitions for the pin number and either
- *   LPC_TIMER_PIN_FUNC_CAPTURE or LPC_TIMER_PIN_FUNC_MATCH for the function.
- * Note: These pins are not setup using the usual system set default pins functions
- *   as most functions may be affected to many different pins, and the use of the
- *   timers does no require the use of pins.
- */
+/* Setup timer pins to be used as match or capture pin  */
+extern struct pio timer0_pins[];
+extern struct pio timer1_pins[];
+extern struct pio timer2_pins[];
+extern struct pio timer3_pins[];
+
 #define LPC_TIMER_PIN_CONFIG   (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT)
-void timer_pins_setup(uint8_t port, uint8_t pin_num, uint32_t func)
+static void timer_pins_setup(uint32_t timer_num)
 {
-	config_gpio(port, pin_num, (func | LPC_TIMER_PIN_CONFIG));
+	int i = 0;
+	struct pio* timer_pins = NULL;
+	switch (timer_num) {
+		case LPC_TIMER_16B0:
+			timer_pins = timer0_pins;
+			break;
+		case LPC_TIMER_16B1:
+			timer_pins = timer1_pins;
+			break;
+		case LPC_TIMER_32B0:
+			timer_pins = timer2_pins;
+			break;
+		case LPC_TIMER_32B1:
+			timer_pins = timer3_pins;
+			break;
+		default:
+			return;
+	}
+	for (i = 0; timer_pins[i].port != 0xFF; i++) {
+		config_pio(&timer_pins[i], LPC_TIMER_PIN_CONFIG);
+	}
 }
 
 /* Power up a timer.
@@ -240,6 +258,8 @@ void timer_on(uint32_t timer_num, uint32_t clkrate)
 		prescale = (get_main_clock() / clkrate) - 1;
 	}
 	timer->regs->prescale = prescale;
+
+	timer_pins_setup(timer_num);
 
 	NVIC_EnableIRQ(timer_devices[timer_num].irq);
 }

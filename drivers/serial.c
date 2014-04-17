@@ -228,17 +228,22 @@ static uint32_t uart_mode_setup(uint32_t uart_num)
 /* Note : We MUST set LPC_IO_DIGITAL for Rx even if the bit is marked as "Reserved" in
  *        the datasheet !
  */
+extern struct pio uart0_pins[];
+extern struct pio uart1_pins[];
+
 static void uart_set_pin_func(uint32_t uart_num)
 {
-	/* Configure UART pins (Only Rx and Tx) */
+	int i = 0;
 	switch (uart_num) {
 		case 0:
-			config_gpio(0, 1, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
-			config_gpio(0, 2, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
+			for (i = 0; uart0_pins[i].port != 0xFF; i++) {
+				config_pio(&uart0_pins[i], LPC_IO_DIGITAL);
+			}
 			break;
 		case 1:
-			config_gpio(0, 8, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
-			config_gpio(0, 9, (LPC_IO_FUNC_ALT(2) | LPC_IO_DIGITAL));
+			for (i = 0; uart1_pins[i].port != 0xFF; i++) {
+				config_pio(&uart1_pins[i], LPC_IO_DIGITAL);
+			}
 			break;
 	}
 }

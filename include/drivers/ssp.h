@@ -27,7 +27,6 @@
 /***************************************************************************** */
 
 #include <stdint.h>
-#include "drivers/gpio.h"
 
 
 /* Set this to 1 for use of this driver in a multitasking OS, it will activate the SPI Mutex */
@@ -38,7 +37,6 @@ enum spi_fifo_or_pooling {
 	SPI_USE_FIFO = 1,
 };
 
-#define SPI_CS_PIN 15
 
 /***************************************************************************** */
 /* SPI device mode slave select sharing.
@@ -91,9 +89,6 @@ int spi_transfer_multiple_frames(uint16_t* data_out, int size, uint16_t* data_in
 /***************************************************************************** */
 uint32_t ssp_clk_on(uint32_t rate);
 void ssp_clk_update(void);
-void set_ssp_pins(void);
-
-
 
 /***************************************************************************** */
 /* SSP Setup as master */

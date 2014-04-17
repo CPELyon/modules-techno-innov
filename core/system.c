@@ -277,35 +277,6 @@ void clkout_off(void)
 {
 }
 
-/***************************************************************************** */
-/*                    Peripheral Pins                                          */
-/***************************************************************************** */
-void Dummy_Pin_Config(void) {
-	do { } while (0);
-}
-
-void set_i2c_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
-void set_ssp_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
-void set_uarts_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
-void set_gpio_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
-void set_adc_pins(void) __attribute__ ((weak, alias ("Dummy_Pin_Config")));
-
-void system_set_default_pins(void)
-{
-	/* Set all pins as GPIO first, those used for something else will
-	   override the settings in corresponding pin setup functions. */
-	set_gpio_pins();
-	set_uarts_pins();
-	set_i2c_pins();
-	set_ssp_pins();
-	set_adc_pins();
-}
-
-/* FIXME: We should add some system-wide way to "reserve" a pin.
-     This would not prevent anyone from configuring the same pin for two diferent
-     functions.
- */
-
 
 /***************************************************************************** */
 /* Note that if the systick core functions are used these will be overridden */

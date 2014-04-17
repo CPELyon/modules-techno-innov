@@ -53,11 +53,11 @@ void temp_display(void);
 
 /***************************************************************************** */
 /* DHT11 Humidity and temp sensor */
-void TH_config(uint8_t pin_num);
+void dth11_config(struct pio* gpio);
 
-unsigned char read_dht11_dat();
+unsigned char dht11_read_dat();
 
-void TH_display(void);
+void dth11_display(void);
 
 
 
@@ -93,12 +93,12 @@ void TMP36_display(int adc_num);
 
 /***************************************************************************** */
 /* RGB Led */
-void RGB_Led_config(uint8_t timer, uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin);
+void RGB_Led_config(uint8_t timer);
 
 
 /***************************************************************************** */
 /* Maxim's MAX31855 themocouple to digital converter */
-uint16_t Thermocouple_Read(uint8_t slave_sel_pin);
+uint16_t Thermocouple_Read(struct pio* spi_cs);
 
 
 
@@ -111,7 +111,7 @@ uint16_t Thermocouple_Read(uint8_t slave_sel_pin);
  *   multiple interrupts for each push of the switch.
  * Note: should also be used without the capacitor to test the input filter ?
  */
-void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin);
+void gpio_intr_toggle_config(struct pio* irq_gpio, struct pio* led);
 
 
 
@@ -124,9 +124,10 @@ void gpio_intr_toggle_config(uint8_t irq_pin, uint8_t led_pin);
  *  - timer : one of LPC_TIMER_32B0, LPC_TIMER_32B1, LPC_TIMER_16B0 or LPC_TIMER_16B1
  *  - pwm_pin : pin number for PWM output. It must be the match 0 pin, and must be located
  *     on port 0.
- *  - channel is the timer channel corresponding to the pin.
+ * The channel for the timer channel must be configured in the appropriate timer pins
+ *    declaration table.
  */
-void voltage_to_position_config(uint8_t timer, uint8_t pwm_pin, uint8_t channel);
+void voltage_to_position_config(uint8_t timer, uint8_t channel);
 
 /* Change the angle of the servo on the selected channel.
  *  - timer : the timer used for voltage_to_position_config()

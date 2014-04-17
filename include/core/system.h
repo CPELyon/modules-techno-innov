@@ -160,7 +160,7 @@ uint32_t get_sleep(void);
 uint32_t sleep(void);
 
 void msleep(uint32_t ms);
-void usleep(uint32_t ms);
+void usleep(uint32_t us);
 
 
 #endif /* CORE_SYSTEM_H */

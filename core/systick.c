@@ -1,5 +1,5 @@
 /****************************************************************************
- *  drivers/systick.c
+ *  core/systick.c
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -120,6 +120,7 @@ uint32_t systick_get_timer_val(void)
 	return systick->value;
 }
 /* Get the "timer wrapped" indicator.
+ * Used in usleep() function.
  * Note : the first to call this function will get the right information.
  * All subsequent calls will get wrong indication.
  * Thus this function is not exported to user space, user should compare global
@@ -153,16 +154,19 @@ void systick_timer_on(uint32_t ms)
 		reload = (get_main_clock() / 1000) - 1;
 		ms = 1;
 	}
-	systick->reload_val = reload;
+	/* For the LPC1224 the system tick clock is fixed to half the frequency of the system clock */
+	reload = reload >> 1; /* Divide by 2 */
+	systick->reload_val = (reload & 0xffffff);
 	tick_ms = ms;
 
 	/* Start counting from the reload value, writting anything would do ... */
-	systick->value = 0;
+	systick->value = reload;
 
 	/* And enable counter interrupt */
-	systick->control = (LPC_SYSTICK_CTRL_TICKINT | LPC_SYSTICK_CTRL_CLKSOURCE);
+	systick->control = LPC_SYSTICK_CTRL_TICKINT;
 	systick_running = 0;
 
+	/* FIXME : document this */
 	NVIC_SetPriority(SYSTICK_IRQ, ((1 << LPC_NVIC_PRIO_BITS) - 1));
 }
 

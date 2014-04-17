@@ -129,7 +129,7 @@ void *vector_table[] __attribute__ ((section(".vectors"))) = {
 };
 
 
-extern void rom_div_helpers_init(void);
+extern void rom_helpers_init(void);
 /*
  * This is the entry point of the programm
  * It does the set up of the memory and then starts the main.
@@ -149,7 +149,7 @@ void Reset_Handler(void) {
 		*dst++ = 0;
 
 	/* Initialize rom based division helpers */
-	rom_div_helpers_init();
+	rom_helpers_init();
 	/* Start main programm */
 	main();
 }

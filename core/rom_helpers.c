@@ -1,5 +1,5 @@
 /****************************************************************************
- *   core/uidiv.c
+ *   core/rom_helpers.c
  *
  *
  *
@@ -44,13 +44,7 @@ struct lpc_rom_div_helpers {
 	struct uidiv_return (*rom_uidivmod)(unsigned numerator, unsigned denominator);
 };
 
-#define LPC_122x_DIVROM_LOC (0x1FFC0000)
 static struct lpc_rom_div_helpers* rom_div_helpers;
-
-void rom_div_helpers_init(void)
-{
-	rom_div_helpers = *((struct lpc_rom_div_helpers**)LPC_122x_DIVROM_LOC);
-}
 
 /* Division (/) */
 int __aeabi_idiv(int numerator, int denominator)
@@ -76,5 +70,16 @@ void __aeabi_uidivmod(unsigned numerator, unsigned denominator)
 	register uint32_t r0 asm("r0") = result.quotient;
 	register uint32_t r1 asm("r1") = result.remainder;
 	asm volatile("" : "+r"(r0), "+r"(r1) : "r"(r0), "r"(r1));
+}
+
+
+/*******************************************************************************/
+/*            Rom based routines initialisation                                */
+/*******************************************************************************/
+#define LPC_122x_DIVROM_LOC (0x1FFC0000)
+
+void rom_helpers_init(void)
+{
+	rom_div_helpers = *((struct lpc_rom_div_helpers**)LPC_122x_DIVROM_LOC);
 }
 

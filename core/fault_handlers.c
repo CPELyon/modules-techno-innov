@@ -25,9 +25,10 @@
 #include "core/lpc_regs_12xx.h"
 #include "drivers/serial.h"
 
-void fault_info(const char* name, uint32_t len)
-{
-	serial_write(1, name, len);
+void fault_info(const char* name, uint32_t len) __attribute__ ((weak, alias ("Dummy_Fault_Handler")));
+
+void Dummy_Fault_Handler(const char* name, uint32_t len) {
+	while (1);
 }
 
 /* Cortex M0 core interrupt handlers */

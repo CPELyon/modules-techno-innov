@@ -63,6 +63,13 @@ void system_init()
 	systick_timer_on(1); /* 1ms */
 }
 
+/* Define our fault handler. This one is not mandatory, the dummy fault handler 
+ * will be used when it's not overridden here */
+void fault_info(const char* name, uint32_t len)
+{
+	serial_write(1, name, len);
+}
+
 
 #define LED_RGB_RED   LPC_TIMER_32B1_CHANNEL_0_PIO_23
 #define LED_RGB_GREEN LPC_TIMER_32B1_CHANNEL_1_PIO_24

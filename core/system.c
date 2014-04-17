@@ -279,6 +279,8 @@ void clkout_off(void)
 
 
 /***************************************************************************** */
+/*                    Default sleep function                                   */
+/***************************************************************************** */
 /* Note that if the systick core functions are used these will be overridden */
 
 /* This "msleep" is a simple wait routine which is close to a millisecond sleep
@@ -302,5 +304,5 @@ static inline void def_usleep(uint32_t us)
 }
 
 void msleep(uint32_t ms) __attribute__ ((weak, alias ("def_msleep")));
-void usleep(uint32_t ms) __attribute__ ((weak, alias ("def_usleep")));
+void usleep(uint32_t us) __attribute__ ((weak, alias ("def_usleep")));
 

@@ -51,7 +51,6 @@
 /***************************************************************************** */
 /* Pins configuration */
 struct pio clkout_pin[] = {
-	LPC_CLKOUT_PIO_0_12,
 	ARRAY_LAST_PIN,
 };
 struct pio uart0_pins[] = {
@@ -105,7 +104,7 @@ struct pio adc_pins[] = {
 struct pio gpio_pins[] = {
 	LPC_GPIO_0_7, /* Temp Alert, hard-wired on the board */
 	LPC_GPIO_0_6, /* Used for DTH11 */
-//	LPC_GPIO_0_12, /* ISP Used as button */
+	LPC_GPIO_0_12, /* ISP Used as button */
 	LPC_GPIO_0_4, /* Led toggle on ISP button press */
 	LPC_GPIO_0_19, /* Used as SPI chip select for Thermocouple reading */
 	ARRAY_LAST_PIN,
@@ -152,7 +151,6 @@ int main(void) {
 	timer_on(LPC_TIMER_32B0, 0);
 	ssp_master_on(LPC_SSP_FRAME_SPI, 8, 8*1000*1000); /* frame_type, data_width, rate */
 
-	clkout_on(LPC_CLKOUT_SRC_MAIN_CLK, 2);
 
 	i2c_on(I2C_CLK_100KHz);
 

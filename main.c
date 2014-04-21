@@ -140,6 +140,12 @@ void fault_info(const char* name, uint32_t len)
 #define PWM_CHAN  1
 
 
+void test(uint32_t curent_tick)
+{
+	struct lpc_gpio* gpio = LPC_GPIO_0;
+	gpio->data_dir |= (1 << 0);
+	gpio->toggle |= (1 << 0);
+}
 
 /***************************************************************************** */
 int main(void) {
@@ -151,6 +157,8 @@ int main(void) {
 	timer_on(LPC_TIMER_32B0, 0);
 	ssp_master_on(LPC_SSP_FRAME_SPI, 8, 8*1000*1000); /* frame_type, data_width, rate */
 
+	add_systick_callback(test, 200);
+	systick_start();
 
 	i2c_on(I2C_CLK_100KHz);
 

@@ -41,8 +41,8 @@ void status_led_config(void)
 {
 	struct lpc_gpio* gpio1 = LPC_GPIO_1;
 	uint32_t mode = (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT);
-	struct pio red_led = LPC_GPIO_1_4;
-	struct pio green_led = LPC_GPIO_1_5;
+	struct pio red_led = LPC_GPIO_1_5;
+	struct pio green_led = LPC_GPIO_1_4;
 	/* Status Led GPIO */
 	config_pio(&green_led, mode);
 	config_pio(&red_led, mode);

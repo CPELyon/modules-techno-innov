@@ -165,7 +165,7 @@ void config_pio(struct pio* pp, uint32_t mode);
 #define LPC_ADC_AD2_PIO_1_0   {1,  0, 2}
 #define LPC_ADC_AD3_PIO_1_1   {1,  1, 2}
 #define LPC_ADC_AD4_PIO_1_2   {1,  2, 2}
-#define LPC_ADC_AD5_PIO_1_3   {1,  4, 1}
+#define LPC_ADC_AD5_PIO_1_3   {1,  3, 1}
 #define LPC_ADC_AD6_PIO_1_4   {1,  4, 1}
 #define LPC_ADC_AD7_PIO_1_5   {1,  5, 1}
 

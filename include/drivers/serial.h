@@ -1,5 +1,5 @@
 /****************************************************************************
- *  serial.h
+ *  drivers/serial.h
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -45,13 +45,12 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 /***************************************************************************** */
 /*   Public access to UART setup   */
 
-void set_uarts_pins(void);
 
 /* Allow any change to the main clock to be forwarded to us */
 void uart_clk_update(void);
 
 /* Do we need to allow setting of other parameters ? (Other than 8n1) */
-void uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char));
+int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char));
 
 void uart_off(uint32_t uart_num);
 

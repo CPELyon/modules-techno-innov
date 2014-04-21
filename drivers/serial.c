@@ -29,9 +29,8 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "core/pio.h"
 #include "lib/string.h"
-#include "drivers/timers.h"
-#include "drivers/gpio.h"
 
 #define SERIAL_OUT_BUFF_SIZE 64
 struct uart_device
@@ -260,14 +259,6 @@ static struct uart_def uart_defs[NUM_UARTS] = {
 /***************************************************************************** */
 /*   Public access to UART setup   */
 
-void set_uarts_pins(void)
-{
-	int i = 0;
-	for (i = 0; i < NUM_UARTS; i++) {
-		uart_set_pin_func(i);
-	}
-}
-
 /* Allow any change to the main clock to be forwarded to us */
 void uart_clk_update(void)
 {
@@ -280,7 +271,6 @@ void uart_clk_update(void)
 }
 
 /* Do we need to allow setting of other parameters ? (Other than 8n1) */
-/* Do we need to allow specifying an interrupt handler ? */
 int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char))
 {
 	struct uart_def* uart = NULL;

@@ -22,7 +22,6 @@
 #define DRIVERS_TIMERS_H
 
 #include <stdint.h>
-#include "core/lpc_regs_12xx.h"
 
 /***************************************************************************** */
 /*                Timers                                                       */

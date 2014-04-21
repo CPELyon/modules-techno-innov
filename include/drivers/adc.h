@@ -27,9 +27,6 @@
 /***************************************************************************** */
 
 #include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/system.h"
 
 /* Start a conversion on the given channel (0 to 7) */
 void adc_start_convertion_once(unsigned int channel, int use_int);
@@ -54,13 +51,13 @@ void adc_start_burst_conversion(uint8_t channels);
  */
 void adc_prepare_conversion_on_event(void);
 
-/* On LPC1224 there is no possibility to change the ADC resolution */
+/* Change the ADC resolution. */
+/* Note : On LPC1224 there is no possibility to change the ADC resolution */
 void adc_set_resolution(int bits);
 
 
 /***************************************************************************** */
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
-void set_adc_pins(void);
 void adc_clk_update(void);
 void adc_on(void);
 void adc_off(void);

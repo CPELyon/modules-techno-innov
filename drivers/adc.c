@@ -44,6 +44,7 @@ void ADC_Handler(void)
 	uint32_t status = adc->status;
 */
 	/* .... What to do ... is specific to your application */
+	/* FIXME : Add an handler callback. */
 }
 
 /* Start a conversion on the given channel (0 to 7) */
@@ -115,9 +116,11 @@ void adc_prepare_conversion_on_event(void)
 	/* Unsupported Yet */
 }
 
-/* On LPC1224 there is no possibility to change the ADC resolution */
+/* Change the ADC resolution. */
 void adc_set_resolution(int bits)
 {
+	/* On LPC1224 there is no possibility to change the ADC resolution */
+	return;
 }
 
 
@@ -126,7 +129,7 @@ void adc_set_resolution(int bits)
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
 extern struct pio adc_pins[];
 
-void set_adc_pins(void)
+static void set_adc_pins(void)
 {
 	int i = 0;
 	/* Configure ADC pins */
@@ -162,6 +165,9 @@ void adc_on(void)
 
 	/* Prevent unconfigured conversion start */
 	adc->ctrl &= ~LPC_ADC_START_CONV_MASK;
+
+	/* Configure ADC pins */
+	set_adc_pins();
 
 	/* Enable ADC Interrupt */
 	NVIC_EnableIRQ(ADC_IRQ);

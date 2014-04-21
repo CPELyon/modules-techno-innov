@@ -199,6 +199,10 @@ struct lpc_sys_control
 #define LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_ON  0x0000FFF7
 #define LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_OFF 0x0000FFFF
 
+#define LPC_CLKOUT_SRC_IRC_OSC       0x00
+#define LPC_CLKOUT_SRC_XTAL_OSC      0x01
+#define LPC_CLKOUT_SRC_WATCHDOG_OSC  0x02
+#define LPC_CLKOUT_SRC_MAIN_CLK      0x03
 
 
 /***************************************************************************** */

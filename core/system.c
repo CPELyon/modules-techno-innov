@@ -27,6 +27,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "core/pio.h"
 
 
 /* Private defines */
@@ -270,11 +271,28 @@ void io_config_clk_off(void)
 /* This is mainly a debug feature, but can be used to provide a clock to an
  * external peripheral */
 /* Note that the CLK_Out pin PIO0_12 is multiplexed with ISP mode selection on reset */
+extern struct pio clkout_pin[];
+
 void clkout_on(uint32_t src, uint32_t div)
 {
+	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+
+	/* Only one possible pin, and no specific configuration */
+	config_pio(&clkout_pin[0], 0);
+
+	/* Select clk_out clock source */
+	sys_ctrl->clk_out_src_sel = (src & 0x03);
+	/* Activate clk_out */
+	sys_ctrl->clk_out_div = (div & 0xFF);
+	sys_ctrl->clk_out_upd_en = 0;
+	sys_ctrl->clk_out_upd_en = 1;
 }
 void clkout_off(void)
 {
+	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	sys_ctrl->clk_out_div = 0; /* Disable CLKOUT */
+	sys_ctrl->clk_out_upd_en = 0;
+	sys_ctrl->clk_out_upd_en = 1;
 }
 
 

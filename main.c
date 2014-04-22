@@ -173,7 +173,7 @@ int main(void) {
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
 	timer_on(LPC_TIMER_32B0, 0);
-	ssp_master_on(LPC_SSP_FRAME_SPI, 8, 8*1000*1000); /* frame_type, data_width, rate */
+	ssp_master_on(0, LPC_SSP_FRAME_SPI, 16, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 
 	add_systick_callback(test, 200);
 	systick_start();

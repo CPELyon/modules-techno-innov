@@ -339,8 +339,8 @@ uint16_t Thermocouple_Read(struct pio* slave_sel)
 
 	/* Activate slave (active low), transfer data, and release slave */
 	gpio0->clear = (1 << slave_sel->pin);
-	spi_transfer_multiple_frames(NULL, 2, data);
 	gpio0->set = (1 << slave_sel->pin);
+	spi_transfer_multiple_frames(0, NULL, data, 2, 16);
 
 	/* Convert data */
 	temp = (data[0] >> 4) & 0x07FF;

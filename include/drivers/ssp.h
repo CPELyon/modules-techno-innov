@@ -32,50 +32,48 @@
 /* Set this to 1 for use of this driver in a multitasking OS, it will activate the SPI Mutex */
 #define MULTITASKING 0
 
-enum spi_fifo_or_pooling {
-	SPI_NO_FIFO = 0,
-	SPI_USE_FIFO = 1,
-};
+
 
 
 /***************************************************************************** */
-/* SPI device mode slave select sharing.
- * Note: Used only by non SPI functions to request the SSEL pin when SPI driver is used.
- */
-int spi_device_cs_pull_low(void);
-void spi_device_cs_release(void);
-
-
-/***************************************************************************** */
-/* SPI Bus mutex */
+/* SPI mutex for SPI bus */
 /* In multitasking environment spi_get_mutex will block until mutex is available and always
  *  return 1. In non multitasking environments spi_get_mutex returns either 1 (got mutex)
  *  or -EBUSY (SPI bus in use)
  */
-int spi_get_mutex(void);
-void spi_release_mutex(void);
+int spi_get_mutex(uint8_t ssp_num);
+void spi_release_mutex(uint8_t ssp_num);
 
 
 /***************************************************************************** */
-/* This function is used to transfer a byte to AND from a device
+/* This function is used to transfer a word (4 to 16 bits) to AND from a device
  * As the SPI bus is full duplex, data can flow in both directions, but the clock is
  *   always provided by the master. The SPI clock cannont be activated without sending
  *   data, which means we must send data to the device when we want to read data from
  *   the device.
+ * Note : the SSP device number is not checked, thus a value above the number of SSP
+ *   devices present on the micro-controller may break your programm.
+ *   Double check the value of the ssp_num parameter. The check is made on the call to
+ *   ssp_master_on() or ssp_slave_on().
  * This function does not take care of the SPI chip select.
  */
-uint16_t spi_transfer_single_frame(uint16_t data);
+uint16_t spi_transfer_single_frame(uint8_t ssp_num, uint16_t data);
 
 
 /***************************************************************************** */
 /* Multiple words (4 to 16 bits) transfer function on the SPI bus.
  * The SSP fifo is used to leave as little time between frames as possible.
  * Parameters :
- *  size is the number of frames, each one having the configured data width (4 to 16 bits).
+ *  ssp_num : ssp device number. The SSP device number is not checked, thus a value above
+ *            the number of SSP devices present on the micro-controller may break your
+ *            programm. Double check the value of the ssp_num parameter. The check is made
+ *            on the call to ssp_master_on() or ssp_slave_on().
+ *  size : the number of frames, each one having the configured data width (4 to 16 bits).
  *  data_out : data to be sent. Data will be read in the lower bits of the 16 bits values
  *             pointed by "data_out" for each frame. If NULL, then the content of data_in
                will be used.
  *  data_in : buffer for read data. If NULL, read data will be discarded.
+ * Returns the number of data words transfered.
  * As the SPI bus is full duplex, data can flow in both directions, but the clock is
  *   always provided by the master. The SPI clock cannont be activated without sending
  *   data, which means we must send data to the device when we want to read data from
@@ -83,12 +81,13 @@ uint16_t spi_transfer_single_frame(uint16_t data);
  * This function does not take care of the SPI chip select.
  * Note: there's no need to count Rx data as it is equal to Tx data
  */
-int spi_transfer_multiple_frames(uint16_t* data_out, int size, uint16_t* data_in);
+int spi_transfer_multiple_frames(uint8_t ssp_num, void* data_out, void* data_in, int size, int width);
+
 
 
 /***************************************************************************** */
-uint32_t ssp_clk_on(uint32_t rate);
 void ssp_clk_update(void);
+
 
 /***************************************************************************** */
 /* SSP Setup as master */
@@ -101,12 +100,13 @@ void ssp_clk_update(void);
  *   handling highly depends on the device on the other end of the wires. Use a GPIO
  *   to activate the device's chip select (usually active low)
  */
-int ssp_master_on(uint8_t frame_type, uint8_t data_width, uint32_t rate);
+int ssp_master_on(uint8_t ssp_num, uint8_t frame_type, uint8_t data_width, uint32_t rate);
 
-int ssp_slave_on(uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_t max_rate);
+int ssp_slave_on(uint8_t ssp_num, uint8_t frame_type, uint8_t data_width, uint8_t out_en, uint32_t max_rate);
 
-/* Turn off the SSP block */
-void ssp_off(void);
+/* Turn off given SSP block */
+void ssp_off(uint8_t ssp_num);
+
 
 
 #endif /* DRIVERS_SSP_H */

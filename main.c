@@ -144,8 +144,8 @@ void fault_info(const char* name, uint32_t len)
 void test(uint32_t curent_tick)
 {
 	struct lpc_gpio* gpio = LPC_GPIO_REGS(0);
-	gpio->data_dir |= (1 << 0);
-	gpio->toggle |= (1 << 0);
+	gpio->data_dir |= (1 << 4);
+	gpio->toggle |= (1 << 4);
 }
 
 

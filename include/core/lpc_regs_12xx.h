@@ -463,6 +463,7 @@ struct lpc_gpio
 #define LPC_GPIO_1      ((struct lpc_gpio *) LPC_GPIO_1_BASE)
 #define LPC_GPIO_2      ((struct lpc_gpio *) LPC_GPIO_2_BASE)
 
+#define LPC_GPIO_REGS(x)  ((struct lpc_gpio *) (LPC_AHB_BASE + (0x10000 * (x))))
 
 
 /***************************************************************************** */

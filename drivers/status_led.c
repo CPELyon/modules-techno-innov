@@ -39,7 +39,7 @@
 
 void status_led_config(void)
 {
-	struct lpc_gpio* gpio1 = LPC_GPIO_1;
+	struct lpc_gpio* gpio1 = LPC_GPIO_REGS(1);
 	uint32_t mode = (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT);
 	struct pio red_led = LPC_GPIO_1_5;
 	struct pio green_led = LPC_GPIO_1_4;
@@ -55,7 +55,7 @@ void status_led_config(void)
 
 void status_led(uint32_t val)
 {
-	struct lpc_gpio* gpio1 = LPC_GPIO_1;
+	struct lpc_gpio* gpio1 = LPC_GPIO_REGS(1);
 
 	switch (val) {
 		case red_only:

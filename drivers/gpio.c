@@ -32,9 +32,9 @@
 #include "drivers/gpio.h"
 
 
+
 /***************************************************************************** */
 /*   GPIO setup   */
-
 
 /* Set all GPIO used in a default state */
 extern struct pio gpio_pins[];
@@ -73,7 +73,7 @@ static void (*gpio_calbacks_port2[PORT2_NB_PINS]) (uint32_t);
 
 int set_gpio_callback(void (*callback) (uint32_t), struct pio* gpio, uint8_t sense)
 {
-	struct lpc_gpio* gpio_port = NULL;
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio->port);
 	uint32_t irq = 0;
 
 	/* Register the callback */
@@ -83,21 +83,18 @@ int set_gpio_callback(void (*callback) (uint32_t), struct pio* gpio, uint8_t sen
 			if (gpio->pin >= PORT0_NB_PINS)
 				return -EINVAL;
 			gpio_calbacks_port0[gpio->pin] = callback;
-			gpio_port = LPC_GPIO_0;
 			irq = PIO_0_IRQ;
 			break;
 		case 1:
 			if (gpio->pin >= PORT1_NB_PINS)
 				return -EINVAL;
 			gpio_calbacks_port1[gpio->pin] = callback;
-			gpio_port = LPC_GPIO_1;
 			irq = PIO_1_IRQ;
 			break;
 		case 2:
 			if (gpio->pin >= PORT2_NB_PINS)
 				return -EINVAL;
 			gpio_calbacks_port2[gpio->pin] = callback;
-			gpio_port = LPC_GPIO_2;
 			irq = PIO_2_IRQ;
 			break;
 		default:
@@ -141,7 +138,7 @@ int set_gpio_callback(void (*callback) (uint32_t), struct pio* gpio, uint8_t sen
 }
 void remove_gpio_callback(struct pio* gpio)
 {
-	struct lpc_gpio* gpio_port = NULL;
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio->port);
 	uint32_t irq = 0;
 
 	/* Remove the handler */
@@ -150,21 +147,18 @@ void remove_gpio_callback(struct pio* gpio)
 			if (gpio->pin >= PORT0_NB_PINS)
 				return;
 			gpio_calbacks_port0[gpio->pin] = NULL;
-			gpio_port = LPC_GPIO_0;
 			irq = PIO_0_IRQ;
 			break;
 		case 1:
 			if (gpio->pin >= PORT1_NB_PINS)
 				return;
 			gpio_calbacks_port1[gpio->pin] = NULL;
-			gpio_port = LPC_GPIO_1;
 			irq = PIO_1_IRQ;
 			break;
 		case 2:
 			if (gpio->pin >= PORT2_NB_PINS)
 				return;
 			gpio_calbacks_port2[gpio->pin] = NULL;
-			gpio_port = LPC_GPIO_2;
 			irq = PIO_2_IRQ;
 			break;
 		default:

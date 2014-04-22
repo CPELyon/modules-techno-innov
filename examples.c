@@ -92,37 +92,37 @@ void temp_display(int uart_num)
 static struct pio dth11_gpio;
 void dth11_config(struct pio* gpio)
 {
-	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(gpio->port);
 
 	config_pio(gpio, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
 	pio_copy(&dth11_gpio, gpio);
 
 	/* Configure as output and set it low. */
 	/* This is the "do nothing" state */
-	gpio0->data_dir |= (1 << gpio->pin);
-	gpio0->set = (1 << gpio->pin);
+	gpio_port_regs->data_dir |= (1 << gpio->pin);
+	gpio_port_regs->set = (1 << gpio->pin);
 }
 
 unsigned char dht11_read_dat()
 {
-	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(dth11_gpio.port);
 	int i = 0;
 	unsigned char val = 0;
 	for (i = 0; i < 8; i++) {
 		/* Wait end of 'low' */
-		while(!(gpio0->in & (1 << dth11_gpio.pin))) {
+		while(!(gpio_port_regs->in & (1 << dth11_gpio.pin))) {
 			nop();
 		}
 		/* Wait 30ms */
 		usleep(35);
 
 		/* read one bit */
-		if (gpio0->in & (1 << dth11_gpio.pin)) {
+		if (gpio_port_regs->in & (1 << dth11_gpio.pin)) {
 			val |= (1 << (7-i));
 		}
 
 		/* Wait end of bit */
-		while (gpio0->in & (1 << dth11_gpio.pin)) {
+		while (gpio_port_regs->in & (1 << dth11_gpio.pin)) {
 			nop();
 		}
 	}
@@ -131,36 +131,36 @@ unsigned char dht11_read_dat()
 
 void dth11_display(void)
 {
-	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(dth11_gpio.port);
 	unsigned char data[5];
 	unsigned char checksum = 0;
 	int i = 0;
 
 	/* Set pin as output */
-	gpio0->data_dir |= (1 << dth11_gpio.pin);
+	gpio_port_regs->data_dir |= (1 << dth11_gpio.pin);
 
 	/* Send the "start" bit */
-	gpio0->clear = (1 << dth11_gpio.pin);
+	gpio_port_regs->clear = (1 << dth11_gpio.pin);
 	msleep(50);
-	gpio0->set = (1 << dth11_gpio.pin);
+	gpio_port_regs->set = (1 << dth11_gpio.pin);
 
 	/* Set pin as input */
-	gpio0->data_dir &= ~(1 << dth11_gpio.pin);
+	gpio_port_regs->data_dir &= ~(1 << dth11_gpio.pin);
 
 	/* Wait for start conditions */
 	debug(0, 'S');
 	status_led(both);
-	while (gpio0->in & (1 << dth11_gpio.pin)) {
+	while (gpio_port_regs->in & (1 << dth11_gpio.pin)) {
 		nop();
 	}
 	status_led(none);
 	debug(0, 'c');
-	while (!(gpio0->in & (1 << dth11_gpio.pin))) {
+	while (!(gpio_port_regs->in & (1 << dth11_gpio.pin))) {
 		nop();
 	}
 	status_led(both);
 	debug(0, 'C');
-	while (gpio0->in & (1 << dth11_gpio.pin)) {
+	while (gpio_port_regs->in & (1 << dth11_gpio.pin)) {
 		nop();
 	}
 	status_led(none);
@@ -328,7 +328,7 @@ void RGB_Led_config(uint8_t timer)
  */
 uint16_t Thermocouple_Read(struct pio* slave_sel)
 {
-	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(slave_sel->port);
 	char buff[50];
 	int len = 0;
 	uint16_t data[2];
@@ -338,9 +338,9 @@ uint16_t Thermocouple_Read(struct pio* slave_sel)
 	config_pio(slave_sel, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
 
 	/* Activate slave (active low), transfer data, and release slave */
-	gpio0->clear = (1 << slave_sel->pin);
-	gpio0->set = (1 << slave_sel->pin);
+	gpio_port_regs->clear = (1 << slave_sel->pin);
 	spi_transfer_multiple_frames(0, NULL, data, 2, 16);
+	gpio_port_regs->set = (1 << slave_sel->pin);
 
 	/* Convert data */
 	temp = (data[0] >> 4) & 0x07FF;
@@ -362,19 +362,25 @@ uint16_t Thermocouple_Read(struct pio* slave_sel)
  *   multiple interrupts for each push of the switch.
  * Note: should also be used without the capacitor to test the input filter ?
  */
-static uint8_t led_pin_toggle = 0;
+static volatile struct pio led_toggle;
 void callback(uint32_t pin_num)
 {
-	struct lpc_gpio* gpio0 = LPC_GPIO_0;
-	gpio0->toggle = (1 << led_pin_toggle);
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(led_toggle.port);
+	gpio_port_regs->toggle = (1 << led_toggle.pin);
 }
 void gpio_intr_toggle_config(struct pio* irq_gpio, struct pio* led)
 {
-	struct lpc_gpio* gpio0 = LPC_GPIO_0;
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(led->port);
 	int ret = 0;
+
+	/* Setup the Led GPIO */
 	config_pio(led, LPC_IO_DIGITAL);
-	gpio0->data_dir |= (1 << led->pin);
-	led_pin_toggle = led->pin;
+	gpio_port_regs->data_dir |= (1 << led->pin);
+
+	/* Make a copy of the gpio info */
+	pio_copy((struct pio*)(&led_toggle), led);
+
+	/* Register the callback */
 	ret = set_gpio_callback(callback, irq_gpio, EDGE_FALLING);
 	if (ret != 0) {
 		serial_write(1, "GPIO INTR config error\r\n", 24);

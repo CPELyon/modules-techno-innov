@@ -46,12 +46,12 @@
 /***************************************************************************** */
 /* Temperature */
 /* The Temperature Alert pin is on GPIO Port 0, pin 7 (PIO0_7) */
-/* The I2C Temperature sensor is at address */
+/* The I2C Temperature sensor is at address 0x94 */
 void WAKEUP_Handler(void)
 {
 }
 
-void temp_config(void)
+void temp_config(int uart_num)
 {
 	int ret = 0;
 	struct pio temp_alert = LPC_GPIO_0_7;
@@ -62,11 +62,11 @@ void temp_config(void)
 	/* Temp sensor */
 	ret = sensor_config(TMP_RES_ELEVEN_BITS);
 	if (ret != 0) {
-		serial_write(1, "Temp config error\r\n", 19);
+		serial_write(uart_num, "Temp config error\r\n", 19);
 	}
 }
 
-void temp_display(void)
+void temp_display(int uart_num)
 {
 	char buff[40];
 	uint16_t raw = 0;
@@ -77,11 +77,11 @@ void temp_display(void)
 	msleep(250); /* Wait for the end of the conversion : 40ms */
 	len = temp_read(&raw, &deci_degrees);
 	if (len != 0) {
-		serial_write(1, "Temp read error\r\n", 19);
+		serial_write(uart_num, "Temp read error\r\n", 19);
 	} else {
 		len = snprintf(buff, 40, "Temp read: %d,%d - raw: 0x%04x.\r\n",
 				(deci_degrees/10), (deci_degrees%10), raw);
-		serial_write(1, buff, len);
+		serial_write(uart_num, buff, len);
 	}
 }
 

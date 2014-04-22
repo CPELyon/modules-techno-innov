@@ -44,10 +44,9 @@
 /***************************************************************************** */
 /* Temperature */
 /* The Temperature Alert pin is on GPIO Port 0, pin 7 (PIO0_7) */
-/* The I2C Temperature sensor is at address */
-void temp_config(void);
-
-void temp_display(void);
+/* The I2C Temperature sensor is at address 0x94 */
+void temp_config(int uart_num);
+void temp_display(int uart_num);
 
 
 

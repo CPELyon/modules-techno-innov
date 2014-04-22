@@ -33,11 +33,18 @@
 /***************************************************************************** */
 /*       EEPROM Chip select for the GPIO Demo module                           */
 /*******************************************************************************/
-/* These are place-holders to set the SPI chip select low if the SPI driver is not used.
- * These dummy functions will be over-ridden by SPI ones if the SPI driver is used.
+/* Set the SPI SSEL pin low. */
+/* These functions are specific to the mod_gpio_demo and domotab modules.
+ * It is used to release the gate that blocks the SCL signal to the EEPROM,
+ *   allowing multiple eeproms with the same address to be accessed one at a time
+ *   on the same I2C Bus, which gives a way to both identify modules presence and
+ *   module function, name, and pther capabilities.
+ * When the SPI is used as slave, the master has the control of the SPI SSEL signal
+ *   and the EEPROM should not be accessed by the module.
+ * Other I2C EEPROMs should not need these functions.
  */
 static struct pio i2c_eeprom_cs = LPC_GPIO_0_15;
-int I2C_CS_Default_Set(void)
+int mod_gpio_demo_eeprom_cs_pull_low(void)
 {
     struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(i2c_eeprom_cs.port);
     config_pio(&i2c_eeprom_cs, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
@@ -46,14 +53,11 @@ int I2C_CS_Default_Set(void)
     gpio_port_regs->clear = (1 << i2c_eeprom_cs.pin);
 	return 0;
 }
-void I2C_CS_Default_Release(void)
+void mod_gpio_demo_eeprom_cs_release(void)
 {
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(i2c_eeprom_cs.port);
     gpio_port_regs->set = (1 << i2c_eeprom_cs.pin);
 }
-
-int spi_device_cs_pull_low(void) __attribute__ ((weak, alias ("I2C_CS_Default_Set")));
-void spi_device_cs_release(void) __attribute__ ((weak, alias ("I2C_CS_Default_Release")));
 
 
 /***************************************************************************** */
@@ -138,7 +142,7 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 	char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
 	int eeprom_type = 0;
 
-	if (spi_device_cs_pull_low() != 0) {
+	if (mod_gpio_demo_eeprom_cs_pull_low() != 0) {
 		return -EBUSY;
 	}
 	eeprom_type = get_eeprom_type();
@@ -160,7 +164,7 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 			ret = -1;
 			break;
 	}
-	spi_device_cs_release();
+	mod_gpio_demo_eeprom_cs_release();
 
 	return ret;
 }
@@ -193,7 +197,7 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 	char full_buff[(EEPROM_ID_MAX_PAGE_SIZE + MAX_CMD_SIZE)];
 	int eeprom_type = 0;
 
-	if (spi_device_cs_pull_low() != 0) {
+	if (mod_gpio_demo_eeprom_cs_pull_low() != 0) {
 		return -EBUSY;
 	}
 	eeprom_type = get_eeprom_type();
@@ -248,7 +252,7 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 
 		write_count += size;
 	}
-	spi_device_cs_release();
+	mod_gpio_demo_eeprom_cs_release();
 
 	if (write_count != count)
 		return ret;

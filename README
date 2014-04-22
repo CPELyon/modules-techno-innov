@@ -54,6 +54,7 @@ SUPPORTED FEATURES and INTERFACES
    - Cortex-M0 and LPC1224 Registers
    - Interrupts
    - ROM based division routines
+   - Utility functions to replace ctz and clz instructions (not present in Cortex M0)
 
 - Bootstrap
    - vector table
@@ -74,7 +75,7 @@ SUPPORTED FEATURES and INTERFACES
    - snprintf, vsnprintf
 
 - Interface drivers
-   - UART
+   - UART (as UART or RS485)
    - I²C
    - I²C EEPROM
    - TMP101 I²C temperature sensor
@@ -95,3 +96,5 @@ TODO :
 - Watchdog support
 - Flash IAP support
 - CRC engine support
+- Test UART IrDA mode
+

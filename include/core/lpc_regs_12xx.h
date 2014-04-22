@@ -491,7 +491,7 @@ struct lpc_uart
 	volatile const uint32_t modem_status;  /* 0x018 : Modem status Register (R/ ) */
 	volatile uint32_t scratch_pad;  /* 0x01C : Scratch Pad Register (R/W) */
 	volatile uint32_t auto_baud_ctrl;  /* 0x020 : Auto-baud Control Register (R/W) */
-	uint32_t reserved_0;
+	volatile uint32_t irda_ctrl;       /* 0x024 : UART IrDA Control Register (R/W) */
 	volatile uint32_t fractional_div;  /* 0x028 : Fractional Divider Register (R/W) */
 	uint32_t reserved_1;
 	volatile uint32_t transmit_enable;  /* 0x030 : Transmit Enable Register (R/W) */
@@ -531,6 +531,19 @@ struct lpc_uart
 #define LPC_UART_INT_RX        (0x2 << 1)
 #define LPC_UART_INT_RX_STATUS (0x3 << 1)
 #define LPC_UART_INT_TIMEOUT   (0x6 << 1)
+/* RS485 Control */
+#define LPC_RS485_ENABLE       (0x1 << 0)
+#define LPC_RS485_RX_DIS       (0x1 << 1)
+#define LPC_RS485_AUTO_ADDR_EN (0x1 << 2)
+#define LPC_RS485_DIR_PIN_RTS  (0x0 << 3)
+#define LPC_RS485_DIR_PIN_DTR  (0x1 << 3)
+#define LPC_RS485_AUTO_DIR_EN  (0x1 << 4)
+#define LPC_RS485_DIR_CTRL_INV (0x1 << 5)
+/* RS485 */
+#define LPC_RS485_ADDR(x)  ((x) & 0xFF)
+#define LPC_RS485_DIR_DELAY(x)  ((x) & 0xFF)
+/* IrDA */
+#define LPC_IRDA_PULSEDIV(x)  (((x) & 0x07) << 3)
 
 
 /***************************************************************************** */

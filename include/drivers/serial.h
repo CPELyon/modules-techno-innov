@@ -25,6 +25,14 @@
 #include <stdint.h>
 
 
+#define SERIAL_CAP_UART   (1 << 0)
+#define SERIAL_CAP_RS485  (1 << 1)
+#define SERIAL_CAP_IRDA   (1 << 2)
+
+#define SERIAL_MODE_UART  SERIAL_CAP_UART
+#define SERIAL_MODE_RS485 SERIAL_CAP_RS485
+#define SERIAL_MODE_IRDA  SERIAL_CAP_IRDA
+
 /***************************************************************************** */
 /*    Serial Write
  *
@@ -45,12 +53,21 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 /***************************************************************************** */
 /*   Public access to UART setup   */
 
+/* Change uart mode to RS485
+ * return -ENODEV when the device does not support RS485 mode.
+ */
+int uart_set_mode_rs485(uint32_t uart_num, uint32_t control, uint8_t addr, uint8_t delay);
+
+/* Change uart mode to IRDA
+ * return -ENODEV when the device does not support IrDA mode.
+ */
+int uart_set_mode_irda(uint32_t uart_num, uint32_t control, uint16_t pulse_width);
 
 /* Allow any change to the main clock to be forwarded to us */
 void uart_clk_update(void);
 
 /* Do we need to allow setting of other parameters ? (Other than 8n1) */
-int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char));
+int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(uint8_t));
 
 void uart_off(uint32_t uart_num);
 

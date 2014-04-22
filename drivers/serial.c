@@ -31,6 +31,8 @@
 #include "core/system.h"
 #include "core/pio.h"
 #include "lib/string.h"
+#include "lib/utils.h"
+#include "drivers/serial.h"
 
 #define SERIAL_OUT_BUFF_SIZE 64
 struct uart_device
@@ -39,6 +41,8 @@ struct uart_device
 	struct lpc_uart* regs;
 	uint32_t baudrate;
 	uint32_t config;
+	uint32_t capabilities;
+	uint32_t current_mode;
 
 	/* Output buffer */
 	volatile char out_buff[SERIAL_OUT_BUFF_SIZE];
@@ -47,7 +51,7 @@ struct uart_device
 	volatile uint32_t out_length; /* actual position to add in out buffer */
 
 	/* Input */
-	void (*rx_callback)(char); /* Possible RX callback */
+	void (*rx_callback)(uint8_t); /* Possible RX callback */
 };
 
 #define NUM_UARTS 2
@@ -61,6 +65,8 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.sending = 0,
 		.out_lock = 0,
 		.rx_callback = 0,
+		.capabilities = (SERIAL_CAP_UART | SERIAL_CAP_RS485),
+		.current_mode = SERIAL_MODE_UART,
 	},
 	{
 		.num = 1,
@@ -71,6 +77,8 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.sending = 0,
 		.out_lock = 0,
 		.rx_callback = 0,
+		.capabilities = (SERIAL_CAP_UART | SERIAL_CAP_IRDA),
+		.current_mode = SERIAL_MODE_UART,
 	},
 };
 
@@ -127,6 +135,7 @@ static void uart_start_sending(uint32_t uart_num)
 }
 
 
+
 /***************************************************************************** */
 /*    Serial Write
  *
@@ -172,7 +181,6 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 
 
 
-
 /***************************************************************************** */
 /*   UART Setup : private part : Clocks, Pins, Power and Mode   */
 
@@ -206,7 +214,7 @@ static void uart_clk_off(uint32_t uart_num)
 	sys_ctrl->uart_clk_div[uart_num] = 0;
 }
 
-static uint32_t uart_mode_setup(uint32_t uart_num)
+static uint32_t uart_setup(uint32_t uart_num)
 {
 	struct lpc_uart* uart = uarts[uart_num].regs; /* Get the right registers */
 	uint32_t status = 0;
@@ -270,8 +278,68 @@ void uart_clk_update(void)
 	}
 }
 
+/* Change uart mode to RS485
+ * return -ENODEV when the device does not support RS485 mode.
+ */
+int uart_set_mode_rs485(uint32_t uart_num, uint32_t control, uint8_t addr, uint8_t delay)
+{
+	struct uart_device* uart = NULL;
+	struct lpc_uart* uart_regs = NULL;
+	if (uart_num >= NUM_UARTS)
+		return -EINVAL;
+	uart = &uarts[uart_num];
+	uart_regs = uart->regs; /* Get the right registers */
+
+	if (!(uart->capabilities & SERIAL_CAP_RS485)) {
+		return -ENODEV;
+	}
+	/* Disable all other modes */
+	uart_regs->irda_ctrl = 0;
+
+	/* Set current mode */
+	uart->current_mode = SERIAL_MODE_RS485;
+	uart_regs->RS485_ctrl = (control & 0xFF);
+	uart_regs->RS485_addr_match = LPC_RS485_ADDR(addr);
+	uart_regs->RS485_dir_ctrl_delay = LPC_RS485_DIR_DELAY(delay);
+	return 0;
+}
+
+/* Change uart mode to IRDA
+ * pulse_width is the number of clock cycles for a pulse. Should dbe a power of 2.
+ * return -ENODEV when the device does not support IrDA mode.
+ */
+int uart_set_mode_irda(uint32_t uart_num, uint32_t control, uint16_t pulse_width)
+{
+	struct uart_device* uart = NULL;
+	struct lpc_uart* uart_regs = NULL;
+	uint8_t pulse_div = 0;
+
+	if (uart_num >= NUM_UARTS)
+		return -EINVAL;
+	uart = &uarts[uart_num];
+	uart_regs = uart->regs; /* Get the right registers */
+
+	if (!(uart->capabilities & SERIAL_CAP_IRDA)) {
+		return -ENODEV;
+	}
+	/* Disable all other modes */
+	uart_regs->RS485_ctrl = 0;
+
+	/* Set current mode */
+	uart->current_mode = SERIAL_MODE_IRDA;
+	/* Setup IrDA */
+	if (pulse_width < 2) {
+		pulse_div = 0;
+	} else {
+		pulse_div = (31 - clz(pulse_width & 0x1FF));
+	}
+	uart_regs->irda_ctrl = control | LPC_IRDA_PULSEDIV(pulse_div);
+	return 0;
+}
+
+
 /* Do we need to allow setting of other parameters ? (Other than 8n1) */
-int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char))
+int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(uint8_t))
 {
 	struct uart_def* uart = NULL;
 	uint32_t status = 0;
@@ -291,7 +359,7 @@ int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(char))
 	/* Setup clock acording to baudrate */
 	uart_clk_on(uart_num, baudrate);
 	/* Setup mode, fifo, ... */
-	status = uart_mode_setup(uart_num);
+	status = uart_setup(uart_num);
 	/* Enable interrupts back on */
 	NVIC_EnableIRQ( uart->irq );
 

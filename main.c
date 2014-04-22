@@ -56,6 +56,7 @@ struct pio clkout_pin[] = {
 struct pio uart0_pins[] = {
 	LPC_UART0_RX_PIO_0_1,
 	LPC_UART0_TX_PIO_0_2,
+	LPC_UART0_RTS_PIO_0_0,
 	ARRAY_LAST_PIN,
 };
 struct pio uart1_pins[] = {
@@ -147,10 +148,27 @@ void test(uint32_t curent_tick)
 	gpio->toggle |= (1 << 0);
 }
 
+
+#define RX_BUFF_LEN  50
+static volatile uint32_t rx = 0;
+static volatile uint8_t rx_buff[RX_BUFF_LEN];
+static volatile uint8_t ptr = 0;
+void rs485_out(uint8_t c)
+{
+	if (ptr < RX_BUFF_LEN) {
+		rx_buff[ptr++] = c;
+	} else {
+		ptr = 0;
+	}
+	if (c == '\n') {
+		rx = 1;
+	}
+}
+
 /***************************************************************************** */
 int main(void) {
 	system_init();
-	uart_on(0, 115200, NULL);
+	uart_on(0, 115200, rs485_out);
 	uart_on(1, 115200, NULL);
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
@@ -175,7 +193,7 @@ int main(void) {
 
 	/* Configure the DHT11 and the onboard temp sensor */
 	dth11_config(DTH11_GPIO);
-	temp_config();
+	temp_config(0);
 
 	/* GPIO interrupt test */
 	gpio_intr_toggle_config(BUTTON_GPIO, LED_GPIO);
@@ -185,11 +203,23 @@ int main(void) {
 
 	RGB_Led_config(LPC_TIMER_32B1);
 
+	{
+		uint32_t rs485_ctrl = LPC_RS485_ENABLE;
+		rs485_ctrl |= LPC_RS485_DIR_PIN_RTS | LPC_RS485_AUTO_DIR_EN | LPC_RS485_DIR_CTRL_INV;
+		uart_set_mode_rs485(0, rs485_ctrl, 0, 1);
+	}
+
 	while (1) {
 		uint16_t val = 0;
 		char buff[50];
 		int len = 0;
 		chenillard(25);
+		if (rx) {
+			/* Should copy data */
+			serial_write(1, rx_buff, ptr);
+			rx = 0;
+			ptr = 0;
+		}
 		val = adc_display(LPC_ADC_NUM(1));
 		val = (((val - 480) & ~(0x03)) / 3);
 		len = snprintf(buff, 50, "Angle: %d/180\r\n", val);
@@ -198,7 +228,7 @@ int main(void) {
 		/* TH_display(); */
 		TMP36_display(LPC_ADC_NUM(0));
 		Thermocouple_Read(THERMOCOUPLE_SLAVE_SEL);
-		temp_display();
+		temp_display(0);
 	}
 	return 0;
 }

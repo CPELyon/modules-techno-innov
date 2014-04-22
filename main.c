@@ -216,7 +216,7 @@ int main(void) {
 		chenillard(25);
 		if (rx) {
 			/* Should copy data */
-			serial_write(1, rx_buff, ptr);
+			serial_write(1, (char*)rx_buff, ptr);
 			rx = 0;
 			ptr = 0;
 		}

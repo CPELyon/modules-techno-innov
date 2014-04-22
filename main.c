@@ -175,7 +175,7 @@ int main(void) {
 	timer_on(LPC_TIMER_32B0, 0);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 16, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 
-	add_systick_callback(test, 200);
+	add_systick_callback(test, 200); /* callback, ms */
 	systick_start();
 
 	i2c_on(I2C_CLK_100KHz);

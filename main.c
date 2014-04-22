@@ -84,13 +84,13 @@ struct pio timer1_pins[] = { /* TIMER_16B1 */
 	ARRAY_LAST_PIN,
 };
 struct pio timer2_pins[] = { /* TIMER_32B0 */
-	LPC_TIMER_32B0_M2_PIO_0_20, /* PWM out for Servo Motor */
+	LPC_TIMER_32B0_M1_PIO_0_19, /* PWM out for Servo Motor */
 	ARRAY_LAST_PIN,
 };
 struct pio timer3_pins[] = { /* TIMER_32B1 */
-	LPC_TIMER_32B1_C0_PIO_0_23, /* RGB Led Red */
-	LPC_TIMER_32B1_C1_PIO_0_24, /* RGB Led Green */
-	LPC_TIMER_32B1_C2_PIO_0_25, /* RGB Led Blue */
+	LPC_TIMER_32B1_M0_PIO_0_23, /* RGB Led Red */
+	LPC_TIMER_32B1_M1_PIO_0_24, /* RGB Led Green */
+	LPC_TIMER_32B1_M2_PIO_0_25, /* RGB Led Blue */
 	ARRAY_LAST_PIN,
 };
 struct pio adc_pins[] = {

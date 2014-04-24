@@ -294,10 +294,6 @@ int main(void) {
 				serial_write(1, buff, len);
 			}
 		}
-		/* TH_display(); */
-		TMP36_display(LPC_ADC_NUM(0));
-		Thermocouple_Read(THERMOCOUPLE_SLAVE_SEL);
-		temp_display(0);
 #if SERVO
 		{
 			uint16_t val = 0;

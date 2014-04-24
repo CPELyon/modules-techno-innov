@@ -39,7 +39,7 @@
 /* Set all GPIO used in a default state */
 extern struct pio gpio_pins[];
 
-void set_gpio_pins(void)
+static void set_gpio_pins(void)
 {
 	int i = 0;
 	/* Set GPIO pins as GPIO */
@@ -55,6 +55,7 @@ void gpio_on(void)
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO1, 1);
 	/* FIXME : Power this one too if you use LQFP64 or LQFP100 packages */
 	/* subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO2, 1); */
+	set_gpio_pins();
 }
 void gpio_off(void)
 {

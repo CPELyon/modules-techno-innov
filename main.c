@@ -35,6 +35,7 @@
 #include "drivers/adc.h"
 #include "drivers/timers.h"
 #include "drivers/ssp.h"
+#include "drivers/cc1101.h"
 
 #include "examples.h"
 
@@ -70,6 +71,7 @@ struct pio i2c0_pins[] = {
 	ARRAY_LAST_PIN,
 };
 struct pio ssp0_pins[] = {
+	/* Warning : Order is used later on, DO NOT change it ! */
 	LPC_SSP0_SCLK_PIO_0_14,
 	LPC_SSP0_MOSI_PIO_0_17,
 	LPC_SSP0_MISO_PIO_0_16,
@@ -165,15 +167,32 @@ void rs485_out(uint8_t c)
 	}
 }
 
+/* Data sent on radio comes from the UART */
+static volatile uint32_t cc_tx = 0;
+static volatile uint8_t cc_tx_buff[RX_BUFF_LEN];
+static volatile uint8_t cc_ptr = 0;
+void cc1101_test_rf_serial_link_tx(uint8_t c)
+{
+	if (cc_ptr < RX_BUFF_LEN) {
+		cc_tx_buff[cc_ptr++] = c;
+	} else {
+		cc_ptr = 0;
+	}
+	if ((c == '\n') || (c == '\r')) {
+		cc_tx = 1;
+	}
+}
+
+
 /***************************************************************************** */
 int main(void) {
 	system_init();
 	uart_on(0, 115200, rs485_out);
-	uart_on(1, 115200, NULL);
+	uart_on(1, 115200, cc1101_test_rf_serial_link_tx);
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
 	timer_on(LPC_TIMER_32B0, 0);
-	ssp_master_on(0, LPC_SSP_FRAME_SPI, 16, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
+	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 
 	add_systick_callback(test, 200); /* callback, ms */
 	systick_start();
@@ -201,17 +220,24 @@ int main(void) {
 	/* Servo motor PWM control test */
 	servomotor_config(LPC_TIMER_32B0, PWM_CHAN);
 
+	/* Radio */
+	cc1101_init(0, &(ssp0_pins[3]), &(ssp0_pins[2])); /* ssp_num, cs_pin, miso_pin */
+	cc1101_config();
+
 	RGB_Led_config(LPC_TIMER_32B1);
 
+#if RS485
 	{
 		uint32_t rs485_ctrl = LPC_RS485_ENABLE;
 		rs485_ctrl |= LPC_RS485_DIR_PIN_RTS | LPC_RS485_AUTO_DIR_EN | LPC_RS485_DIR_CTRL_INV;
 		uart_set_mode_rs485(0, rs485_ctrl, 0, 1);
 	}
+#endif
 
+#define BUFF_LEN 60
 	while (1) {
 		uint16_t val = 0;
-		char buff[50];
+		char buff[BUFF_LEN];
 		int len = 0;
 		chenillard(25);
 		if (rx) {
@@ -219,6 +245,55 @@ int main(void) {
 			serial_write(1, (char*)rx_buff, ptr);
 			rx = 0;
 			ptr = 0;
+		}
+		if (cc_tx) {
+			uint8_t cc_tx_data[RX_BUFF_LEN + 2];
+			uint8_t len = 0, tx_len = cc_ptr;
+			uint8_t val = 0;
+			int ret = 0;
+			memcpy((char*)&(cc_tx_data[2]), (char*)cc_tx_buff, tx_len);
+			cc_tx_data[0] = tx_len + 1;
+			cc_tx_data[1] = 0; /* Broadcast */
+			serial_write(1, buff, len);
+			ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
+			len = snprintf(buff, BUFF_LEN, "Tx ret: %d\r\n", ret);
+			serial_write(1, buff, len);
+			msleep(2);
+			do {
+				ret = cc1101_tx_fifo_state();
+				if (ret < 0) {
+					len = snprintf(buff, BUFF_LEN, "Tx Underflow !\r\n");
+					serial_write(1, buff, len);
+					break;
+				}
+			} while (ret != 0);
+			cc1101_enter_rx_mode();
+			val = cc1101_read_status();
+			len = snprintf(buff, BUFF_LEN, "Status : 0x%02x, Sending : %d\r\n", val, tx_len);
+			serial_write(1, buff, len);
+			serial_write(1, (char*)&(cc_tx_data[2]), tx_len);
+			cc_tx = 0;
+			cc_ptr = 0;
+		}
+		{
+			int ret = 0, rxlen = 0, addr = 0;
+			uint8_t status = 0;
+			ret = cc1101_receive_packet((uint8_t*)buff, 50, &status);
+			cc1101_enter_rx_mode();
+			if (ret > 0) {
+				uint8_t val = 0;
+				len = ret;
+				serial_write(1, &buff[2], (len - 2));
+				serial_write(1, "\r\n", 2);
+				rxlen = buff[0];
+				addr = buff[1];
+				val = cc1101_get_signal_strength_indication();
+				len = snprintf(buff, BUFF_LEN, "Status: %d, link: %d, len: %d/%d, addr: %d\r\n", status, val, rxlen, len, addr);
+				serial_write(1, buff, len);
+			} else if (ret < 0) {
+				len = snprintf(buff, BUFF_LEN, "Rx Error: %d, len: %d\r\n", -ret, (status & 0x7F));
+				serial_write(1, buff, len);
+			}
 		}
 		val = adc_display(LPC_ADC_NUM(1));
 		val = (((val - 480) & ~(0x03)) / 3);

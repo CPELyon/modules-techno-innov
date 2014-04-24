@@ -236,7 +236,6 @@ int main(void) {
 
 #define BUFF_LEN 60
 	while (1) {
-		uint16_t val = 0;
 		char buff[BUFF_LEN];
 		int len = 0;
 		chenillard(25);
@@ -295,15 +294,20 @@ int main(void) {
 				serial_write(1, buff, len);
 			}
 		}
-		val = adc_display(LPC_ADC_NUM(1));
-		val = (((val - 480) & ~(0x03)) / 3);
-		len = snprintf(buff, 50, "Angle: %d/180\r\n", val);
-		serial_write(1, buff, len);
 		/* TH_display(); */
 		TMP36_display(LPC_ADC_NUM(0));
 		Thermocouple_Read(THERMOCOUPLE_SLAVE_SEL);
 		temp_display(0);
-		servomotor_pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
+#if SERVO
+		{
+			uint16_t val = 0;
+			val = adc_display(LPC_ADC_NUM(1));
+			val = (((val - 480) & ~(0x03)) / 3);
+			len = snprintf(buff, BUFF_LEN, "Angle: %d/180\r\n", val);
+			serial_write(1, buff, len);
+			servomotor_pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
+		}
+#endif
 	}
 	return 0;
 }

@@ -453,9 +453,10 @@ static void i2c_clock_on(uint32_t i2c_clk_freq)
 	i2c->clk_duty_low = (scl_clk - i2c->clk_duty_high);
 }
 
+/* I2C Pins configuration */
 extern struct pio i2c0_pins[];
 
-void set_i2c_pins(void)
+static void set_i2c_pins(void)
 {
 	int i = 0;
 	/* Configure I2C pins */

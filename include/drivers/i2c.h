@@ -190,7 +190,6 @@ int i2c_write(const void *buf, size_t count, const void* ctrl_buf);
 /***************************************************************************** */
 /*                I2C Init                                                     */
 /***************************************************************************** */
-void set_i2c_pins(void);
 void i2c_on(uint32_t i2c_clk_freq);
 void i2c_off(void);
 /* Allow system to propagate main clock */

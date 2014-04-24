@@ -64,8 +64,7 @@ uint8_t cc1101_spi_transfer(uint8_t addr, uint8_t* out, uint8_t* in, uint8_t siz
 	if (size != 0) {
 		spi_transfer_multiple_frames(cc1101.spi_num, out, in, size, 8);
 	}
-
-	/* Wait for 20ns before pulling CS back high ... 20ns is one nop() at 50MHz */
+	/* Release Chip select */
 	gpio->set = (1 << cc1101.cs_pin.pin);
 
 	return status;

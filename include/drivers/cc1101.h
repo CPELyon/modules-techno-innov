@@ -202,7 +202,7 @@ int cc1101_rx_fifo_state(void);
 
 /* Tx fifo state :
  * Return 0 when fifo is empty, or number of remaining bytes when non empty and no
- *    overflow occured.
+ *    underflow occured.
  * Return a negative value on error:
  *     when an underflow occured, return value is -1
  *     on other errors return value is (-1) * (global status byte)

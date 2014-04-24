@@ -207,11 +207,16 @@ static int spi_transfer_bytes(struct lpc_ssp* ssp, uint8_t* data_out, uint8_t* d
 /* Multiple words (4 to 16 bits) transfer function on the SPI bus.
  * The SSP fifo is used to leave as little time between frames as possible.
  * Parameters :
+ *  ssp_num : ssp device number. The SSP device number is not checked, thus a value above
+ *            the number of SSP devices present on the micro-controller may break your
+ *            programm. Double check the value of the ssp_num parameter. The check is made
+ *            on the call to ssp_master_on() or ssp_slave_on().
  *  size is the number of frames, each one having the configured data width (4 to 16 bits).
  *  data_out : data to be sent. Data will be read in the lower bits of the 16 bits values
  *             pointed by "data_out" for each frame. If NULL, then the content of data_in
  *             will be used.
  *  data_in : buffer for read data. If NULL, read data will be discarded.
+ * Returns the number of data words transfered or negative value on error.
  * As the SPI bus is full duplex, data can flow in both directions, but the clock is
  *   always provided by the master. The SPI clock cannont be activated without sending
  *   data, which means we must send data to the device when we want to read data from
@@ -323,7 +328,7 @@ static void ssp_set_pin_func(uint32_t ssp_num)
  *   handling highly depends on the device on the other end of the wires. Use a GPIO
  *   to activate the device's chip select (usually active low)
  */
-int ssp_master_on(uint8_t ssp_num, uint8_t frame_type, uint8_t data_width, uint32_t rate )
+int ssp_master_on(uint8_t ssp_num, uint8_t frame_type, uint8_t data_width, uint32_t rate)
 {
 	struct ssp_device* ssp = NULL;
 	struct lpc_ssp* ssp_regs = NULL;

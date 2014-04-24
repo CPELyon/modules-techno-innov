@@ -1,5 +1,5 @@
 /****************************************************************************
- *  lib/utils.c
+ *  lib/utils.h
  *
  * Copyright 2014 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -25,7 +25,6 @@
 /* Library routines                                                            */
 /***************************************************************************** */
 
-#include <stddef.h>
 #include <stdint.h>
 
 

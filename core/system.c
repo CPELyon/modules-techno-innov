@@ -199,10 +199,10 @@ void clock_config(uint32_t freq_sel)
 		switch (freq_sel) {
 			case 3: /* FREQ_SEL_36MHz */
 			case 2: /* FREQ_SEL_24MHz */
-				N = 2;
+				N = 2; /* P = 4 */
 				break;
 			default: /* 48MHz to 60 MHz */
-				N = 1;
+				N = 1; /* P = 2 */
 				break;
 		}
 		lpc_private.main_clock = (((freq_sel >> 3) & 0xFF) * 12 * 1000 * 1000);

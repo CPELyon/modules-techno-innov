@@ -397,7 +397,8 @@ void gpio_intr_toggle_config(struct pio* irq_gpio, struct pio* led)
  *  - timer : one of LPC_TIMER_32B0, LPC_TIMER_32B1, LPC_TIMER_16B0 or LPC_TIMER_16B1
  *  - channel is the timer channel corresponding to the pin.
  */
-void voltage_to_position_config(uint8_t timer, uint8_t channel)
+/* FIXME : add params for min pulse, max pulse and period */
+void servomotor_config(uint8_t timer, uint8_t channel)
 {
 	/* Timer configuration */
 	struct timer_config timer_conf = {
@@ -411,12 +412,14 @@ void voltage_to_position_config(uint8_t timer, uint8_t channel)
 	timer_start(timer);
 }
 
+/* FIXME : Use the min and max timings from config. */
+/* FIXME : Use more precise timings */
 /* Change the angle of the servo on the selected channel.
  *  - timer : the timer used for voltage_to_position_config()
  *  - channel : channel used for voltage_to_position_config()
  *  - angle : between 0 and 180 : servo angle in degrees.
  */
-void pwm_update(uint8_t timer, uint8_t channel, uint8_t angle)
+void servomotor_pwm_update(uint8_t timer, uint8_t channel, uint8_t angle)
 {
 	uint32_t val = 12500; /* minimum pulse width */
 	val += (angle * 250);

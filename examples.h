@@ -126,14 +126,14 @@ void gpio_intr_toggle_config(struct pio* irq_gpio, struct pio* led);
  * The channel for the timer channel must be configured in the appropriate timer pins
  *    declaration table.
  */
-void voltage_to_position_config(uint8_t timer, uint8_t channel);
+void servomotor_config(uint8_t timer, uint8_t channel);
 
 /* Change the angle of the servo on the selected channel.
  *  - timer : the timer used for voltage_to_position_config()
  *  - channel : channel used for voltage_to_position_config()
  *  - angle : between 0 and 180 : servo angle in degrees.
  */
-void pwm_update(uint8_t timer, uint8_t channel, uint8_t val);
+void servomotor_pwm_update(uint8_t timer, uint8_t channel, uint8_t angle);
 
 #endif /* EXAMPLE_H */
 

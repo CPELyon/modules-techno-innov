@@ -199,7 +199,7 @@ int main(void) {
 	gpio_intr_toggle_config(BUTTON_GPIO, LED_GPIO);
 
 	/* Servo motor PWM control test */
-	voltage_to_position_config(LPC_TIMER_32B0, PWM_CHAN);
+	servomotor_config(LPC_TIMER_32B0, PWM_CHAN);
 
 	RGB_Led_config(LPC_TIMER_32B1);
 
@@ -224,11 +224,11 @@ int main(void) {
 		val = (((val - 480) & ~(0x03)) / 3);
 		len = snprintf(buff, 50, "Angle: %d/180\r\n", val);
 		serial_write(1, buff, len);
-		pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
 		/* TH_display(); */
 		TMP36_display(LPC_ADC_NUM(0));
 		Thermocouple_Read(THERMOCOUPLE_SLAVE_SEL);
 		temp_display(0);
+		servomotor_pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
 	}
 	return 0;
 }

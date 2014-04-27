@@ -45,6 +45,13 @@ int adc_get_value(uint16_t * val, int channel);
  */
 void adc_start_burst_conversion(uint8_t channels);
 
+/* Start single burst conversions : triggers a single conversion for each of the
+ * selected channels.
+ * channels is a bit mask of requested channels.
+ * Use LPC_ADC_CHANNEL(x) (x = 0 .. 7) for channels selection.
+ */
+void adc_start_single_burst_conversion(uint8_t channels);
+
 /* Unsupported Yet */
 /* This should be used to configure conversion start on falling or rising edges of
  * some signals, or on timer for burst conversions.

@@ -340,10 +340,15 @@ int main(void) {
 #if SERVO
 		{
 			uint16_t val = 0;
+			/* Get the ADC value */
 			val = adc_display(LPC_ADC_NUM(1));
+			/* The following computation depends on the resistor and potentiometer used
+			 * to change the ADC input voltage */
 			val = (((val - 480) & ~(0x03)) / 3);
+			/* Display the value and new angle on UART 1 */
 			len = snprintf(buff, BUFF_LEN, "Angle: %d/180\r\n", val);
 			serial_write(1, buff, len);
+			/* And change the servo-motor command */
 			servomotor_pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
 		}
 #endif

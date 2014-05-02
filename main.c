@@ -177,7 +177,11 @@ void rs485_out(uint8_t c)
 }
 #endif
 
-/* Data sent on radio comes from the UART */
+#if CC1101
+/* Data sent on radio comes from the UART, put any data received from UART in
+ * cc_tx_buff and send when either '\r' or '\n' is received.
+ * This function is very simple and data received between cc_tx flag set and
+ * cc_ptr rewind to 0 may be lost. */
 static volatile uint32_t cc_tx = 0;
 static volatile uint8_t cc_tx_buff[RX_BUFF_LEN];
 static volatile uint8_t cc_ptr = 0;
@@ -192,16 +196,19 @@ void cc1101_test_rf_serial_link_tx(uint8_t c)
 		cc_tx = 1;
 	}
 }
-
+#endif
 
 /***************************************************************************** */
 int main(void) {
 	system_init();
 	uart_on(0, 115200, NULL);
+	uart_on(1, 115200, NULL);
 #if RS485
 	uart_on(0, 115200, rs485_out);
 #endif
+#if CC1101
 	uart_on(1, 115200, cc1101_test_rf_serial_link_tx);
+#endif
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
 	timer_on(LPC_TIMER_32B0, 0);
@@ -264,18 +271,27 @@ int main(void) {
 			rs485_ptr = 0;
 		}
 #endif
+#if CC1101
+		/* Any Data to send */
 		if (cc_tx) {
 			uint8_t cc_tx_data[RX_BUFF_LEN + 2];
 			uint8_t len = 0, tx_len = cc_ptr;
 			uint8_t val = 0;
 			int ret = 0;
+			/* Create a local copy */
 			memcpy((char*)&(cc_tx_data[2]), (char*)cc_tx_buff, tx_len);
+			/* "Free" the rx buffer as soon as possible */
+			cc_ptr = 0;
+			/* Prepare buffer for sending */
 			cc_tx_data[0] = tx_len + 1;
 			cc_tx_data[1] = 0; /* Broadcast */
-			serial_write(1, buff, len);
+			/* Send */
 			ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
+			/* Give some feedback on UART 1 */
 			len = snprintf(buff, BUFF_LEN, "Tx ret: %d\r\n", ret);
 			serial_write(1, buff, len);
+			/* Wait a short time for data to be sent ... */
+			/* FIXME : This should be done using the packet sent signal from CC1101 on GDO pin */
 			msleep(2);
 			do {
 				ret = cc1101_tx_fifo_state();
@@ -285,34 +301,42 @@ int main(void) {
 					break;
 				}
 			} while (ret != 0);
+			/* Get back to Receiver mode */
 			cc1101_enter_rx_mode();
+			/* And give some feedback again */
 			val = cc1101_read_status();
 			len = snprintf(buff, BUFF_LEN, "Status : 0x%02x, Sending : %d\r\n", val, tx_len);
 			serial_write(1, buff, len);
 			serial_write(1, (char*)&(cc_tx_data[2]), tx_len);
 			cc_tx = 0;
-			cc_ptr = 0;
 		}
+		/* Check for received data on RF link */
 		{
 			int ret = 0, rxlen = 0, addr = 0;
 			uint8_t status = 0;
+			/* Check for received packet (and get it if any) */
 			ret = cc1101_receive_packet((uint8_t*)buff, 50, &status);
-			cc1101_enter_rx_mode();
+			cc1101_enter_rx_mode(); /* We should already be in receive mode. */
+			/* >0 means we got something, <0 is an error, =0 is no packet received */
 			if (ret > 0) {
 				uint8_t val = 0;
 				len = ret;
+				/* Send packet on UART 1 */
 				serial_write(1, &buff[2], (len - 2));
 				serial_write(1, "\r\n", 2);
+				/* And also some feedback */
 				rxlen = buff[0];
 				addr = buff[1];
 				val = cc1101_get_signal_strength_indication();
 				len = snprintf(buff, BUFF_LEN, "Status: %d, link: %d, len: %d/%d, addr: %d\r\n", status, val, rxlen, len, addr);
 				serial_write(1, buff, len);
 			} else if (ret < 0) {
+				/* Send error on UART 1 */
 				len = snprintf(buff, BUFF_LEN, "Rx Error: %d, len: %d\r\n", -ret, (status & 0x7F));
 				serial_write(1, buff, len);
 			}
 		}
+#endif
 #if SERVO
 		{
 			uint16_t val = 0;

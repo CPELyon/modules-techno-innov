@@ -156,18 +156,18 @@ void test(uint32_t curent_tick)
 
 
 #define RX_BUFF_LEN  50
-static volatile uint32_t rx = 0;
-static volatile uint8_t rx_buff[RX_BUFF_LEN];
-static volatile uint8_t ptr = 0;
+static volatile uint32_t rs485_rx = 0;
+static volatile uint8_t rs485_rx_buff[RX_BUFF_LEN];
+static volatile uint8_t rs485_ptr = 0;
 void rs485_out(uint8_t c)
 {
-	if (ptr < RX_BUFF_LEN) {
-		rx_buff[ptr++] = c;
+	if (rs485_ptr < RX_BUFF_LEN) {
+		rs485_rx_buff[rs485_ptr++] = c;
 	} else {
-		ptr = 0;
+		rs485_ptr = 0;
 	}
 	if (c == '\n') {
-		rx = 1;
+		rs485_rx = 1;
 	}
 }
 
@@ -243,11 +243,14 @@ int main(void) {
 		char buff[BUFF_LEN];
 		int len = 0;
 		chenillard(25);
-		if (rx) {
-			/* Should copy data */
-			serial_write(1, (char*)rx_buff, ptr);
-			rx = 0;
-			ptr = 0;
+		if (rs485_rx) {
+			/* Fixme: We should copy data before sending. The use of the same buffer
+			 *    might lead to data corruption, but a copy is made by serial_write().
+			 * Fixme: serial_write() will not send more than 64 bytes at a time, we
+			 *    should check the return value ! */
+			serial_write(1, (char*)rs485_rx_buff, rs485_ptr);
+			rs485_rx = 0;
+			rs485_ptr = 0;
 		}
 		if (cc_tx) {
 			uint8_t cc_tx_data[RX_BUFF_LEN + 2];

@@ -156,6 +156,11 @@ void test(uint32_t curent_tick)
 
 
 #define RX_BUFF_LEN  50
+#if RS485
+/* Put any data received from RS485 UART in rs485_rx_buff and set rs485_rx flag
+ * when either '\r' or '\n' is received.
+ * This function is very simple and data received between rs485_rx flag set and
+ * rs485_ptr rewind to 0 may be lost. */
 static volatile uint32_t rs485_rx = 0;
 static volatile uint8_t rs485_rx_buff[RX_BUFF_LEN];
 static volatile uint8_t rs485_ptr = 0;
@@ -170,6 +175,7 @@ void rs485_out(uint8_t c)
 		rs485_rx = 1;
 	}
 }
+#endif
 
 /* Data sent on radio comes from the UART */
 static volatile uint32_t cc_tx = 0;
@@ -191,7 +197,10 @@ void cc1101_test_rf_serial_link_tx(uint8_t c)
 /***************************************************************************** */
 int main(void) {
 	system_init();
+	uart_on(0, 115200, NULL);
+#if RS485
 	uart_on(0, 115200, rs485_out);
+#endif
 	uart_on(1, 115200, cc1101_test_rf_serial_link_tx);
 	adc_on();
 	timer_on(LPC_TIMER_32B1, 0);
@@ -231,6 +240,7 @@ int main(void) {
 	RGB_Led_config(LPC_TIMER_32B1);
 
 #if RS485
+	/* Configure RS485 */
 	{
 		uint32_t rs485_ctrl = LPC_RS485_ENABLE;
 		rs485_ctrl |= LPC_RS485_DIR_PIN_RTS | LPC_RS485_AUTO_DIR_EN | LPC_RS485_DIR_CTRL_INV;
@@ -243,6 +253,7 @@ int main(void) {
 		char buff[BUFF_LEN];
 		int len = 0;
 		chenillard(25);
+#if RS485
 		if (rs485_rx) {
 			/* Fixme: We should copy data before sending. The use of the same buffer
 			 *    might lead to data corruption, but a copy is made by serial_write().
@@ -252,6 +263,7 @@ int main(void) {
 			rs485_rx = 0;
 			rs485_ptr = 0;
 		}
+#endif
 		if (cc_tx) {
 			uint8_t cc_tx_data[RX_BUFF_LEN + 2];
 			uint8_t len = 0, tx_len = cc_ptr;

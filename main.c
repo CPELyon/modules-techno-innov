@@ -240,9 +240,11 @@ int main(void) {
 	/* Servo motor PWM control test */
 	servomotor_config(LPC_TIMER_32B0, PWM_CHAN);
 
+#if CC1101
 	/* Radio */
 	cc1101_init(0, &(ssp0_pins[3]), &(ssp0_pins[2])); /* ssp_num, cs_pin, miso_pin */
 	cc1101_config();
+#endif
 
 	RGB_Led_config(LPC_TIMER_32B1);
 

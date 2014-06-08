@@ -33,6 +33,18 @@
 /***************************************************************************** */
 /* Status LED is the bicolors red/green led on the GPIO Demo module */
 
+/* This code configures the status led and enables it's use as a debug helper
+ * or visual watchdog.
+ * Calls to chenillard() with a value of about 25ms or more will trigger a
+ * defined sequence to be displayed by the status led.
+ * This sequence implies a big delay in your code (eleven times the value used
+ * as argument in ms.
+ *
+ * If you want to use this led in a more application friendly way (with no sleep)
+ * you must use a timer to call a "stepping" routine (either systick timer or any
+ * of the other four timers).
+ */
+
 /* The status LED is on GPIO Port 1, pin 4 (PIO1_4) and Port 1, pin 5 (PIO1_5) */
 #define LED_RED    5
 #define LED_GREEN  4

@@ -465,6 +465,10 @@ struct lpc_gpio
 
 #define LPC_GPIO_REGS(x)  ((struct lpc_gpio *) (LPC_AHB_BASE + (0x10000 * (x))))
 
+#define GPIO_DIR_IN 0
+#define GPIO_DIR_OUT 1
+
+
 
 /***************************************************************************** */
 /*                     Universal Asynchronous Receiver Transmitter             */

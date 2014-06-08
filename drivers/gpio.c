@@ -65,6 +65,28 @@ void gpio_off(void)
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO2, 0);
 }
 
+/*
+ * This function calls the config_pio() function for the gpio with the given
+ * mode, configures the direction of the pin and sets the initial state.
+ */
+void config_gpio(struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini_val)
+{
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio->port);
+
+	/* Configure as GPIO */
+	config_pio(gpio, mode);
+
+	if (dir == GPIO_DIR_IN) {
+		gpio_port->data_dir &= ~(1 << gpio->pin);
+	} else {
+		gpio_port->data_dir |= (1 << gpio->pin);
+	}
+	if (ini_val == 0) {
+		gpio_port->clear = (1 << gpio->pin);
+	} else {
+		gpio_port->set = (1 << gpio->pin);
+	}
+}
 
 /***************************************************************************** */
 /* GPIO Interrupts Callbacks */

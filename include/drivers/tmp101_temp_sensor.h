@@ -51,7 +51,7 @@
 /* Check the sensor presence, return 1 if found
  * This is a basic check, it could be anything with the same address ...
  */
-int probe_sensor(void);
+int tmp101_probe_sensor(void);
 
 
 /* Convert raw temperature data (expressed as signed value of 16 times the
@@ -59,7 +59,7 @@ int probe_sensor(void);
  * into a decimal interger value of ten times the actual temperature.
  * The value returned is thus in tenth of degrees centigrade.
  */
-int convert_to_deci_degrees(uint16_t raw);
+int tmp101_convert_to_deci_degrees(uint16_t raw);
 
 
 /* Temp Read
@@ -75,7 +75,7 @@ int convert_to_deci_degrees(uint16_t raw);
  *   -EREMOTEIO : Device did not acknowledge : Any device present ?
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int temp_read(uint16_t* raw, int* deci_degrees);
+int tmp101_sensor_read(uint16_t* raw, int* deci_degrees);
 
 
 /* Sensor config
@@ -93,10 +93,10 @@ int temp_read(uint16_t* raw, int* deci_degrees);
  *   -EREMOTEIO : Device did not acknowledge : Any device present ?
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int sensor_config(uint32_t resolution);
+int tmp101_sensor_config(uint32_t resolution);
 
 /* Start a conversion when the sensor is in shutdown mode. */
-int sensor_start_conversion(void);
+int tmp101_sensor_start_conversion(void);
 
 
 #endif /* DRIVERS_TEMP_H */

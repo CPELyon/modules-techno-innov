@@ -31,7 +31,6 @@
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
 #include "drivers/status_led.h"
-#include "drivers/temp.h"
 #include "drivers/adc.h"
 #include "drivers/timers.h"
 #include "drivers/ssp.h"

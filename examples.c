@@ -35,7 +35,7 @@
 #include "drivers/i2c.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
-#include "drivers/temp.h"
+#include "drivers/tmp101_temp_sensor.h"
 #include "drivers/adc.h"
 #include "drivers/timers.h"
 #include "drivers/ssp.h"
@@ -60,7 +60,7 @@ void temp_config(int uart_num)
 	config_pio(&temp_alert, LPC_IO_MODE_PULL_UP);
 
 	/* Temp sensor */
-	ret = sensor_config(TMP_RES_ELEVEN_BITS);
+	ret = tmp101_sensor_config(TMP_RES_ELEVEN_BITS);
 	if (ret != 0) {
 		serial_write(uart_num, "Temp config error\r\n", 19);
 	}
@@ -73,9 +73,9 @@ void temp_display(int uart_num)
 	int deci_degrees = 0;
 	int len = 0;
 
-	sensor_start_conversion();
+	tmp101_sensor_start_conversion();
 	msleep(250); /* Wait for the end of the conversion : 40ms */
-	len = temp_read(&raw, &deci_degrees);
+	len = tmp101_sensor_read(&raw, &deci_degrees);
 	if (len != 0) {
 		serial_write(uart_num, "Temp read error\r\n", 19);
 	} else {

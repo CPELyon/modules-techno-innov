@@ -26,7 +26,7 @@
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "drivers/i2c.h"
-#include "drivers/temp.h"
+#include "drivers/tmp101_temp_sensor.h"
 
 
 /***************************************************************************** */
@@ -70,7 +70,7 @@ static int last_accessed_register = 0;
 /* Check the sensor presence, return 1 if sensor was found.
  * This is a basic check, it could be anything with the same address ...
  */
-int probe_sensor(void)
+int tmp101_probe_sensor(void)
 {
 	static int ret = -1;
 	char cmd_buf[1] = { (TMP101_ADDR | I2C_READ_BIT), };
@@ -87,7 +87,7 @@ int probe_sensor(void)
  * into a decimal integer value of ten times the actual temperature.
  * The value returned is thus in tenth of degrees centigrade.
  */
-int convert_to_deci_degrees(uint16_t raw)
+int tmp101_convert_to_deci_degrees(uint16_t raw)
 {
 	return (((int16_t)raw * 10) >> 8);
 }
@@ -105,14 +105,14 @@ int convert_to_deci_degrees(uint16_t raw)
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CMD_BUF_SIZE 3
-int temp_read(uint16_t* raw, int* deci_degrees)
+int tmp101_temp_read(uint16_t* raw, int* deci_degrees)
 {
 	int ret = 0;
 	uint16_t temp = 0;
 	char cmd_buf[CMD_BUF_SIZE] = { TMP101_ADDR, TMP_REG_TEMPERATURE, (TMP101_ADDR | I2C_READ_BIT), };
 	char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
 
-	if (probe_sensor() != 1) {
+	if (tmp101_probe_sensor() != 1) {
 		return -ENODEV;
 	}
 
@@ -130,7 +130,7 @@ int temp_read(uint16_t* raw, int* deci_degrees)
 			*raw = byte_swap_16(temp);
 		}
 		if (deci_degrees != NULL) {
-			*deci_degrees = convert_to_deci_degrees(byte_swap_16(temp));
+			*deci_degrees = tmp101_convert_to_deci_degrees(byte_swap_16(temp));
 		}
 		return 0;
 	}
@@ -155,12 +155,12 @@ int temp_read(uint16_t* raw, int* deci_degrees)
  */
 static uint8_t actual_config = 0;
 #define CONF_BUF_SIZE 4
-int sensor_config(uint32_t resolution)
+int tmp101_sensor_config(uint32_t resolution)
 {
 	int ret = 0;
 	char cmd[CONF_BUF_SIZE] = { TMP101_ADDR, TMP_REG_CONFIG, };
 
-	if (probe_sensor() != 1) {
+	if (tmp101_probe_sensor() != 1) {
 		return -ENODEV;
 	}
 
@@ -177,12 +177,12 @@ int sensor_config(uint32_t resolution)
 }
 
 /* Start a conversion when the sensor is in shutdown mode. */
-int sensor_start_conversion(void)
+int tmp101_sensor_start_conversion(void)
 {
 	int ret = 0;
 	char cmd[CONF_BUF_SIZE] = { TMP101_ADDR, TMP_REG_CONFIG, };
 
-	if (probe_sensor() != 1) {
+	if (tmp101_probe_sensor() != 1) {
 		return -ENODEV;
 	}
 

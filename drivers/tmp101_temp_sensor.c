@@ -105,7 +105,7 @@ int tmp101_convert_to_deci_degrees(uint16_t raw)
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CMD_BUF_SIZE 3
-int tmp101_temp_read(uint16_t* raw, int* deci_degrees)
+int tmp101_sensor_read(uint16_t* raw, int* deci_degrees)
 {
 	int ret = 0;
 	uint16_t temp = 0;

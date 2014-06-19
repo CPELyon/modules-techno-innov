@@ -17,3 +17,5 @@
 *.zip
 *.svg
 *.dump
+tags
+mod_gpio

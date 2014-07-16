@@ -7,12 +7,9 @@ ARCH = armv6-m
 
 CROSS_COMPILE = arm-linux-gnueabi-
 CC = $(CROSS_COMPILE)gcc
-
-FOPTS = -fmessage-length=0 -ffunction-sections -fdata-sections \
-		-static -fno-builtin
+FOPTS = -fno-builtin -ffunction-sections -fdata-sections
 CFLAGS = -Wall -O2 -mthumb -mcpu=$(CPU) $(FOPTS)
-#CFLAGS = -Wall -O2 -mthumb -march=$(ARCH) $(FOPTS)
-LINKOPTS = -nostartfiles -Wl,--gc-sections -Wl,--build-id=none \
+LINKOPTS = -static -nostartfiles -Wl,--gc-sections -Wl,--build-id=none \
 		   -Wl,-Map=lpc_map_$(LPC).map -Tlpc_link_$(LPC).ld
 
 

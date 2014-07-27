@@ -1,5 +1,5 @@
 /*
- * C linker script file for LPC1114
+ * C linker script file for LPC1224
  */
 
 MEMORY

@@ -95,17 +95,25 @@ static volatile uint32_t* pio_regs_handles_port2[PORT2_NB_PINS] = {
 	&(LPC_IO_CONTROL->pio2_15),
 };
 
+/* Simple copy function. */
 void pio_copy(struct pio* dst, struct pio* src)
 {
+	if ((dst == NULL) || (src == NULL)) {
+		return;
+	}
 	dst->port = src->port;
 	dst->pin = src->pin;
 	dst->alt_setting = src->alt_setting;
 }
 
+/* Configure the pin in the requested function and mode. */
 void config_pio(struct pio* pp, uint32_t mode)
 {
 	volatile uint32_t* handle = NULL;
 
+	if (pp == NULL) {
+		return;
+	}
 	switch (pp->port) {
 		case 0:
 			if (pp->pin >= PORT0_NB_PINS)

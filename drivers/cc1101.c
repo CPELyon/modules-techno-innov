@@ -404,7 +404,12 @@ static uint8_t paTable[] = {0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 /* Configure pins, reset the CC1101, and put the CC1101 chip in idle state */
 void cc1101_init(uint8_t ssp_num, struct pio* cs_pin, struct pio* miso_pin)
 {
-	struct lpc_gpio* gpio = LPC_GPIO_REGS(cc1101.cs_pin.port);;
+	struct lpc_gpio* gpio = NULL;
+
+	if ((cs_pin == NULL) || (miso_pin == NULL)) {
+		return;
+	}
+	gpio = LPC_GPIO_REGS(cs_pin->port);
 
 	cc1101.spi_num = ssp_num;
 	/* Copy CS pin info and configure pin as GPIO output */

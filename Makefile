@@ -14,7 +14,7 @@ LINKOPTS = -static -nostartfiles -Wl,--gc-sections -Wl,--build-id=none \
 
 
 .PHONY: all
-all: $(NAME)
+all: $(NAME).bin
 
 prog: CFLAGS += -DEEPROM_WRITE
 prog: clean all
@@ -26,13 +26,15 @@ OBJDIR = objs
 SRC = $(shell find . -name \*.c)
 OBJS = ${SRC:%.c=${OBJDIR}/%.o}
 
+$(NAME).bin: $(NAME)
+	@echo "Creating image : [32m$@[37m"
+	@$(CROSS_COMPILE)objcopy -R .stack -R .bss -O binary $^ $@
+	@ls -l $@
+	@echo Done.
+
 $(NAME): $(OBJS)
 	@echo "Linking ..."
 	@$(CC) $(CFLAGS) $(LINKOPTS) $(OBJS) -o $@ -I$(INCLUDES)
-	@echo "Creating image : [32m$@.bin[37m"
-	@$(CROSS_COMPILE)objcopy -R .stack -R .bss -O binary $@ $@.bin
-	@ls -l $@.bin
-	@echo Done.
 
 ${OBJDIR}/%.o: %.c
 	@mkdir -p $(dir $@)

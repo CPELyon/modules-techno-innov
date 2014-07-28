@@ -96,7 +96,7 @@ void system_brown_out_detection_config(uint32_t level);
  */
 void clock_config(uint32_t freq_sel);
 
-/* return current main clock */
+/* return current main clock in HZ */
 uint32_t get_main_clock(void);
 
 /* IO config clock */

@@ -200,10 +200,18 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf)
 
 
 /* Setup timer pins to be used as match or capture pin  */
-extern struct pio timer0_pins[];
-extern struct pio timer1_pins[];
-extern struct pio timer2_pins[];
-extern struct pio timer3_pins[];
+struct pio timer0_pins[] __attribute__ ((weak)) = {
+	ARRAY_LAST_PIN,
+};
+struct pio timer1_pins[] __attribute__ ((weak)) = {
+	ARRAY_LAST_PIN,
+};
+struct pio timer2_pins[] __attribute__ ((weak)) = {
+	ARRAY_LAST_PIN,
+};
+struct pio timer3_pins[] __attribute__ ((weak)) = {
+	ARRAY_LAST_PIN,
+};
 
 #define LPC_TIMER_PIN_CONFIG   (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT)
 static void timer_pins_setup(uint32_t timer_num)

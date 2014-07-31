@@ -148,7 +148,9 @@ void adc_set_resolution(int bits)
 
 /***************************************************************************** */
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
-extern struct pio adc_pins[];
+struct pio adc_pins[] __attribute__ ((weak)) = {
+	ARRAY_LAST_PIN,
+};
 
 static void set_adc_pins(void)
 {

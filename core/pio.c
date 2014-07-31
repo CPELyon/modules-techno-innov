@@ -22,6 +22,7 @@
 /*                GPIOs                                                        */
 /***************************************************************************** */
 
+/*   Public access to Pins setup   */
 
 
 #include <stdint.h>
@@ -31,8 +32,8 @@
 #include "core/pio.h"
 
 
+
 /***************************************************************************** */
-/*   Public access to GPIO setup   */
 static volatile uint32_t* pio_regs_handles_port0[PORT0_NB_PINS] = {
 	&(LPC_IO_CONTROL->pio0_0),
 	&(LPC_IO_CONTROL->pio0_1),

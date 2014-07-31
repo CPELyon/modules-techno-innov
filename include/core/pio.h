@@ -21,6 +21,11 @@
 #ifndef CORE_PIO_H
 #define CORE_PIO_H
 
+/* The "PIO" module gives access to the configuration of all the pins of the
+ * micro-controller, whatever the function of the pin.
+ * It has nothing related to GPIO function of the pins.
+ */
+
 #include <stdint.h>
 
 struct pio {

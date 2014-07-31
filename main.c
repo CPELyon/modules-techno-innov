@@ -50,9 +50,11 @@
 
 /***************************************************************************** */
 /* Pins configuration */
-struct pio clkout_pin[] = {
-	ARRAY_LAST_PIN,
-};
+/* List of available pin blocks :
+ *  clkout_pin, uart0_pins, uart1_pins, i2c0_pins, ssp0_pins,
+ *  timer0_pins, timer1_pins, timer2_pins, timer3_pins,
+ *  adc_pins, gpio_pins
+ */
 struct pio uart0_pins[] = {
 	LPC_UART0_RX_PIO_0_1,
 	LPC_UART0_TX_PIO_0_2,
@@ -76,12 +78,6 @@ struct pio ssp0_pins[] = {
 	LPC_SSP0_MISO_PIO_0_16,
 	LPC_GPIO_0_15, /* Use the GPIO config for the pin when SPI is configured as master */
 /*	LPC_SSP0_SSEL_PIO_0_15, */
-	ARRAY_LAST_PIN,
-};
-struct pio timer0_pins[] = { /* TIMER_16B0 */
-	ARRAY_LAST_PIN,
-};
-struct pio timer1_pins[] = { /* TIMER_16B1 */
 	ARRAY_LAST_PIN,
 };
 struct pio timer2_pins[] = { /* TIMER_32B0 */

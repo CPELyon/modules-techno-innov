@@ -454,7 +454,10 @@ static void i2c_clock_on(uint32_t i2c_clk_freq)
 }
 
 /* I2C Pins configuration */
-extern struct pio i2c0_pins[];
+struct pio i2c0_pins[] __attribute__ ((weak)) = {
+	ARRAY_LAST_PIN,
+};
+
 
 static void set_i2c_pins(void)
 {

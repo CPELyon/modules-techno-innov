@@ -305,7 +305,9 @@ void ssp_clk_update(void)
 }
 
 /* Configure all SPI pins. */
-extern struct pio ssp0_pins[];
+struct pio ssp0_pins[] __attribute__ ((weak)) = {
+	ARRAY_LAST_PIN,
+};
 static void ssp_set_pin_func(uint32_t ssp_num)
 {
 	int i = 0;

@@ -28,9 +28,6 @@
  * @dest: Where to copy to
  * @src: Where to copy from
  * @count: The size of the area.
- *
- * You should not use this function to access IO space, use memcpy_toio()
- * or memcpy_fromio() instead.
  */
 void* memcpy(void* dest, const void* src, size_t count)
 {
@@ -47,7 +44,7 @@ void* memcpy(void* dest, const void* src, size_t count)
 			count -= sizeof(*dl);
 		}
 	}
-	/* copy the reset one byte at a time */
+	/* copy the rest one byte at a time */
 	d8 = (char *)dl;
 	s8 = (char *)sl;
 	while (count--) {
@@ -61,8 +58,6 @@ void* memcpy(void* dest, const void* src, size_t count)
  * @s: Pointer to the start of the area.
  * @c: The byte to fill the area with
  * @count: The size of the area.
- *
- * Do not use memset() to access IO space, use memset_io() instead.
  */
 void* memset(void* s, int c, size_t count)
 {

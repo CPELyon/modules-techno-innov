@@ -205,8 +205,8 @@ int main(void) {
 	uart_on(1, 115200, cc1101_test_rf_serial_link_tx);
 #endif
 	adc_on();
-	timer_on(LPC_TIMER_32B1, 0);
-	timer_on(LPC_TIMER_32B0, 0);
+	timer_on(LPC_TIMER_32B1, 0, NULL);
+	timer_on(LPC_TIMER_32B0, 0, NULL);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 
 	add_systick_callback(test, 200); /* callback, ms */

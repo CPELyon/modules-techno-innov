@@ -39,6 +39,7 @@ struct timer_device
  	struct lpc_timer* regs;
 	uint32_t power_bit;
 	uint32_t irq;
+	void (*callback)(uint8_t); /* Possible RX callback */
 };
 static struct timer_device timer_devices[NUM_TIMERS] = {
 	{ LPC_TMR16B0, LPC_SYS_ABH_CLK_CTRL_CT16B0, TIMER0_IRQ }, 
@@ -49,15 +50,34 @@ static struct timer_device timer_devices[NUM_TIMERS] = {
 
 
 
-/* FIXME : Add callbacks and implement all handlers ! */
 /* Handlers */
-void TIMER_0_Handler(void)
+void TIMER_Handler(struct timer_device* timer)
 {
-	struct lpc_timer* timer = timer_devices[0].regs;
-	uint32_t intr_flags = timer->int_reg;
+	struct lpc_timer* regs = timer->regs;
+	uint32_t intr_flags = regs->int_reg; /* Backup the flags */
 
 	/* Clear the interrupt */
-	timer->int_reg = 0xFF;
+	regs->int_reg = 0xFF;
+	/* And call the user routine if one has been registered */
+	if (timer->callback != NULL) {
+		timer->callback(intr_flags);
+	}
+}
+void TIMER_0_Handler(void)
+{
+	TIMER_Handler(&timer_devices[0]);
+}
+void TIMER_1_Handler(void)
+{
+	TIMER_Handler(&timer_devices[1]);
+}
+void TIMER_2_Handler(void)
+{
+	TIMER_Handler(&timer_devices[2]);
+}
+void TIMER_3_Handler(void)
+{
+	TIMER_Handler(&timer_devices[3]);
 }
 
 
@@ -245,7 +265,7 @@ static void timer_pins_setup(uint32_t timer_num)
  *   the prescaler value.
  * Set clkrate to 0 to disable the prescaler.
  */
-void timer_on(uint32_t timer_num, uint32_t clkrate)
+void timer_on(uint32_t timer_num, uint32_t clkrate, void (*callback)(uint8_t))
 {
 	struct timer_device* timer = NULL;
 	uint32_t prescale; /* The clock divider for the counter */
@@ -259,6 +279,9 @@ void timer_on(uint32_t timer_num, uint32_t clkrate)
 	subsystem_power(timer->power_bit, 1);
 	/* Reset counter on next PCLK positive edge, and disable counter */
 	timer->regs->timer_ctrl = LPC_TIMER_COUNTER_RESET;
+
+	/* Store the callback, OK even if none given */
+	timer->callback = callback;
 
 	/* Set the prescaler value */
 	if (clkrate == 0) {

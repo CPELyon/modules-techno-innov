@@ -106,8 +106,11 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf);
  *   for your application as it will be used to divide the main clock to get
  *   the prescaler value.
  * Set clkrate to 0 to disable the prescaler.
+ * calback is used for all the possible timer interrupts (activated using the
+ *   config field in timer_config struct upon timer setup)
+ *   The interrupt flags are passed to the interrupt routine as argument.
  */
-void timer_on(uint32_t timer_num, uint32_t clkrate);
+void timer_on(uint32_t timer_num, uint32_t clkrate, void (*callback)(uint8_t));
 
 /* Removes the main clock from the selected timer block */
 void timer_off(uint32_t timer_num);

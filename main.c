@@ -104,7 +104,7 @@ struct pio gpio_pins[] = {
 	LPC_GPIO_0_6, /* Used for DTH11 */
 	LPC_GPIO_0_12, /* ISP Used as button */
 	LPC_GPIO_0_4, /* Led toggle on ISP button press */
-	LPC_GPIO_0_19, /* Used as SPI chip select for Thermocouple reading */
+	LPC_GPIO_0_18, /* Used as SPI chip select for Thermocouple reading */
 	ARRAY_LAST_PIN,
 };
 #define DTH11_GPIO  (&gpio_pins[1])

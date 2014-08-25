@@ -427,3 +427,30 @@ void servomotor_pwm_update(uint8_t timer, uint8_t channel, uint8_t angle)
 	timer_set_match(timer, channel, val);
 }
 
+/***************************************************************************** */
+/* Simple example of callback setup on timer overflow */
+static struct pio timer_toggle_gpio;
+void timer_toggle_output(uint8_t flags)
+{
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(timer_toggle_gpio.port);
+	gpio_port_regs->toggle |= (1 << timer_toggle_gpio.pin);
+}
+
+void timer_toggle_output_config(uint8_t timer, struct pio* gpio)
+{
+	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(gpio->port);
+	/* Timer configuration */
+	struct timer_config timer_conf = {
+		.mode = LPC_TIMER_MODE_MATCH,
+		.config = { (LPC_TIMER_INTERRUPT_ON_MATCH | LPC_TIMER_RESET_ON_MATCH), 0, 0, 0 },
+		.match = { 9600, 0, 0, 0 },
+	};
+	timer_on(LPC_TIMER_16B0, 0, timer_toggle_output);
+	timer_setup(timer, &timer_conf);
+
+	pio_copy(&timer_toggle_gpio, gpio);
+	gpio_port_regs->data_dir |= (1 << gpio->pin);
+
+	/* Start the timer */
+	timer_start(timer);
+}

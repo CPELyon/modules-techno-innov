@@ -135,5 +135,11 @@ void servomotor_config(uint8_t timer, uint8_t channel);
  */
 void servomotor_pwm_update(uint8_t timer, uint8_t channel, uint8_t angle);
 
+
+
+/***************************************************************************** */
+/* Simple example of callback setup on timer overflow */
+void timer_toggle_output_config(uint8_t timer, struct pio* gpio);
+
 #endif /* EXAMPLE_H */
 

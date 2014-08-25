@@ -105,12 +105,14 @@ struct pio gpio_pins[] = {
 	LPC_GPIO_0_12, /* ISP Used as button */
 	LPC_GPIO_0_4, /* Led toggle on ISP button press */
 	LPC_GPIO_0_18, /* Used as SPI chip select for Thermocouple reading */
+	LPC_GPIO_0_3, /* Led toggle for timer interrupt test */
 	ARRAY_LAST_PIN,
 };
 #define DTH11_GPIO  (&gpio_pins[1])
 #define BUTTON_GPIO (&gpio_pins[2])
 #define LED_GPIO    (&gpio_pins[3])
 #define THERMOCOUPLE_SLAVE_SEL   (&gpio_pins[4])
+#define TIMER_TOGGLE_GPIO   (&gpio_pins[5])
 
 void system_init()
 {
@@ -224,6 +226,9 @@ int main(void) {
 #else
 	module_desc_dump(1);
 #endif
+
+	/* Configure and start the timer interrupt test (toggles pin 0.3) */
+	timer_toggle_output_config(LPC_TIMER_16B0, TIMER_TOGGLE_GPIO);
 
 	/* Configure the DHT11 and the onboard temp sensor */
 	dth11_config(DTH11_GPIO);

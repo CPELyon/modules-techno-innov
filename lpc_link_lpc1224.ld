@@ -6,11 +6,13 @@ MEMORY
 {
 	sram (rwx) : ORIGIN = 0x10000000, LENGTH = 4k
 	flash (rx) : ORIGIN = 0x00000000, LENGTH = 32k
+	info  (rx) : ORIGIN = 0x00040200, LENGTH = 1536
 }
 
 _sram_size = 4k;
 _sram_base = 0x10000000;
-_end_stack = (_sram_base + _sram_size);
+/* Leave 32 bytes for IAP functions, see UM10441 Chapter 20, section 20.8 */
+_end_stack = (_sram_base + _sram_size - 32);
 
 ENTRY(Reset_Handler)
 
@@ -49,6 +51,14 @@ SECTIONS {
 		_end_bss = .;
 	} >sram
 
+	. = ALIGN(4);
+
+	.user_information_block :
+	{
+		_start_info = .;
+		*(.user_information_block*)
+		_end_info = .;
+	} >info
 
 	. = ALIGN(4);
 }

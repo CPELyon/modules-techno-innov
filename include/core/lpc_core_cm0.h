@@ -148,21 +148,21 @@ static inline void set_fault_mask(uint32_t mask)
 static inline uint32_t double_byte_swap_16(volatile uint32_t value)
 {
 	uint32_t result = 0;
-	__asm volatile ("rev16 %0, %1" : "=r" (result) : "r" (value));
+	__asm volatile ("rev16 %0, %1" : "=l" (result) : "l" (value));
 	return result;
 }
 /* Change endianness of a 16-bit halfword */
 static inline uint32_t byte_swap_16(volatile uint16_t value)
 {
 	uint32_t result = 0;
-	__asm volatile ("rev16 %0, %1" : "=r" (result) : "r" (value));
+	__asm volatile ("rev16 %0, %1" : "=l" (result) : "l" (value));
 	return (result & 0xFFFF);
 }
 /* Change endianness of a 32-bit word */
 static inline uint32_t byte_swap_32(volatile uint32_t value)
 {
 	uint32_t result = 0;
-	__asm volatile ("rev %0, %1" : "=r" (result) : "r" (value));
+	__asm volatile ("rev %0, %1" : "=l" (result) : "l" (value));
 	return result;
 }
 

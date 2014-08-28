@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
+#include "core/user_information_block.h"
+#include "core/iap.h"
 #include "core/system.h"
 #include "lib/stdio.h"
 #include "drivers/i2c.h"
@@ -254,6 +256,50 @@ int main(void) {
 		uint32_t rs485_ctrl = LPC_RS485_ENABLE;
 		rs485_ctrl |= LPC_RS485_DIR_PIN_RTS | LPC_RS485_AUTO_DIR_EN | LPC_RS485_DIR_CTRL_INV;
 		uart_set_mode_rs485(0, rs485_ctrl, 0, 1);
+	}
+#endif
+
+#define USER_INFO 1
+#if USER_INFO
+#define USER_FLASH_ADDR
+	/* Simple demonstration of user information block access and IAP routines */
+	/* The sleep() are only here to let the user see the status leds. */
+	{
+		struct user_info* info = (struct user_info*)get_user_info();
+		char src[] __attribute__ ((aligned (4))) = "GPIO Demo Code for IAP";
+		char buff[50];
+		int len = 0, ret = 0;
+
+		/* Access to User flash information block */
+		len = snprintf(buff, 50, "User info : %s\r\n", info->name);
+		serial_write(1, buff, len);
+		status_led(both);
+		msleep(1000);
+		status_led(none);
+		/* Get and display part ID */
+		ret = iap_read_part_id();
+		len = snprintf(buff, 50, "Part id : 0x%x\r\n", ret);
+		serial_write(1, buff, len);
+
+		/* Erase the first user flash information page and write our string at the begining of the page */
+		ret = iap_erase_info_page(0, 0);
+		if (ret == 0) {
+			status_led(both);
+			msleep(1000);
+
+			ret = iap_copy_ram_to_flash((uint32_t)info, (uint32_t)src, sizeof(struct user_info));
+			if (ret == 0) {
+				status_led(green_only);
+				serial_write(1, "User flash write OK\r\n", 21);
+			} else {
+				status_led(red_only);
+				serial_write(1, "User flash write error\r\n", 24);
+			}
+		} else {
+			status_led(red_only);
+			serial_write(1, "User flash erase error\r\n", 24);
+		}
+		msleep(1000);
 	}
 #endif
 

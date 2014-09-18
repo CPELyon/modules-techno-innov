@@ -58,10 +58,6 @@ void adc_start_single_burst_conversion(uint8_t channels);
  */
 void adc_prepare_conversion_on_event(void);
 
-/* Change the ADC resolution. */
-/* Note : On LPC1224 there is no possibility to change the ADC resolution */
-void adc_set_resolution(int bits);
-
 
 /***************************************************************************** */
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */

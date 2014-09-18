@@ -137,13 +137,6 @@ void adc_prepare_conversion_on_event(void)
 	/* Unsupported Yet */
 }
 
-/* Change the ADC resolution. */
-void adc_set_resolution(int bits)
-{
-	/* On LPC1224 there is no possibility to change the ADC resolution */
-	return;
-}
-
 
 
 /***************************************************************************** */

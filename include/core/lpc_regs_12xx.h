@@ -745,16 +745,6 @@ struct lpc_adc
 #define LPC_ADC_CHANNEL_MASK (0xFF << 0)
 #define LPC_ADC_CHANNEL(x)  (0x01 << ((x) & 0x07))
 #define LPC_ADC_BURST     (0x01 << 16)
-/* These are unused for LPC1224 */
-#define LPC_ADC_10BITS  (0x00 << 17)
-#define LPC_ADC_9BITS   (0x01 << 17)
-#define LPC_ADC_8BITS   (0x02 << 17)
-#define LPC_ADC_7BITS   (0x03 << 17)
-#define LPC_ADC_6BITS   (0x04 << 17)
-#define LPC_ADC_5BITS   (0x05 << 17)
-#define LPC_ADC_4BITS   (0x06 << 17)
-#define LPC_ADC_3BITS   (0x07 << 17)
-#define LPC_ADC_BITS_MASK  (0x07 << 17)
 
 #define LPC_ADC_SINGLE_BURST  (0x01 << 20)
 

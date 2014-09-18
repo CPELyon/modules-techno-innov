@@ -123,6 +123,7 @@ int tmp101_sensor_read(uint16_t* raw, int* deci_degrees)
 	} else {
 		/* Send (write) temperature register address to TMP101 internal pointer */
 		ret = i2c_read(cmd_buf, CMD_BUF_SIZE, ctrl_buf, (char*)&temp, 2);
+		last_accessed_register = TMP_REG_TEMPERATURE;
 	}
 
 	if (ret == 2) {

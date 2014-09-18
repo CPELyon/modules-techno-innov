@@ -104,26 +104,8 @@ void adc_start_burst_conversion(uint8_t channels)
 	uint32_t reg_val = 0;
 
 	/* Set conversion channel bits and burst mode */
-	reg_val = ((adc->ctrl & ~LPC_ADC_CHANNEL_MASK) | channels | LPC_ADC_BURST);
-	/* Clear single burst flag */
-	reg_val &= ~(LPC_ADC_SINGLE_BURST);
-
-	adc->ctrl = (reg_val & LPC_ADC_CTRL_MASK);
-}
-
-/* Start single burst conversions : triggers a single conversion for each of the
- * selected channels.
- * channels is a bit mask of requested channels.
- * Use LPC_ADC_CHANNEL(x) (x = 0 .. 7) for channels selection.
- */
-void adc_start_single_burst_conversion(uint8_t channels)
-{
-	struct lpc_adc* adc = LPC_ADC;
-	uint32_t reg_val = 0;
-
-	/* Set conversion channel bits and burst mode */
 	reg_val = ((adc->ctrl & ~LPC_ADC_CHANNEL_MASK) | channels);
-	reg_val |= (LPC_ADC_BURST | LPC_ADC_SINGLE_BURST);
+	reg_val |= LPC_ADC_BURST;
 	adc->ctrl = (reg_val & LPC_ADC_CTRL_MASK);
 }
 

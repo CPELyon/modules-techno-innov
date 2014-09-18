@@ -746,8 +746,6 @@ struct lpc_adc
 #define LPC_ADC_CHANNEL(x)  (0x01 << ((x) & 0x07))
 #define LPC_ADC_BURST     (0x01 << 16)
 
-#define LPC_ADC_SINGLE_BURST  (0x01 << 20)
-
 #define LPC_ADC_START_CONV_NOW  (0x01 << 24)
 #define LPC_ADC_START_CONV_MASK (0x07 << 24)
 

@@ -327,11 +327,33 @@ int cc1101_receive_packet(uint8_t* buffer, uint8_t size, uint8_t* status)
 /***************************************************************************** */
 /* CC1101 Initialisation */
 
+
+/* Change the CC1101 address
+ * Only packets addressed to the specified address (or broadcasted) will be
+*    received.
+ * Adresses 0x00 and 0xFF are broadcast
+ * This function places the CC1101 chip in idle state.
+ */
+void cc1101_set_address(uint8_t address)
+{
+	cc1101_send_cmd(CC1101_CMD(state_idle));
+	cc1101_write_reg(CC1101_REGS(device_addr), address);
+}
+
+/* Change a configuration byte.
+ * This function places the CC1101 chip in idle state.
+ */
+void cc1101_set_config(uint8_t byte_addr, uint8_t value)
+{
+	cc1101_send_cmd(CC1101_CMD(state_idle));
+	cc1101_write_reg(byte_addr, value);
+}
+
 /* Table of initial settings, in the form of address / value pairs. */
 static uint8_t rf_init_settings[] = {
 	CC1101_REGS(gdo_config[0]), 0x2E, /* GDO_2 - High impedance (Disabled) */
 	CC1101_REGS(gdo_config[1]), 0x29, /* GDO_1 - Chip ready | Low drive strength */
-	CC1101_REGS(gdo_config[2]), 0x06, /* GDO_0 - Packet sent/received | Disable temp sensor */
+	CC1101_REGS(gdo_config[2]), 0x07, /* GDO_0 - Assert on CRC OK | Disable temp sensor */
 
 	/* RX FIFO and TX FIFO thresholds - 0x03 - FIFOTHR */
 	CC1101_REGS(fifo_thresholds), 0x07, /* Bytes in TX FIFO:33 - Bytes in RX FIFO:32 */

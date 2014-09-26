@@ -246,6 +246,19 @@ int cc1101_receive_packet(uint8_t* buffer, uint8_t size, uint8_t* status);
 /***************************************************************************** */
 /* CC1101 Initialisation */
 
+/* Change the CC1101 address
+ * Only packets addressed to the specified address (or broadcasted) will be
+*    received.
+ * Adresses 0x00 and 0xFF are broadcast
+ * This function places the CC1101 chip in idle state.
+ */
+void cc1101_set_address(uint8_t address);
+
+/* Change a configuration byte.
+ * This function places the CC1101 chip in idle state.
+ */
+void cc1101_set_config(uint8_t byte_addr, uint8_t value);
+
 /* Configure pins, reset the CC1101, and put the CC1101 chip in idle state */
 void cc1101_init(uint8_t ssp_num, struct pio* cs_pin, struct pio* miso_pin);
 

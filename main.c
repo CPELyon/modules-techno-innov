@@ -400,6 +400,8 @@ int main(void) {
 			servomotor_pwm_update(LPC_TIMER_32B0, PWM_CHAN, val);
 		}
 #endif
+		/* ADC Test */
+		adc_display(LPC_ADC_NUM(1));
 	}
 	return 0;
 }

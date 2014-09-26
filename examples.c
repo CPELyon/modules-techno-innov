@@ -288,7 +288,7 @@ void TMP36_display(int adc_num)
 	adc_start_convertion_once(adc_num, 0);
 	msleep(8);
 	ret = adc_get_value(&val, adc_num);
-	if (ret == 0) {
+	if (ret != 0) {
 		debug(0, 'm');
 	} else {
 		char buff[60];

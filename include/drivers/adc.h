@@ -22,14 +22,29 @@
 #define DRIVERS_ADC_H
 
 
+#include <stdint.h>
+
 /***************************************************************************** */
 /*                Analog to Digital Converter (ADC)                            */
 /***************************************************************************** */
 
-#include <stdint.h>
+enum adc_events {
+	/* CT32B0 */
+	ADC_CONV_ON_CT32B0_CAP0_RISING,
+	ADC_CONV_ON_CT32B0_CAP0_FALLING,
+	ADC_CONV_ON_CT32B0_MAT0_RISING,
+	ADC_CONV_ON_CT32B0_MAT0_FALLING,
+	ADC_CONV_ON_CT32B0_MAT1_RISING,
+	ADC_CONV_ON_CT32B0_MAT1_FALLING,
+	/* CT16B0 */
+	ADC_CONV_ON_CT16B0_CAP0_RISING,
+	ADC_CONV_ON_CT16B0_CAP0_FALLING,
+	ADC_CONV_ON_CT16B0_MAT0_RISING,
+	ADC_CONV_ON_CT16B0_MAT0_FALLING,
+	ADC_CONV_ON_CT16B0_MAT1_RISING,
+	ADC_CONV_ON_CT16B0_MAT1_FALLING,
+};
 
-/* Start a conversion on the given channel (0 to 7) */
-void adc_start_convertion_once(unsigned int channel, int use_int);
 
 /* Read the conversion from the given channel (0 to 7)
  * This function reads the conversion value directly in the data register and
@@ -39,17 +54,19 @@ void adc_start_convertion_once(unsigned int channel, int use_int);
  */
 int adc_get_value(uint16_t * val, int channel);
 
+/* Start a conversion on the given channel (0 to 7) */
+void adc_start_convertion_once(unsigned int channel, int use_int);
+
 /* Start burst conversions.
  * channels is a bit mask of requested channels.
  * Use LPC_ADC_CHANNEL(x) (x = 0 .. 7) for channels selection.
  */
 void adc_start_burst_conversion(uint8_t channels);
 
-/* Unsupported Yet */
 /* This should be used to configure conversion start on falling or rising edges of
  * some signals, or on timer for burst conversions.
  */
-void adc_prepare_conversion_on_event(void);
+void adc_prepare_conversion_on_event(uint8_t channels, uint8_t event, int use_int);
 
 
 /***************************************************************************** */

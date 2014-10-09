@@ -200,14 +200,14 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf)
 			}
 			break;
 		case LPC_TIMER_MODE_PWM:
-			if (conf->match[3] == 0) {
+			if (conf->match[ conf->config[1] ] == 0) {
 				return -EINVAL; /* Force use of Channel 3 for PWM cycle length */
 			}
 			/* Activate selected PWM channels 0 to 2 */
 			timer->regs->pwm_ctrl = (conf->config[0] & 0x07);
 			/* Use Channel 3 for PWM cycle length as recommended in the manual */
-			timer->regs->match_ctrl &= ~(LPC_TIMER_MATCH_ERASE(3));
-			timer->regs->match_ctrl |= (LPC_TIMER_RESET_ON_MATCH << LPC_TIMER_MATCH_SHIFT(3));
+			timer->regs->match_ctrl &= ~(LPC_TIMER_MATCH_ERASE(conf->config[1]));
+			timer->regs->match_ctrl |= (LPC_TIMER_RESET_ON_MATCH << LPC_TIMER_MATCH_SHIFT(conf->config[1]));
 			for (i = 0; i < NUM_CHANS; i++) {
 				timer->regs->match_reg[i] = conf->match[i];
 			}

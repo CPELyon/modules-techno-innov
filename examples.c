@@ -311,7 +311,7 @@ void RGB_Led_config(uint8_t timer)
 	/* Timer configuration */
 	struct timer_config timer_conf = {
 		.mode = LPC_TIMER_MODE_PWM,
-		.config = { (LPC_PWM_CHANNEL_ENABLE(0) | LPC_PWM_CHANNEL_ENABLE(1) | LPC_PWM_CHANNEL_ENABLE(2)), 0, 0, 0 },
+		.config = { (LPC_PWM_CHANNEL_ENABLE(0) | LPC_PWM_CHANNEL_ENABLE(1) | LPC_PWM_CHANNEL_ENABLE(2)), 3, 0, 0 },
 		.match = { 20, 125, 200, 200 },
 	};
 	timer_setup(timer, &timer_conf);
@@ -403,7 +403,7 @@ void servomotor_config(uint8_t timer, uint8_t channel)
 	/* Timer configuration */
 	struct timer_config timer_conf = {
 		.mode = LPC_TIMER_MODE_PWM,
-		.config = { LPC_PWM_CHANNEL_ENABLE(channel), 0, 0, 0 },
+		.config = { LPC_PWM_CHANNEL_ENABLE(channel), 3, 0, 0 },
 		.match = { 0, 0, 0, 400*1000 },
 	};
 	timer_setup(timer, &timer_conf);
@@ -442,7 +442,7 @@ void timer_toggle_output_config(uint8_t timer, struct pio* gpio)
 	/* Timer configuration */
 	struct timer_config timer_conf = {
 		.mode = LPC_TIMER_MODE_MATCH,
-		.config = { (LPC_TIMER_INTERRUPT_ON_MATCH | LPC_TIMER_RESET_ON_MATCH), 0, 0, 0 },
+		.config = { (LPC_TIMER_INTERRUPT_ON_MATCH | LPC_TIMER_RESET_ON_MATCH), 3, 0, 0 },
 		.match = { 9600, 0, 0, 0 },
 	};
 	timer_on(LPC_TIMER_16B0, 0, timer_toggle_output);

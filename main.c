@@ -121,6 +121,8 @@ void system_init()
 	/* Stop the watchdog */
 	stop_watchdog(); /* Do it right now, before it gets a chance to break in */
 
+	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
+	 *  it back on if called after system_init() */
 	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);

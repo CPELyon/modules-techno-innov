@@ -54,7 +54,9 @@ enum adc_events {
  */
 int adc_get_value(uint16_t * val, int channel);
 
-/* Start a conversion on the given channel (0 to 7) */
+/* Start a conversion on the given channel (0 to 7)
+ * Unsupported yet : Set use_int to 1 to have your interrupt callback called upon conversion done.
+ */
 void adc_start_convertion_once(unsigned int channel, int use_int);
 
 /* Start burst conversions.

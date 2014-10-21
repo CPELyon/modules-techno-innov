@@ -261,9 +261,7 @@ int main(void) {
 	}
 #endif
 
-#define USER_INFO 1
 #if USER_INFO
-#define USER_FLASH_ADDR
 	/* Simple demonstration of user information block access and IAP routines */
 	/* The sleep() are only here to let the user see the status leds. */
 	{

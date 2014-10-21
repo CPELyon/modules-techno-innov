@@ -205,6 +205,11 @@ void adc_on(void)
 
 	/* Disable ADC Interrupt */
 	NVIC_DisableIRQ(ADC_IRQ);
+
+	/* Brown-Out detection must be powered to operate the ADC.
+	 * See Section 19.2 of UM10441 revision 2.1 or newer for more information */
+	sys_ctrl->powerdown_run_cfg &= ~LPC_POWER_DOWN_BOD;
+
 	/* Power-up ADC */
 	sys_ctrl->powerdown_run_cfg &= ~LPC_POWER_DOWN_ADC;
 	/* Provide clock to ADC */

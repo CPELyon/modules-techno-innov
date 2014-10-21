@@ -71,7 +71,10 @@ void enter_deep_sleep(void);
 /* Power on or off a subsystem */
 void subsystem_power(uint32_t power_bit, uint32_t on_off);
 
-/* Configure the brown-out detection */
+/* Configure the brown-out detection.
+ * Note: Brown-Out detection must be powered to operate the ADC (See Section 19.2
+ *    of UM10441 revision 2.1 or newer for more information)
+ */
 void system_brown_out_detection_config(uint32_t level);
 
 /***************************************************************************** */

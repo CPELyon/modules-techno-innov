@@ -100,6 +100,9 @@ void system_brown_out_detection_config(uint32_t level)
 		sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_BOD;
 		lpc_private.brown_out_detection_enabled = 0;
 	} else {
+		/* Power on Brown-Out Detection.
+		 * (Needed for ADC, See Section 19.2 of UM10441 revision 2.1 or newer for more information) */
+		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_BOD);
 		lpc_private.brown_out_detection_enabled = 1;
 		/* Configure Brown-Out Detection */
 		/* FIXME */

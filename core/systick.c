@@ -69,6 +69,8 @@ void SysTick_Handler(void)
 /* Register a callback to be called every 'period' system ticks with 'param' parameter.
  * returns the callback number, to be used to remove the callback from the table of callbacks.
  * returns negative value on error.
+ * The callback will get the "global_wrapping_system_ticks" as argument, which wraps every 50 days
+ *   or so with a 1ms tick
  */
 int add_systick_callback(void (*callback) (uint32_t), uint16_t period)
 {

@@ -276,7 +276,9 @@ int cc1101_receive_packet(uint8_t* buffer, uint8_t size, uint8_t* status)
 
 	/* Get fifo state */
 	rx_status = cc1101_read_reg(CC1101_STATUS(rx_bytes));
-	*status = rx_status;
+	if (status != NULL) {
+		*status = rx_status;
+	}
 
 	/* Empty fifo ? */
 	if (rx_status == 0) {

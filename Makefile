@@ -28,7 +28,7 @@ SRC = $(shell find . -name \*.c)
 OBJS = ${SRC:%.c=${OBJDIR}/%.o}
 
 $(NAME).bin: $(NAME)
-	@echo "Creating image : [32m$@[37m"
+	@echo "Creating image : [32m$@[39m"
 	@$(CROSS_COMPILE)objcopy -R .stack -R .bss -O binary $^ $@
 	@ls -l $@
 	@echo Done.

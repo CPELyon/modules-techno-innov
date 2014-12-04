@@ -108,7 +108,8 @@ enum iap_commands {
 	IAP_CMD_ERASE_INFO_PAGE = 60,
 };
 
-void (*iap_entry)(unsigned int*, unsigned int*);
+typedef void (*iap_entry_func)(uint32_t*, uint32_t*);
+iap_entry_func iap_entry;
 
 static uint32_t params[5];
 static uint32_t results[4];
@@ -187,6 +188,6 @@ uint32_t iap_read_part_id(void)
 void rom_helpers_init(void)
 {
 	rom_div_helpers = *((struct lpc_rom_div_helpers**)LPC_122x_DIV_ROM_LOC);
-	iap_entry = *((void(*)(unsigned int*, unsigned int*))LPC_122x_IAP_ROM_LOC);
+	iap_entry = (iap_entry_func)LPC_122x_IAP_ROM_LOC;
 }
 

@@ -1,4 +1,4 @@
-# Makefile for control
+# Makefile for GPIO Demo Module
 
 NAME = mod_gpio
 LPC = lpc1224

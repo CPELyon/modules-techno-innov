@@ -1,5 +1,5 @@
 /****************************************************************************
- *  drivers/status_led.h
+ *  extdrv/status_led.h
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -18,8 +18,8 @@
  *
  *************************************************************************** */
 
-#ifndef DRIVERS_STATUS_LED_H
-#define DRIVERS_STATUS_LED_H
+#ifndef EXTDRV_STATUS_LED_H
+#define EXTDRV_STATUS_LED_H
 
 
 #include <stdint.h>
@@ -49,4 +49,4 @@ enum led_status {
 };
 
 
-#endif /* DRIVERS_STATUS_LED_H */
+#endif /* EXTDRV_STATUS_LED_H */

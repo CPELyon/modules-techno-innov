@@ -1,5 +1,5 @@
 /****************************************************************************
- *   drivers/temp.c
+ *   extdrv/temp.c
  *
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
@@ -26,7 +26,7 @@
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "drivers/i2c.h"
-#include "drivers/tmp101_temp_sensor.h"
+#include "extdrv/tmp101_temp_sensor.h"
 
 
 /***************************************************************************** */

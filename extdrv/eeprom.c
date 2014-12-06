@@ -1,5 +1,5 @@
 /****************************************************************************
- *   drivers/eeprom.c
+ *   extdrv/eeprom.c
  *
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
@@ -28,6 +28,7 @@
 #include "core/pio.h"
 #include "lib/string.h"
 #include "drivers/i2c.h"
+#include "extdrv/eeprom.h"
 
 
 /***************************************************************************** */

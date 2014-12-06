@@ -33,13 +33,14 @@
 #include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/i2c.h"
+#include "extdrv/eeprom.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
-#include "drivers/tmp101_temp_sensor.h"
+#include "extdrv/tmp101_temp_sensor.h"
 #include "drivers/adc.h"
 #include "drivers/timers.h"
 #include "drivers/ssp.h"
-#include "drivers/status_led.h"
+#include "extdrv/status_led.h"
 
 #include "examples.h"
 

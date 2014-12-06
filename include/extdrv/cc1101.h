@@ -32,8 +32,8 @@
  * http://focus.ti.com/lit/ds/swrs061f/swrs061f.pdf
  */
 
-#ifndef DRIVERS_CC1101_H
-#define DRIVERS_CC1101_H
+#ifndef EXTDRV_CC1101_H
+#define EXTDRV_CC1101_H
 
 #include "lib/stddef.h"
 
@@ -266,4 +266,4 @@ void cc1101_init(uint8_t ssp_num, struct pio* cs_pin, struct pio* miso_pin);
 void cc1101_config(void);
 
 
-#endif /* DRIVERS_CC1101_H */
+#endif /* EXTDRV_CC1101_H */

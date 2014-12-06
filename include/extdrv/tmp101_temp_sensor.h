@@ -1,5 +1,5 @@
 /****************************************************************************
- *   drivers/temp.h
+ *   extdrv/temp.h
  *
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
@@ -20,8 +20,8 @@
  *
  *************************************************************************** */
 
-#ifndef DRIVERS_TEMP_H
-#define DRIVERS_TEMP_H
+#ifndef EXTDRV_TEMP_H
+#define EXTDRV_TEMP_H
 
 #include <stdint.h>
 
@@ -99,5 +99,5 @@ int tmp101_sensor_config(uint32_t resolution);
 int tmp101_sensor_start_conversion(void);
 
 
-#endif /* DRIVERS_TEMP_H */
+#endif /* EXTDRV_TEMP_H */
 

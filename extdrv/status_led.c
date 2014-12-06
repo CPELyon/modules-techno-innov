@@ -1,5 +1,5 @@
 /****************************************************************************
- *  drivers/status_led.c
+ *  extdrv/status_led.c
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -27,7 +27,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/system.h"
 #include "core/pio.h"
-#include "drivers/status_led.h"
+#include "extdrv/status_led.h"
 
 
 /***************************************************************************** */

@@ -1,5 +1,5 @@
 /****************************************************************************
- *  drivers/cc1101.c
+ *  extdrv/cc1101.c
  *
  * Copyright 2014 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
@@ -25,7 +25,7 @@
 #include "core/pio.h"
 #include "lib/string.h"
 #include "drivers/ssp.h"
-#include "drivers/cc1101.h"
+#include "extdrv/cc1101.h"
 
 
 /***************************************************************************** */

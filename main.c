@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
+#include "core/pio.h"
 #include "core/user_information_block.h"
 #include "core/iap.h"
 #include "core/system.h"
@@ -57,24 +58,26 @@
  *  clkout_pin, uart0_pins, uart1_pins, i2c0_pins, ssp0_pins,
  *  timer0_pins, timer1_pins, timer2_pins, timer3_pins,
  *  adc_pins, gpio_pins
+ * These will override weak definitions from drivers/weak_pinout.c
+ * Unused pin blocks can thus be removed safely.
  */
-struct pio uart0_pins[] = {
+const struct pio uart0_pins[] = {
 	LPC_UART0_RX_PIO_0_1,
 	LPC_UART0_TX_PIO_0_2,
 	LPC_UART0_RTS_PIO_0_0,
 	ARRAY_LAST_PIN,
 };
-struct pio uart1_pins[] = {
+const struct pio uart1_pins[] = {
 	LPC_UART1_RX_PIO_0_8,
 	LPC_UART1_TX_PIO_0_9,
 	ARRAY_LAST_PIN,
 };
-struct pio i2c0_pins[] = {
+const struct pio i2c0_pins[] = {
 	LPC_I2C0_SCL_PIO_0_10,
 	LPC_I2C0_SDA_PIO_0_11,
 	ARRAY_LAST_PIN,
 };
-struct pio ssp0_pins[] = {
+const struct pio ssp0_pins[] = {
 	/* Warning : Order is used later on, DO NOT change it ! */
 	LPC_SSP0_SCLK_PIO_0_14,
 	LPC_SSP0_MOSI_PIO_0_17,
@@ -83,17 +86,17 @@ struct pio ssp0_pins[] = {
 /*	LPC_SSP0_SSEL_PIO_0_15, */
 	ARRAY_LAST_PIN,
 };
-struct pio timer2_pins[] = { /* TIMER_32B0 */
+const struct pio timer2_pins[] = { /* TIMER_32B0 */
 	LPC_TIMER_32B0_M1_PIO_0_19, /* PWM out for Servo Motor */
 	ARRAY_LAST_PIN,
 };
-struct pio timer3_pins[] = { /* TIMER_32B1 */
+const struct pio timer3_pins[] = { /* TIMER_32B1 */
 	LPC_TIMER_32B1_M0_PIO_0_23, /* RGB Led Red */
 	LPC_TIMER_32B1_M1_PIO_0_24, /* RGB Led Green */
 	LPC_TIMER_32B1_M2_PIO_0_25, /* RGB Led Blue */
 	ARRAY_LAST_PIN,
 };
-struct pio adc_pins[] = {
+const struct pio adc_pins[] = {
 	LPC_ADC_AD0_PIO_0_30,
 	LPC_ADC_AD1_PIO_0_31,
 	LPC_ADC_AD2_PIO_1_0,
@@ -102,7 +105,7 @@ struct pio adc_pins[] = {
 	LPC_ADC_AD5_PIO_1_3,
 	ARRAY_LAST_PIN,
 };
-struct pio gpio_pins[] = {
+const struct pio gpio_pins[] = {
 	LPC_GPIO_0_7, /* Temp Alert, hard-wired on the board */
 	LPC_GPIO_0_6, /* Used for DTH11 */
 	LPC_GPIO_0_12, /* ISP Used as button */

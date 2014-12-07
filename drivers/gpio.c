@@ -37,9 +37,7 @@
 /*   GPIO setup   */
 
 /* Set all GPIO used in a default state */
-struct pio gpio_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
+extern const struct pio gpio_pins[];
 
 static void set_gpio_pins(void)
 {

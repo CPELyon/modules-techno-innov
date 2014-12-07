@@ -173,9 +173,7 @@ void adc_prepare_conversion_on_event(uint8_t channels, uint8_t event, int use_in
 
 /***************************************************************************** */
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
-struct pio adc_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
+extern const struct pio adc_pins[];
 
 static void set_adc_pins(void)
 {

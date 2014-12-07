@@ -220,24 +220,16 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf)
 
 
 /* Setup timer pins to be used as match or capture pin  */
-struct pio timer0_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
-struct pio timer1_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
-struct pio timer2_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
-struct pio timer3_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
+extern const struct pio timer0_pins[];
+extern const struct pio timer1_pins[];
+extern const struct pio timer2_pins[];
+extern const struct pio timer3_pins[];
 
 #define LPC_TIMER_PIN_CONFIG   (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT)
 static void timer_pins_setup(uint32_t timer_num)
 {
 	int i = 0;
-	struct pio* timer_pins = NULL;
+	const struct pio* timer_pins = NULL;
 	switch (timer_num) {
 		case LPC_TIMER_16B0:
 			timer_pins = timer0_pins;

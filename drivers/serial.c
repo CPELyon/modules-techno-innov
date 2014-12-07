@@ -235,12 +235,8 @@ static uint32_t uart_setup(uint32_t uart_num)
 /* Note : We MUST set LPC_IO_DIGITAL for Rx even if the bit is marked as "Reserved" in
  *        the datasheet !
  */
-struct pio uart0_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
-struct pio uart1_pins[] __attribute__ ((weak)) = {
-	ARRAY_LAST_PIN,
-};
+extern const struct pio uart0_pins[];
+extern const struct pio uart1_pins[];
 
 static void uart_set_pin_func(uint32_t uart_num)
 {

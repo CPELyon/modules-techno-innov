@@ -109,28 +109,23 @@ void status_led(uint32_t val)
 	}
 }
 
+static enum led_status steps[] = {
+	red_only,
+	green_only,
+	none,
+	both,
+	none,
+	red_only,
+	red_only,
+	none,
+	green_only,
+	green_only,
+	none
+};
+
 void chenillard(uint32_t ms)
 {
-    status_led(red_only);
-    msleep(ms);
-    status_led(green_only);
-    msleep(ms);
-    status_led(none);
-    msleep(ms);
-    status_led(both);
-    msleep(ms);
-    status_led(none);
-    msleep(ms);
-    status_led(red_only);
-    msleep(ms);
-    status_led(red_only);
-    msleep(ms);
-    status_led(none);
-    msleep(ms);
-    status_led(green_only);
-    msleep(ms);
-    status_led(green_only);
-    msleep(ms);
-    status_led(none);
-    msleep(ms);
+	static int n;
+	status_led(steps[n++ % (sizeof steps / sizeof *steps)]);
+	msleep(ms);
 }

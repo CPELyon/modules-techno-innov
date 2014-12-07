@@ -39,8 +39,8 @@ enum gpio_interrupt_senses {
 };
 
 /* GPIO Interrupts */
-int set_gpio_callback(void (*callback) (uint32_t), struct pio* gpio, uint8_t sense);
-void remove_gpio_callback(struct pio* gpio);
+int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8_t sense);
+void remove_gpio_callback(const struct pio* gpio);
 
 
 /* GPIO Activation */
@@ -52,7 +52,7 @@ void gpio_off(void);
  * This function calls the config_pio() function for the gpio with the given
  * mode, configures the direction of the pin and sets the initial state.
  */
-void config_gpio(struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini_val);
+void config_gpio(const struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini_val);
 
 
 #endif /* DRIVERS_GPIO_H */

@@ -42,10 +42,10 @@ struct pio {
 #define PORT2_NB_PINS 16
 
 /* Simple copy function. */
-void pio_copy(struct pio* dst, struct pio* src);
+void pio_copy(struct pio* dst, const struct pio* src);
 
 /* Configure the pin in the requested function and mode. */
-void config_pio(struct pio* pp, uint32_t mode);
+void config_pio(const struct pio* pp, uint32_t mode);
 
 
 /****************************************************************************/

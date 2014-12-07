@@ -91,7 +91,7 @@ void temp_display(int uart_num)
 /***************************************************************************** */
 /* DHT11 Humidity and temp sensor */
 static struct pio dth11_gpio;
-void dth11_config(struct pio* gpio)
+void dth11_config(const struct pio* gpio)
 {
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(gpio->port);
 
@@ -369,7 +369,7 @@ void callback(uint32_t pin_num)
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(led_toggle.port);
 	gpio_port_regs->toggle = (1 << led_toggle.pin);
 }
-void gpio_intr_toggle_config(struct pio* irq_gpio, struct pio* led)
+void gpio_intr_toggle_config(const struct pio* irq_gpio, const struct pio* led)
 {
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(led->port);
 	int ret = 0;
@@ -437,7 +437,7 @@ void timer_toggle_output(uint8_t flags)
 	gpio_port_regs->toggle |= (1 << timer_toggle_gpio.pin);
 }
 
-void timer_toggle_output_config(uint8_t timer, struct pio* gpio)
+void timer_toggle_output_config(uint8_t timer, const struct pio* gpio)
 {
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(gpio->port);
 	/* Timer configuration */

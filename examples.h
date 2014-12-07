@@ -52,7 +52,7 @@ void temp_display(int uart_num);
 
 /***************************************************************************** */
 /* DHT11 Humidity and temp sensor */
-void dth11_config(struct pio* gpio);
+void dth11_config(const struct pio* gpio);
 
 unsigned char dht11_read_dat();
 
@@ -110,7 +110,7 @@ uint16_t Thermocouple_Read(struct pio* spi_cs);
  *   multiple interrupts for each push of the switch.
  * Note: should also be used without the capacitor to test the input filter ?
  */
-void gpio_intr_toggle_config(struct pio* irq_gpio, struct pio* led);
+void gpio_intr_toggle_config(const struct pio* irq_gpio, const struct pio* led);
 
 
 
@@ -139,7 +139,7 @@ void servomotor_pwm_update(uint8_t timer, uint8_t channel, uint8_t angle);
 
 /***************************************************************************** */
 /* Simple example of callback setup on timer overflow */
-void timer_toggle_output_config(uint8_t timer, struct pio* gpio);
+void timer_toggle_output_config(uint8_t timer, const struct pio* gpio);
 
 #endif /* EXAMPLE_H */
 

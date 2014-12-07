@@ -71,7 +71,7 @@ void gpio_off(void)
  * This function calls the config_pio() function for the gpio with the given
  * mode, configures the direction of the pin and sets the initial state.
  */
-void config_gpio(struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini_val)
+void config_gpio(const struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini_val)
 {
 	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio->port);
 
@@ -96,7 +96,7 @@ static void (*gpio_calbacks_port0[PORT0_NB_PINS]) (uint32_t);
 static void (*gpio_calbacks_port1[PORT1_NB_PINS]) (uint32_t);
 static void (*gpio_calbacks_port2[PORT2_NB_PINS]) (uint32_t);
 
-int set_gpio_callback(void (*callback) (uint32_t), struct pio* gpio, uint8_t sense)
+int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8_t sense)
 {
 	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio->port);
 	uint32_t irq = 0;
@@ -161,7 +161,7 @@ int set_gpio_callback(void (*callback) (uint32_t), struct pio* gpio, uint8_t sen
 	NVIC_EnableIRQ(irq);
 	return 0;
 }
-void remove_gpio_callback(struct pio* gpio)
+void remove_gpio_callback(const struct pio* gpio)
 {
 	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio->port);
 	uint32_t irq = 0;

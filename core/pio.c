@@ -144,7 +144,11 @@ void config_pio(const struct pio* pp, uint32_t mode)
 }
 
 
-/* FIXME: We should add some system-wide way to "reserve" a pin, but anyway this
- * would not prevent anyone from configuring the same pin for two diferent functions
- * when not using our code.
- */
+void set_pins(const struct pio_config* pins)
+{
+	int i = 0;
+	for (i = 0; pins[i].pio.port != 0xFF; i++) {
+		config_pio(&(pins[i].pio), pins[i].mode);
+	}
+}
+

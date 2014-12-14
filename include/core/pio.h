@@ -35,6 +35,13 @@ struct pio {
 };
 
 #define ARRAY_LAST_PIN   {0xFF, 0xFF, 0xFF}
+#define PIO_LAST   ARRAY_LAST_PIN
+
+struct pio_config {
+	struct pio pio;
+	uint32_t mode;
+};
+#define ARRAY_LAST_PIO  { PIO_LAST, 0xFF }
 
 
 #define PORT0_NB_PINS 32
@@ -47,6 +54,8 @@ void pio_copy(struct pio* dst, const struct pio* src);
 /* Configure the pin in the requested function and mode. */
 void config_pio(const struct pio* pp, uint32_t mode);
 
+/* Configure a set (array) of pins in a single loop */
+void set_pins(const struct pio_config* pins);
 
 /****************************************************************************/
 /*  GPIO Pins  */

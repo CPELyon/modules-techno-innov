@@ -27,6 +27,7 @@
 #include "core/system.h"
 #include "core/pio.h"
 #include "lib/string.h"
+#include "drivers/gpio.h"
 #include "drivers/i2c.h"
 #include "extdrv/eeprom.h"
 
@@ -44,14 +45,11 @@
  *   and the EEPROM should not be accessed by the module.
  * Other I2C EEPROMs should not need these functions.
  */
-static struct pio i2c_eeprom_cs = LPC_GPIO_0_15;
+static const struct pio i2c_eeprom_cs = LPC_GPIO_0_15;
 int mod_gpio_demo_eeprom_cs_pull_low(void)
 {
-    struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(i2c_eeprom_cs.port);
-    config_pio(&i2c_eeprom_cs, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
     /* Configure SPI_CS as output and set it low. */
-    gpio_port_regs->data_dir |= (1 << i2c_eeprom_cs.pin);
-    gpio_port_regs->clear = (1 << i2c_eeprom_cs.pin);
+    config_gpio(&i2c_eeprom_cs, 0, GPIO_DIR_OUT, 0);
 	return 0;
 }
 void mod_gpio_demo_eeprom_cs_release(void)

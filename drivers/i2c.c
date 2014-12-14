@@ -453,19 +453,6 @@ static void i2c_clock_on(uint32_t i2c_clk_freq)
 	i2c->clk_duty_low = (scl_clk - i2c->clk_duty_high);
 }
 
-/* I2C Pins configuration */
-extern const struct pio i2c0_pins[];
-
-
-static void set_i2c_pins(void)
-{
-	int i = 0;
-	/* Configure I2C pins */
-	for (i = 0; i2c0_pins[i].port != 0xFF; i++) {
-		config_pio(&i2c0_pins[i], (LPC_IO_ANALOG | LPC_IO_OPEN_DRAIN_ENABLE));
-	}
-}
-
 void i2c_on(uint32_t i2c_clk_freq)
 {
 	struct lpc_i2c* i2c = LPC_I2C0;
@@ -476,8 +463,6 @@ void i2c_on(uint32_t i2c_clk_freq)
 	/* Set clock */
 	i2c_clock_on(i2c_clk_freq);
 	mod_i2c.clock = i2c_clk_freq;
-	/* Set pins function for I2C 0 */
-	set_i2c_pins();
 	/* Initialize i2c_bus struct */
 	memset(&mod_i2c, 0, sizeof(struct i2c_bus));
 	mod_i2c.regs = (struct lpc_i2c*)LPC_I2C0;

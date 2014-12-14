@@ -273,15 +273,14 @@ void io_config_clk_off(void)
 /***************************************************************************** */
 /* This is mainly a debug feature, but can be used to provide a clock to an
  * external peripheral */
-/* Note that the CLK_Out pin PIO0_12 is multiplexed with ISP mode selection on reset */
-extern struct pio clkout_pin[];
+/* Note that PIO0_12 is the only pin possible for CLK_Out, and is multiplexed
+ * with ISP mode selection on reset.
+ * The pin must be enabled using a pio table passed to the set_pins() function.
+ */
 
 void clkout_on(uint32_t src, uint32_t div)
 {
 	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
-
-	/* Only one possible pin, and no specific configuration */
-	config_pio(&clkout_pin[0], 0);
 
 	/* Select clk_out clock source */
 	sys_ctrl->clk_out_src_sel = (src & 0x03);

@@ -231,29 +231,6 @@ static uint32_t uart_setup(uint32_t uart_num)
 	return status;
 }
 
-/* Pin settings */
-/* Note : We MUST set LPC_IO_DIGITAL for Rx even if the bit is marked as "Reserved" in
- *        the datasheet !
- */
-extern const struct pio uart0_pins[];
-extern const struct pio uart1_pins[];
-
-static void uart_set_pin_func(uint32_t uart_num)
-{
-	int i = 0;
-	switch (uart_num) {
-		case 0:
-			for (i = 0; uart0_pins[i].port != 0xFF; i++) {
-				config_pio(&uart0_pins[i], LPC_IO_DIGITAL);
-			}
-			break;
-		case 1:
-			for (i = 0; uart1_pins[i].port != 0xFF; i++) {
-				config_pio(&uart1_pins[i], LPC_IO_DIGITAL);
-			}
-			break;
-	}
-}
 struct uart_def
 {
 	uint32_t irq;
@@ -353,7 +330,6 @@ int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(uint8_t))
 	/* Setup pins, must be done before clock setup and with uart powered off. */
 	uart_clk_off(uart_num);
 	subsystem_power(uart->power_offset, 0);
-	uart_set_pin_func(uart_num);
 	/* Turn On power */
 	subsystem_power(uart->power_offset, 1);
 	/* Setup clock acording to baudrate */

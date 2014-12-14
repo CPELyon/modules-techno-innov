@@ -304,22 +304,6 @@ void ssp_clk_update(void)
 	}
 }
 
-/* Configure all SPI pins. */
-extern const struct pio ssp0_pins[];
-static void ssp_set_pin_func(uint32_t ssp_num)
-{
-	int i = 0;
-	switch (ssp_num) {
-		case 0:
-			for (i = 0; ssp0_pins[i].port != 0xFF; i++) {
-				config_pio(&ssp0_pins[i], LPC_IO_DIGITAL);
-			}
-			break;
-	}
-}
-
-
-
 
 /***************************************************************************** */
 /* SSP Setup as master */
@@ -343,9 +327,6 @@ int ssp_master_on(uint8_t ssp_num, uint8_t frame_type, uint8_t data_width, uint3
 	ssp_regs = ssp->regs;
 
 	NVIC_DisableIRQ(ssp->irq);
-
-	/* Configure pins first */
-	ssp_set_pin_func(ssp_num); /* Only one SPI on the LPC1224 */
 
 	/* Power up the ssp block */
 	subsystem_power(ssp->clk_ctrl_bit, 1);
@@ -392,8 +373,6 @@ int ssp_slave_on(uint8_t ssp_num, uint8_t frame_type, uint8_t data_width, uint8_
 
 	/* Enable SSP */
 	ssp_regs->ctrl_1 |= LPC_SSP_ENABLE;
-
-	ssp_set_pin_func(ssp_num);
 
 	NVIC_EnableIRQ(ssp->irq);
 	return 0; /* Config OK */

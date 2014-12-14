@@ -172,17 +172,7 @@ void adc_prepare_conversion_on_event(uint8_t channels, uint8_t event, int use_in
 
 
 /***************************************************************************** */
-/*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
-extern const struct pio adc_pins[];
-
-static void set_adc_pins(void)
-{
-	int i = 0;
-	/* Configure ADC pins */
-	for (i = 0; adc_pins[i].port != 0xFF; i++) {
-		config_pio(&adc_pins[i], LPC_IO_ANALOG);
-	}
-}
+/*   ADC Setup : private part : Clocks, Power and Mode   */
 
 void adc_clk_update(void)
 {
@@ -219,9 +209,6 @@ void adc_on(void)
 
 	/* Remove the default global interrupt enabled setting */
 	adc->int_en = 0;
-
-	/* Configure ADC pins */
-	set_adc_pins();
 
 	/* Enable ADC Interrupt */
 	NVIC_EnableIRQ(ADC_IRQ);

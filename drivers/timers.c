@@ -219,38 +219,6 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf)
 }
 
 
-/* Setup timer pins to be used as match or capture pin  */
-extern const struct pio timer0_pins[];
-extern const struct pio timer1_pins[];
-extern const struct pio timer2_pins[];
-extern const struct pio timer3_pins[];
-
-#define LPC_TIMER_PIN_CONFIG   (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT)
-static void timer_pins_setup(uint32_t timer_num)
-{
-	int i = 0;
-	const struct pio* timer_pins = NULL;
-	switch (timer_num) {
-		case LPC_TIMER_16B0:
-			timer_pins = timer0_pins;
-			break;
-		case LPC_TIMER_16B1:
-			timer_pins = timer1_pins;
-			break;
-		case LPC_TIMER_32B0:
-			timer_pins = timer2_pins;
-			break;
-		case LPC_TIMER_32B1:
-			timer_pins = timer3_pins;
-			break;
-		default:
-			return;
-	}
-	for (i = 0; timer_pins[i].port != 0xFF; i++) {
-		config_pio(&timer_pins[i], LPC_TIMER_PIN_CONFIG);
-	}
-}
-
 /* Power up a timer.
  * Note that clkrate should be a divider of the main clock frequency chosed
  *   for your application as it will be used to divide the main clock to get
@@ -282,8 +250,6 @@ void timer_on(uint32_t timer_num, uint32_t clkrate, void (*callback)(uint8_t))
 		prescale = (get_main_clock() / clkrate) - 1;
 	}
 	timer->regs->prescale = prescale;
-
-	timer_pins_setup(timer_num);
 
 	NVIC_EnableIRQ(timer_devices[timer_num].irq);
 }

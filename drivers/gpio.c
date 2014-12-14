@@ -36,18 +36,6 @@
 /***************************************************************************** */
 /*   GPIO setup   */
 
-/* Set all GPIO used in a default state */
-extern const struct pio gpio_pins[];
-
-static void set_gpio_pins(void)
-{
-	int i = 0;
-	/* Set GPIO pins as GPIO */
-	for (i = 0; gpio_pins[i].port != 0xFF; i++) {
-		config_pio(&gpio_pins[i], LPC_IO_MODE_PULL_UP);
-	}
-}
-
 void gpio_on(void)
 {
 	/* Provide power to GPIO control blocks */
@@ -55,7 +43,6 @@ void gpio_on(void)
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO1, 1);
 	/* FIXME : Power this one too if you use LQFP64 or LQFP100 packages */
 	/* subsystem_power(LPC_SYS_ABH_CLK_CTRL_GPIO2, 1); */
-	set_gpio_pins();
 }
 void gpio_off(void)
 {

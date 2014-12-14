@@ -74,17 +74,17 @@ void config_gpio(const struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini
 	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio->port);
 
 	/* Configure as GPIO */
-	config_pio(gpio, mode);
+	config_pio(gpio, mode | LPC_IO_DIGITAL);
 
 	if (dir == GPIO_DIR_IN) {
 		gpio_port->data_dir &= ~(1 << gpio->pin);
 	} else {
 		gpio_port->data_dir |= (1 << gpio->pin);
-	}
-	if (ini_val == 0) {
-		gpio_port->clear = (1 << gpio->pin);
-	} else {
-		gpio_port->set = (1 << gpio->pin);
+		if (ini_val == 0) {
+			gpio_port->clear = (1 << gpio->pin);
+		} else {
+			gpio_port->set = (1 << gpio->pin);
+		}
 	}
 }
 

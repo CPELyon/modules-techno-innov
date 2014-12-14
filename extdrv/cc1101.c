@@ -25,6 +25,7 @@
 #include "core/pio.h"
 #include "lib/string.h"
 #include "drivers/ssp.h"
+#include "drivers/gpio.h"
 #include "extdrv/cc1101.h"
 
 
@@ -426,21 +427,17 @@ static uint8_t paTable[] = {0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 
 /* Configure pins, reset the CC1101, and put the CC1101 chip in idle state */
-void cc1101_init(uint8_t ssp_num, struct pio* cs_pin, struct pio* miso_pin)
+void cc1101_init(uint8_t ssp_num, const struct pio* cs_pin, const struct pio* miso_pin)
 {
-	struct lpc_gpio* gpio = NULL;
-
 	if ((cs_pin == NULL) || (miso_pin == NULL)) {
 		return;
 	}
-	gpio = LPC_GPIO_REGS(cs_pin->port);
 
 	cc1101.spi_num = ssp_num;
 	/* Copy CS pin info and configure pin as GPIO output */
 	pio_copy(&(cc1101.cs_pin), cs_pin);
 	/* Configure CS as output and set high */
-	gpio->data_dir |= (1 << cc1101.cs_pin.pin);
-	gpio->set = (1 << cc1101.cs_pin.pin);
+	config_gpio(cs_pin, LPC_IO_DIGITAL, GPIO_DIR_OUT, 1);
 
 	/* Copy MISO pin info (no config, should be already configured as SPI) */
 	pio_copy(&(cc1101.miso_pin), miso_pin);

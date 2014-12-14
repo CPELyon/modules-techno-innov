@@ -260,7 +260,7 @@ void cc1101_set_address(uint8_t address);
 void cc1101_set_config(uint8_t byte_addr, uint8_t value);
 
 /* Configure pins, reset the CC1101, and put the CC1101 chip in idle state */
-void cc1101_init(uint8_t ssp_num, struct pio* cs_pin, struct pio* miso_pin);
+void cc1101_init(uint8_t ssp_num, const struct pio* cs_pin, const struct pio* miso_pin);
 
 /* Write / send all the configuration register values to the CC1101 chip */
 void cc1101_config(void);

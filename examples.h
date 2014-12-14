@@ -97,7 +97,7 @@ void RGB_Led_config(uint8_t timer);
 
 /***************************************************************************** */
 /* Maxim's MAX31855 themocouple to digital converter */
-uint16_t Thermocouple_Read(struct pio* spi_cs);
+uint16_t Thermocouple_Read(const struct pio* spi_cs);
 
 
 

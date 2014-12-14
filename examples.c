@@ -55,10 +55,10 @@ void WAKEUP_Handler(void)
 void temp_config(int uart_num)
 {
 	int ret = 0;
-	struct pio temp_alert = LPC_GPIO_0_7;
+	const struct pio temp_alert = LPC_GPIO_0_7;
 
 	/* Temp Alert */
-	config_pio(&temp_alert, LPC_IO_MODE_PULL_UP);
+	config_gpio(&temp_alert, LPC_IO_MODE_PULL_UP, GPIO_DIR_IN, 0);
 
 	/* Temp sensor */
 	ret = tmp101_sensor_config(TMP_RES_ELEVEN_BITS);
@@ -93,15 +93,11 @@ void temp_display(int uart_num)
 static struct pio dth11_gpio;
 void dth11_config(const struct pio* gpio)
 {
-	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(gpio->port);
 
-	config_pio(gpio, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
-	pio_copy(&dth11_gpio, gpio);
-
-	/* Configure as output and set it low. */
+	/* Configure as output and set it high. */
 	/* This is the "do nothing" state */
-	gpio_port_regs->data_dir |= (1 << gpio->pin);
-	gpio_port_regs->set = (1 << gpio->pin);
+	config_gpio(gpio, LPC_IO_MODE_PULL_UP, GPIO_DIR_OUT, 0);
+	pio_copy(&dth11_gpio, gpio);
 }
 
 unsigned char dht11_read_dat()
@@ -327,7 +323,7 @@ void RGB_Led_config(uint8_t timer)
  * Slave select pin must be on port 0
  * SPI must be configured with 16 bits data and data rate of 1MHz.
  */
-uint16_t Thermocouple_Read(struct pio* slave_sel)
+uint16_t Thermocouple_Read(const struct pio* slave_sel)
 {
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(slave_sel->port);
 	char buff[50];
@@ -336,7 +332,7 @@ uint16_t Thermocouple_Read(struct pio* slave_sel)
 	int temp = 0, deci = 0;
 
 	/* Configure slave select pin as GPIO */
-	config_pio(slave_sel, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL));
+	config_gpio(slave_sel, LPC_IO_MODE_PULL_UP, GPIO_DIR_OUT, 0);
 
 	/* Activate slave (active low), transfer data, and release slave */
 	gpio_port_regs->clear = (1 << slave_sel->pin);
@@ -363,7 +359,7 @@ uint16_t Thermocouple_Read(struct pio* slave_sel)
  *   multiple interrupts for each push of the switch.
  * Note: should also be used without the capacitor to test the input filter ?
  */
-static volatile struct pio led_toggle;
+static struct pio led_toggle;
 void callback(uint32_t pin_num)
 {
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(led_toggle.port);
@@ -371,17 +367,16 @@ void callback(uint32_t pin_num)
 }
 void gpio_intr_toggle_config(const struct pio* irq_gpio, const struct pio* led)
 {
-	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(led->port);
 	int ret = 0;
 
 	/* Setup the Led GPIO */
-	config_pio(led, LPC_IO_DIGITAL);
-	gpio_port_regs->data_dir |= (1 << led->pin);
+	config_gpio(led, 0, GPIO_DIR_OUT, 0);
 
 	/* Make a copy of the gpio info */
-	pio_copy((struct pio*)(&led_toggle), led);
+	pio_copy(&led_toggle, led);
 
 	/* Register the callback */
+	config_gpio(irq_gpio, 0, GPIO_DIR_IN, 0);
 	ret = set_gpio_callback(callback, irq_gpio, EDGE_FALLING);
 	if (ret != 0) {
 		serial_write(1, "GPIO INTR config error\r\n", 24);
@@ -439,7 +434,6 @@ void timer_toggle_output(uint8_t flags)
 
 void timer_toggle_output_config(uint8_t timer, const struct pio* gpio)
 {
-	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(gpio->port);
 	/* Timer configuration */
 	struct timer_config timer_conf = {
 		.mode = LPC_TIMER_MODE_MATCH,
@@ -450,7 +444,7 @@ void timer_toggle_output_config(uint8_t timer, const struct pio* gpio)
 	timer_setup(timer, &timer_conf);
 
 	pio_copy(&timer_toggle_gpio, gpio);
-	gpio_port_regs->data_dir |= (1 << gpio->pin);
+	config_gpio(gpio, 0, GPIO_DIR_OUT, 0);
 
 	/* Start the timer */
 	timer_start(timer);

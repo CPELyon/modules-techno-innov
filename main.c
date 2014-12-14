@@ -105,20 +105,15 @@ const struct pio adc_pins[] = {
 	LPC_ADC_AD5_PIO_1_3,
 	ARRAY_LAST_PIN,
 };
-const struct pio gpio_pins[] = {
-	LPC_GPIO_0_7, /* Temp Alert, hard-wired on the board */
-	LPC_GPIO_0_6, /* Used for DTH11 */
-	LPC_GPIO_0_12, /* ISP Used as button */
-	LPC_GPIO_0_4, /* Led toggle on ISP button press */
-	LPC_GPIO_0_18, /* Used as SPI chip select for Thermocouple reading */
-	LPC_GPIO_0_3, /* Led toggle for timer interrupt test */
-	ARRAY_LAST_PIN,
-};
-#define DTH11_GPIO  (&gpio_pins[1])
-#define BUTTON_GPIO (&gpio_pins[2])
-#define LED_GPIO    (&gpio_pins[3])
-#define THERMOCOUPLE_SLAVE_SEL   (&gpio_pins[4])
-#define TIMER_TOGGLE_GPIO   (&gpio_pins[5])
+
+const struct pio dth11_gpio = LPC_GPIO_0_6; /* Used for DTH11 */
+const struct pio button_gpio = LPC_GPIO_0_12; /* ISP Used as button */
+const struct pio led_gpio = LPC_GPIO_0_4; /* Led toggle on ISP button press */
+const struct pio timer_toggle_gpio = LPC_GPIO_0_3; /* Led toggle for timer interrupt test */
+
+const struct pio cc1101_cs_pin = LPC_GPIO_0_15;
+const struct pio cc1101_miso_pin = LPC_SSP0_MISO_PIO_0_16;
+
 
 void system_init()
 {
@@ -236,21 +231,21 @@ int main(void) {
 #endif
 
 	/* Configure and start the timer interrupt test (toggles pin 0.3) */
-	timer_toggle_output_config(LPC_TIMER_16B0, TIMER_TOGGLE_GPIO);
+	timer_toggle_output_config(LPC_TIMER_16B0, &timer_toggle_gpio);
 
 	/* Configure the DHT11 and the onboard temp sensor */
-	dth11_config(DTH11_GPIO);
+	dth11_config(&dth11_gpio);
 	temp_config(0);
 
 	/* GPIO interrupt test */
-	gpio_intr_toggle_config(BUTTON_GPIO, LED_GPIO);
+	gpio_intr_toggle_config(&button_gpio, &led_gpio);
 
 	/* Servo motor PWM control test */
 	servomotor_config(LPC_TIMER_32B0, PWM_CHAN);
 
 #if CC1101
 	/* Radio */
-	cc1101_init(0, &(ssp0_pins[3]), &(ssp0_pins[2])); /* ssp_num, cs_pin, miso_pin */
+	cc1101_init(0, &cc1101_cs_pin, &cc1101_miso_pin); /* ssp_num, cs_pin, miso_pin */
 	cc1101_config();
 #endif
 

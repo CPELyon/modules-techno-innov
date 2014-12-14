@@ -27,6 +27,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/system.h"
 #include "core/pio.h"
+#include "drivers/gpio.h"
 #include "extdrv/status_led.h"
 
 
@@ -51,18 +52,12 @@
 
 void status_led_config(void)
 {
-	struct lpc_gpio* gpio1 = LPC_GPIO_REGS(1);
-	uint32_t mode = (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT);
-	struct pio red_led = LPC_GPIO_1_5;
-	struct pio green_led = LPC_GPIO_1_4;
-	/* Status Led GPIO */
-	config_pio(&green_led, mode);
-	config_pio(&red_led, mode);
-	/* Configure both as output */
-	gpio1->data_dir |= (1 << LED_GREEN) | (1 << LED_RED);
-	/* Turn both LEDs on */
-	//gpio1->set = (1 << LED_GREEN) | (1 << LED_RED);
-	gpio1->set = (1 << LED_GREEN);
+	uint32_t mode = LPC_IO_MODE_PULL_UP | LPC_IO_DRIVE_HIGHCURENT;
+	const struct pio red_led = LPC_GPIO_1_5;
+	const struct pio green_led = LPC_GPIO_1_4;
+	/* Status Led GPIO. Turn Green on. */
+	config_gpio(&green_led, mode, GPIO_DIR_OUT, 1);
+	config_gpio(&red_led, mode, GPIO_DIR_OUT, 0);
 }
 
 void status_led(uint32_t val)

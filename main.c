@@ -54,56 +54,53 @@
 
 /***************************************************************************** */
 /* Pins configuration */
-/* List of available pin blocks :
- *  clkout_pin, uart0_pins, uart1_pins, i2c0_pins, ssp0_pins,
- *  timer0_pins, timer1_pins, timer2_pins, timer3_pins,
- *  adc_pins, gpio_pins
- * These will override weak definitions from drivers/weak_pinout.c
- * Unused pin blocks can thus be removed safely.
+/* pins blocks are passed to set_pins() for pins configuration.
+ * Unused pin blocks can be removed safely with the corresponding set_pins() call
+ * All pins blocks may be safelly merged in a single block for single set_pins() call..
  */
-const struct pio uart0_pins[] = {
-	LPC_UART0_RX_PIO_0_1,
-	LPC_UART0_TX_PIO_0_2,
-	LPC_UART0_RTS_PIO_0_0,
-	ARRAY_LAST_PIN,
+const struct pio_config common_pins[] = {
+	/* UART 0 */
+	{ LPC_UART0_RX_PIO_0_1,  LPC_IO_DIGITAL },
+	{ LPC_UART0_TX_PIO_0_2,  LPC_IO_DIGITAL },
+#if RS485
+	{ LPC_UART0_RTS_PIO_0_0, LPC_IO_DIGITAL }, /* Used for RS485 */
+#endif
+	/* UART 1 */
+	{ LPC_UART1_RX_PIO_0_8, LPC_IO_DIGITAL },
+	{ LPC_UART1_TX_PIO_0_9, LPC_IO_DIGITAL },
+	/* I2C 0 */
+	{ LPC_I2C0_SCL_PIO_0_10, (LPC_IO_DIGITAL | LPC_IO_OPEN_DRAIN_ENABLE) },
+	{ LPC_I2C0_SDA_PIO_0_11, (LPC_IO_DIGITAL | LPC_IO_OPEN_DRAIN_ENABLE) },
+	ARRAY_LAST_PIO,
 };
-const struct pio uart1_pins[] = {
-	LPC_UART1_RX_PIO_0_8,
-	LPC_UART1_TX_PIO_0_9,
-	ARRAY_LAST_PIN,
-};
-const struct pio i2c0_pins[] = {
-	LPC_I2C0_SCL_PIO_0_10,
-	LPC_I2C0_SDA_PIO_0_11,
-	ARRAY_LAST_PIN,
-};
-const struct pio ssp0_pins[] = {
+const struct pio_config spi_pins[] = {
 	/* Warning : Order is used later on, DO NOT change it ! */
-	LPC_SSP0_SCLK_PIO_0_14,
-	LPC_SSP0_MOSI_PIO_0_17,
-	LPC_SSP0_MISO_PIO_0_16,
-	LPC_GPIO_0_15, /* Use the GPIO config for the pin when SPI is configured as master */
-/*	LPC_SSP0_SSEL_PIO_0_15, */
-	ARRAY_LAST_PIN,
+	{ LPC_SSP0_SCLK_PIO_0_14, LPC_IO_DIGITAL },
+	{ LPC_SSP0_MOSI_PIO_0_17, LPC_IO_DIGITAL },
+	{ LPC_SSP0_MISO_PIO_0_16, LPC_IO_DIGITAL },
+	{ LPC_GPIO_0_15, LPC_IO_DIGITAL }, /* Use the GPIO config for the pin when SPI is configured as master */
+	ARRAY_LAST_PIO,
 };
-const struct pio timer2_pins[] = { /* TIMER_32B0 */
-	LPC_TIMER_32B0_M1_PIO_0_19, /* PWM out for Servo Motor */
-	ARRAY_LAST_PIN,
+
+#define LPC_TIMER_PIN_CONFIG   (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL | LPC_IO_DRIVE_HIGHCURENT)
+const struct pio_config timer_pins[] = { /* TIMER_32B0 */
+	/* Timer 2 */
+	{ LPC_TIMER_32B0_M1_PIO_0_19, LPC_TIMER_PIN_CONFIG }, /* PWM out for Servo Motor */
+	/* Timer 3 */
+	{ LPC_TIMER_32B1_M0_PIO_0_23, LPC_TIMER_PIN_CONFIG }, /* RGB Led Red */
+	{ LPC_TIMER_32B1_M1_PIO_0_24, LPC_TIMER_PIN_CONFIG }, /* RGB Led Green */
+	{ LPC_TIMER_32B1_M2_PIO_0_25, LPC_TIMER_PIN_CONFIG }, /* RGB Led Blue */
+	ARRAY_LAST_PIO,
 };
-const struct pio timer3_pins[] = { /* TIMER_32B1 */
-	LPC_TIMER_32B1_M0_PIO_0_23, /* RGB Led Red */
-	LPC_TIMER_32B1_M1_PIO_0_24, /* RGB Led Green */
-	LPC_TIMER_32B1_M2_PIO_0_25, /* RGB Led Blue */
-	ARRAY_LAST_PIN,
-};
-const struct pio adc_pins[] = {
-	LPC_ADC_AD0_PIO_0_30,
-	LPC_ADC_AD1_PIO_0_31,
-	LPC_ADC_AD2_PIO_1_0,
-	LPC_ADC_AD3_PIO_1_1,
-	LPC_ADC_AD4_PIO_1_2,
-	LPC_ADC_AD5_PIO_1_3,
-	ARRAY_LAST_PIN,
+
+const struct pio_config adc_pins[] = {
+	{ LPC_ADC_AD0_PIO_0_30, LPC_IO_ANALOG },
+	{ LPC_ADC_AD1_PIO_0_31, LPC_IO_ANALOG },
+	{ LPC_ADC_AD2_PIO_1_0,  LPC_IO_ANALOG },
+	{ LPC_ADC_AD3_PIO_1_1,  LPC_IO_ANALOG },
+	{ LPC_ADC_AD4_PIO_1_2,  LPC_IO_ANALOG },
+	{ LPC_ADC_AD5_PIO_1_3,  LPC_IO_ANALOG },
+	ARRAY_LAST_PIO,
 };
 
 const struct pio dth11_gpio = LPC_GPIO_0_6; /* Used for DTH11 */
@@ -125,6 +122,10 @@ void system_init()
 	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
+	set_pins(common_pins);
+	set_pins(spi_pins);
+	set_pins(timer_pins);
+	set_pins(adc_pins);
 	gpio_on();
 	status_led_config();
 	/* System tick timer MUST be configured and running in order to use the sleeping

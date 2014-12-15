@@ -88,7 +88,7 @@ int main(void) {
 	system_init();
 	uart_on(0, 115200, NULL);
 
-	/* Configure the DHT11 and the onboard temp sensor */
+	/* Configure the DHT11 temp sensor */
 	dht11_config(&dht11_gpio);
 
 	while (1) {

@@ -39,6 +39,7 @@
 #include "drivers/timers.h"
 #include "drivers/ssp.h"
 #include "extdrv/cc1101.h"
+#include "extdrv/dht11.h"
 
 #include "examples.h"
 
@@ -103,7 +104,7 @@ const struct pio_config adc_pins[] = {
 	ARRAY_LAST_PIO,
 };
 
-const struct pio dth11_gpio = LPC_GPIO_0_6; /* Used for DTH11 */
+const struct pio dht11_gpio = LPC_GPIO_0_6; /* Used for DTH11 */
 const struct pio button_gpio = LPC_GPIO_0_12; /* ISP Used as button */
 const struct pio led_gpio = LPC_GPIO_0_4; /* Led toggle on ISP button press */
 const struct pio timer_toggle_gpio = LPC_GPIO_0_3; /* Led toggle for timer interrupt test */
@@ -235,7 +236,7 @@ int main(void) {
 	timer_toggle_output_config(LPC_TIMER_16B0, &timer_toggle_gpio);
 
 	/* Configure the DHT11 and the onboard temp sensor */
-	dth11_config(&dth11_gpio);
+	dht11_config(&dht11_gpio);
 	temp_config(0);
 
 	/* GPIO interrupt test */

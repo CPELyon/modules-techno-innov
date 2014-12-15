@@ -50,15 +50,6 @@ void temp_display(int uart_num);
 
 
 
-/***************************************************************************** */
-/* DHT11 Humidity and temp sensor */
-void dth11_config(const struct pio* gpio);
-
-unsigned char dht11_read_dat();
-
-void dth11_display(void);
-
-
 
 /***************************************************************************** */
 /* EEPROM */

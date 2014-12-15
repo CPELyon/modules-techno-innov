@@ -2,5 +2,9 @@
 
 NAME = dht11
 
-$(NAME).bin clean mrproper:
+.PHONY: $(NAME).bin
+$(NAME).bin:
 	@make -C ../.. --no-print-directory NAME=$(NAME) apps/$(NAME)/$@
+
+clean mrproper:
+	@make -C ../.. --no-print-directory $@

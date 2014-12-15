@@ -1,6 +1,7 @@
 # Makefile for GPIO Demo Module
 
-NAME = mod_gpio
+TARGET_DIR = apps/$(NAME)
+
 LPC = lpc1224
 CPU = cortex-m0
 ARCH = armv6-m
@@ -11,41 +12,53 @@ FOPTS = -fno-builtin -ffunction-sections -fdata-sections -ffreestanding
 CFLAGS = -Wall -O2 -mthumb -mcpu=$(CPU) $(FOPTS)
 LINKOPTS = -static -nostartfiles -nostdlib \
 		   -Wl,--gc-sections -Wl,--build-id=none \
-		   -Wl,-Map=lpc_map_$(LPC).map -Tlpc_link_$(LPC).ld
+		   -Wl,-Map=$(TARGET_DIR)/lpc_map_$(LPC).map -Tlpc_link_$(LPC).ld
 
 
-.PHONY: all
-all: $(NAME).bin
+APPS = $(subst apps/,,$(wildcard apps/*))
 
-prog: CFLAGS += -DEEPROM_WRITE
-prog: clean all
-
+.PHONY: all $(APPS)
+all: $(APPS)
 
 INCLUDES = include/
+TARGET_INCLUDES = $(TARGET_DIR)/
 OBJDIR = objs
 
-SRC = $(shell find . -name \*.c)
+SRC = $(wildcard */*.c)
 OBJS = ${SRC:%.c=${OBJDIR}/%.o}
+DEPS = ${OBJS:%.o=$(OBJDIR)/%.d}
 
-$(NAME).bin: $(NAME)
+NAME_SRC = $(wildcard $(TARGET_DIR)/*.c)
+NAME_OBJS = ${NAME_SRC:%.c=${OBJDIR}/%.o}
+NAME_DEPS = ${NAME_OBJS:%.o=$(OBJDIR)/%.d}
+
+-include $(DEPS) $(NAME_DEPS)
+
+.SECONDARY: $(OBJS) $(NAME_OBJS)
+.PRECIOUS: %.elf
+%.elf: $(OBJS) $(NAME_OBJS)
+	@echo "Linking $(NAME) ..."
+	@$(CC) $(LINKOPTS) $(OBJS) $(NAME_OBJS) -o $@
+
+%.bin: %.elf
 	@echo "Creating image : [32m$@[39m"
 	@$(CROSS_COMPILE)objcopy -R .stack -R .bss -O binary $^ $@
 	@ls -l $@
 	@echo Done.
 
-$(NAME): $(OBJS)
-	@echo "Linking ..."
-	@$(CC) $(CFLAGS) $(LINKOPTS) $(OBJS) -o $@ -I$(INCLUDES)
-
 ${OBJDIR}/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo "-- compiling" $<
-	@$(CC) -MMD -MP -MF ${OBJDIR}/$*.d $(CFLAGS) $< -c -o $@ -I$(INCLUDES)
+	@$(CC) -MMD -MP -MF ${OBJDIR}/$*.d $(CFLAGS) $< -c -o $@ -I$(INCLUDES) -I$(TARGET_INCLUDES)
+
+
+$(APPS):
+	@make --no-print-directory NAME=$@ apps/$@/$@.bin
+
+all_apps: $(APPS)
 
 clean:
-	find ${OBJDIR} -name "*.o" -exec rm {} \;
-	find ${OBJDIR} -name "*.d" -exec rm {} \;
-	rm -f *.map
+	rm -rf $(OBJDIR)
 
 mrproper: clean
-	rm -f $(NAME)*
+	rm -f apps/*/*.bin apps/*/*.elf apps/*/*.map

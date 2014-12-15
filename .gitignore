@@ -12,10 +12,10 @@
 *.o
 *.d
 *.bin
+*.elf
 *.map
 */objs/*
 *.zip
 *.svg
 *.dump
 tags
-mod_gpio

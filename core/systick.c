@@ -34,8 +34,11 @@
 static volatile uint32_t sleep_count = 0;
 static volatile uint32_t tick_ms = 0;
 static volatile uint32_t systick_running = 0;
+static volatile uint32_t tick_reload = 0;
 
 /* Wraps every 50 days or so with a 1ms tick */
+static volatile uint32_t global_wrapping_system_ticks_cycles;
+/* The systick cycles run at get_main_clock(), and would wrap more often! */
 static volatile uint32_t global_wrapping_system_ticks = 0;
 
 
@@ -51,6 +54,7 @@ void SysTick_Handler(void)
 {
 	int i = 0;
 	global_wrapping_system_ticks++;
+	global_wrapping_system_ticks_cycles += tick_reload;
 	if (sleep_count != 0) {
 		sleep_count--;
 	}
@@ -139,6 +143,12 @@ uint32_t systick_get_tick_count(void)
 	return global_wrapping_system_ticks;
 }
 
+uint32_t systick_get_tick_cycles(void)
+{
+	struct lpc_system_tick* systick = LPC_SYSTICK;
+	return global_wrapping_system_ticks_cycles - systick->value;
+}
+
 /***************************************************************************** */
 /* Power up the system tick timer.
  * ms is the interval between system tick timer interrupts. If set to 0, the default
@@ -160,8 +170,10 @@ void systick_timer_on(uint32_t ms)
 	reload = reload >> 1; /* Divide by 2 */
 	systick->reload_val = (reload & 0xffffff);
 	tick_ms = ms;
+	tick_reload = systick->reload_val;
 
 	/* Start counting from the reload value, writting anything would do ... */
+	global_wrapping_system_ticks_cycles = tick_reload;
 	systick->value = reload;
 
 	/* And enable counter interrupt */
@@ -179,6 +191,7 @@ void systick_timer_off(void)
 	systick->control = 0;
 	systick->reload_val = 0;
 	tick_ms = 0;
+	tick_reload = 0;
 	systick_running = 0;
 }
 

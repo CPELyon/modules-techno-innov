@@ -129,6 +129,8 @@ uint32_t systick_get_timer_val(void);
 
 /* Get the system tick */
 uint32_t systick_get_tick_count(void);
+/* Get the systick cycles since start */
+uint32_t systick_get_tick_cycles(void);
 
 /* Power up the system tick timer.
  * ms is the interval between system tick timer interrupts. If set to 0, the default

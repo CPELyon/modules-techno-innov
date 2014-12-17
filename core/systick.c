@@ -37,9 +37,9 @@ static volatile uint32_t systick_running = 0;
 static volatile uint32_t tick_reload = 0;
 
 /* Wraps every 50 days or so with a 1ms tick */
-static volatile uint32_t global_wrapping_system_ticks_cycles;
-/* The systick cycles run at get_main_clock(), and would wrap more often! */
 static volatile uint32_t global_wrapping_system_ticks = 0;
+/* The systick cycles run at get_main_clock(), and would wrap more often! */
+static volatile uint32_t global_wrapping_system_clock_cycles = 0;
 
 
 struct systick_callback {
@@ -54,7 +54,7 @@ void SysTick_Handler(void)
 {
 	int i = 0;
 	global_wrapping_system_ticks++;
-	global_wrapping_system_ticks_cycles += tick_reload;
+	global_wrapping_system_clock_cycles += tick_reload;
 	if (sleep_count != 0) {
 		sleep_count--;
 	}
@@ -138,15 +138,20 @@ static uint32_t systick_counted_to_zero(void)
 }
 
 
+/* Get the number of system ticks ... since last wrapping of the counter, which
+ * is about 50 days with a 1ms system tick. */
 uint32_t systick_get_tick_count(void)
 {
 	return global_wrapping_system_ticks;
 }
 
-uint32_t systick_get_tick_cycles(void)
+/* Get the number of clock cycles ... since last wrapping of the counter. */
+uint32_t systick_get_clock_cycles(void)
 {
 	struct lpc_system_tick* systick = LPC_SYSTICK;
-	return global_wrapping_system_ticks_cycles - systick->value;
+	/* global_wrapping_system_clock_cycles has been initialised to reload value, thus there is
+	 * no need to add it here, making the call quicker */
+	return global_wrapping_system_clock_cycles - systick->value;
 }
 
 /***************************************************************************** */
@@ -173,8 +178,9 @@ void systick_timer_on(uint32_t ms)
 	tick_reload = systick->reload_val;
 
 	/* Start counting from the reload value, writting anything would do ... */
-	global_wrapping_system_ticks_cycles = tick_reload;
 	systick->value = reload;
+	/* Consider we already counted one cycle, making further reading of this count easier */
+	global_wrapping_system_clock_cycles = tick_reload;
 
 	/* And enable counter interrupt */
 	systick->control = LPC_SYSTICK_CTRL_TICKINT;

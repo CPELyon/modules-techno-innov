@@ -10,8 +10,8 @@ Example applications are created in the apps directory, with one
 sub-directory for each application. These are (and must stay) independent.
 
 More usefull stuff is up to you. Creating an app is *very* simple. Copy
-an example from apps/ to the name you want and simply change "NAME" in the
-Makefile to the name of your new directory. Please, no spaces in the name !
+an example from apps/ to the name you want and start coding.
+** Please, no spaces (or special characters) in the directory name ! **
 
 
 ********************

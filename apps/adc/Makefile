@@ -1,6 +1,6 @@
 # Makefile for DHT11 example for GPIO Demo Module
 
-NAME = adc
+NAME = $(shell basename $(CURDIR))
 
 .PHONY: $(NAME).bin
 $(NAME).bin:

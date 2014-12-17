@@ -1,6 +1,6 @@
 # Makefile for DHT11 example for GPIO Demo Module
 
-NAME = i2c_temp
+NAME = $(shell basename $(CURDIR))
 
 .PHONY: $(NAME).bin
 $(NAME).bin:

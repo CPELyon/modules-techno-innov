@@ -1,6 +1,6 @@
 # Makefile for DHT11 example for GPIO Demo Module
 
-NAME = cc1101
+NAME = $(shell basename $(CURDIR))
 
 .PHONY: $(NAME).bin
 $(NAME).bin:
@@ -8,3 +8,4 @@ $(NAME).bin:
 
 clean mrproper:
 	@make -C ../.. --no-print-directory $@
+

@@ -459,4 +459,24 @@ void cc1101_config(void)
 	cc1101_write_reg(CC1101_PATABLE, paTable[0]);
 }
 
+/* Update CC1101 config
+ * Arguments are the settings table which is a table of address and value pairs,
+ *   and the table length, which must be even.
+ */
+void cc1101_update_config(uint8_t* settings, uint8_t len)
+{
+	int i = 0;
+	if (len & 0x01) {
+		return;
+	}
+	for (i = 0; i < len; i += 2) {
+		cc1101_write_reg(settings[i], settings[i + 1]);
+	}
+}
+
+/* Change PA Table value */
+void cc1101_set_patable(uint8_t val)
+{
+	cc1101_write_reg(CC1101_PATABLE, val);
+}
 

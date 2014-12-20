@@ -265,5 +265,13 @@ void cc1101_init(uint8_t ssp_num, const struct pio* cs_pin, const struct pio* mi
 /* Write / send all the configuration register values to the CC1101 chip */
 void cc1101_config(void);
 
+/* Update CC1101 config
+ * Arguments are the settings table which is a table of address and value pairs,
+ *   and the table length, which must be even.
+ */
+void cc1101_update_config(uint8_t* settings, uint8_t len);
+
+/* Change PA Table value */
+void cc1101_set_patable(uint8_t val);
 
 #endif /* EXTDRV_CC1101_H */

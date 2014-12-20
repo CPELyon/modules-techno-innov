@@ -47,14 +47,18 @@
  */
 
 /* The status LED is on GPIO Port 1, pin 4 (PIO1_4) and Port 1, pin 5 (PIO1_5) */
-#define LED_RED    5
-#define LED_GREEN  4
 
-void status_led_config(void)
+struct pio red_led = LPC_GPIO_1_5;
+struct pio green_led = LPC_GPIO_1_4;
+#define LED_RED    (1 << red_led.pin)
+#define LED_GREEN  (1 << green_led.pin)
+
+void status_led_config(const struct pio* green, const struct pio* red)
 {
 	uint32_t mode = LPC_IO_MODE_PULL_UP | LPC_IO_DRIVE_HIGHCURENT;
-	const struct pio red_led = LPC_GPIO_1_5;
-	const struct pio green_led = LPC_GPIO_1_4;
+	/* Copy status led info */
+	pio_copy(&red_led, red);
+	pio_copy(&green_led, green);
 	/* Status Led GPIO. Turn Green on. */
 	config_gpio(&green_led, mode, GPIO_DIR_OUT, 1);
 	config_gpio(&red_led, mode, GPIO_DIR_OUT, 0);
@@ -62,44 +66,48 @@ void status_led_config(void)
 
 void status_led(uint32_t val)
 {
-	struct lpc_gpio* gpio1 = LPC_GPIO_REGS(1);
+	struct lpc_gpio* gpio_red = LPC_GPIO_REGS(red_led.port);
+	struct lpc_gpio* gpio_green = LPC_GPIO_REGS(green_led.port);
 
 	switch (val) {
 		case red_only:
-			gpio1->set = (1 << LED_RED);
-			gpio1->clear = (1 << LED_GREEN);
+			gpio_red->set = LED_RED;
+			gpio_green->clear = LED_GREEN;
 			break;
 		case red_on:
-			gpio1->set = (1 << LED_RED);
+			gpio_red->set = LED_RED;
 			break;
 		case red_off:
-			gpio1->clear = (1 << LED_RED);
+			gpio_red->clear = LED_RED;
 			break;
 		case red_toggle:
-			gpio1->toggle = (1 << LED_RED);
+			gpio_red->toggle = LED_RED;
 			break;
 		case green_only:
-			gpio1->set = (1 << LED_GREEN);
-			gpio1->clear = (1 << LED_RED);
+			gpio_green->set = LED_GREEN;
+			gpio_red->clear = LED_RED;
 			break;
 		case green_on:
-			gpio1->set = (1 << LED_GREEN);
+			gpio_green->set = LED_GREEN;
 			break;
 		case green_off:
-			gpio1->clear = (1 << LED_GREEN);
+			gpio_green->clear = LED_GREEN;
 			break;
 		case green_toggle:
-			gpio1->toggle = (1 << LED_GREEN);
+			gpio_green->toggle = LED_GREEN;
 			break;
 		case both:
-			gpio1->set = (1 << LED_GREEN) | (1 << LED_RED);
+			gpio_red->set = LED_RED;
+			gpio_green->set = LED_GREEN;
 			break;
 		case toggle:
-			gpio1->toggle = (1 << LED_GREEN) | (1 << LED_RED);
+			gpio_red->toggle = LED_RED;
+			gpio_green->toggle = LED_GREEN;
 			break;
 		case none:
 		default:
-			gpio1->clear = (1 << LED_GREEN) | (1 << LED_RED);
+			gpio_red->clear = LED_RED;
+			gpio_green->clear = LED_GREEN;
 			break;
 	}
 }

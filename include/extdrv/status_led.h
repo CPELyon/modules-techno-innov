@@ -28,7 +28,7 @@
 /***************************************************************************** */
 /* Status LED */
 /* The status LED is on GPIO Port 1, pin 4 (PIO1_4) and Port 1, pin 5 (PIO1_5) */
-void status_led_config(void);
+void status_led_config(const struct pio* green, const struct pio* red);
 
 void status_led(uint32_t val);
 

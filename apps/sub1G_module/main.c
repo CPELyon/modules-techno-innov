@@ -119,7 +119,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(1, name, len);
+	serial_write(0, name, len);
 	/*FIXME : wait for end of Tx and perform soft reset of the micro-controller ! */
 }
 
@@ -133,7 +133,7 @@ void WAKEUP_Handler(void)
 {
 }
 
-void temp_config(int uart_num)
+void temp_config()
 {
 	int ret = 0;
 
@@ -144,7 +144,7 @@ void temp_config(int uart_num)
 	/* Temp sensor */
 	ret = tmp101_sensor_config(TMP_RES_ELEVEN_BITS);
 	if (ret != 0) {
-		serial_write(uart_num, "Temp config error\r\n", 19);
+		serial_write(0, "Temp config error\r\n", 19);
 	}
 }
 
@@ -179,7 +179,7 @@ void rf_config(void)
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
 
 #ifdef DEBUG
-	{
+	if (1) {
 		char buff[BUFF_LEN];
 		int len = 0;
 		len = snprintf(buff, BUFF_LEN, "CC1101 RF link init done.\r\n");
@@ -190,6 +190,8 @@ void rf_config(void)
 
 void handle_rf_rx_data(void)
 {
+	char buff[BUFF_LEN];
+	int len = 0;
 	uint8_t data[RF_BUFF_LEN];
 	int8_t ret = 0;
 	uint8_t status = 0;
@@ -201,13 +203,40 @@ void handle_rf_rx_data(void)
 
 #ifdef DEBUG
 	if (1) {
-		char buff[BUFF_LEN];
-		int len = 0;
 		len = snprintf(buff, BUFF_LEN, "RF: ret:%d, st: %d.\r\n", ret, status);
 		serial_write(0, buff, len);
 	}
 #endif
+
+	switch (data[2]) {
+		case 'T':
+			{
+				uint16_t val = 0;
+				int deci_degrees = 0;
+				/* Read the temperature */
+				if (tmp101_sensor_read(&val, &deci_degrees) != 0) {
+					serial_write(0, "Temp read error\r\n", 19);
+				} else {
+					len = snprintf(buff, 40, "Temp read: %d,%d - raw: 0x%04x.\r\n",
+							(deci_degrees/10), (deci_degrees%10), val);
+					serial_write(0, buff, len);
+				}
+			}
+			break;
+		case 'V':
+			{
+				uint16_t val = 0;
+				/* Get and display the battery voltage */
+				if (adc_get_value(&val, ADC_VBAT) >= 0) {
+					int milli_volts = ((val * 32) / 10);
+					len = snprintf(buff, 40, "Vbat: %d (raw: 0x%04x)\r\n", (milli_volts * 2), val);
+					serial_write(0 , buff, len);
+				}
+			}
+			break;
+	}
 }
+
 
 /* Data sent on radio comes from the UART, put any data received from UART in
  * cc_tx_buff and send when either '\r' or '\n' is received.
@@ -216,7 +245,7 @@ void handle_rf_rx_data(void)
 static volatile uint32_t cc_tx = 0;
 static volatile uint8_t cc_tx_buff[RF_BUFF_LEN];
 static volatile uint8_t cc_ptr = 0;
-void cc1101_test_rf_serial_link_tx(uint8_t c)
+void handle_uart_cmd(uint8_t c)
 {
 	if (cc_ptr < RF_BUFF_LEN) {
 		cc_tx_buff[cc_ptr++] = c;
@@ -228,10 +257,40 @@ void cc1101_test_rf_serial_link_tx(uint8_t c)
 	}
 }
 
+void send_on_rf(void)
+{
+	uint8_t cc_tx_data[RF_BUFF_LEN + 2];
+	uint8_t len = 0, tx_len = cc_ptr;
+
+	/* Create a local copy */
+	memcpy((char*)&(cc_tx_data[2]), (char*)cc_tx_buff, tx_len);
+	/* "Free" the rx buffer as soon as possible */
+	cc_ptr = 0;
+	/* Prepare buffer for sending */
+	cc_tx_data[0] = tx_len + 1;
+	cc_tx_data[1] = 0; /* Broadcast */
+	/* Send */
+	if (cc1101_tx_fifo_state() != 0) {
+		cc1101_flush_tx_fifo();
+	}
+	ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
+
+#ifdef DEBUG
+	{
+		/* Give some feedback on UART 0 */
+		char buff[BUFF_LEN];
+		int len = 0;
+		len = snprintf(buff, BUFF_LEN, "Tx ret: %d\r\n", ret);
+		serial_write(0, buff, len);
+	}
+#endif
+}
+
+
 /***************************************************************************** */
 int main(void) {
 	system_init();
-	uart_on(0, 115200, cc1101_test_rf_serial_link_tx);
+	uart_on(0, 115200, handle_uart_cmd);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 	i2c_on(I2C_CLK_100KHz);
 	adc_on();
@@ -241,15 +300,10 @@ int main(void) {
 	rf_config();
 
 	/* Temperature sensor */
-	temp_config(0);
+	temp_config();
 
 	while (1) {
-		char buff[BUFF_LEN];
-		int len = 0;
-		uint16_t val = 0;
-		int deci_degrees = 0;
 		uint8_t status = 0;
-
 		/* Request a Temp conversion on I2C TMP101 temperature sensor */
 		tmp101_sensor_start_conversion(); /* A conversion takes about 40ms */
 		/* Start an ADC conversion to get battery voltage */
@@ -258,28 +312,16 @@ int main(void) {
 		/* Tell we are alive :) */
 		chenillard(250);
 
-		/* Read the temperature */
-		if (tmp101_sensor_read(&val, &deci_degrees) != 0) {
-			serial_write(0, "Temp read error\r\n", 19);
-		} else {
-			len = snprintf(buff, 40, "Temp read: %d,%d - raw: 0x%04x.\r\n",
-					(deci_degrees/10), (deci_degrees%10), val);
-			serial_write(0, buff, len);
-		}
-
-		/* Get and display the battery voltage */
-		if (adc_get_value(&val, ADC_VBAT) >= 0) {
-			int milli_volts = ((val * 32) / 10);
-			len = snprintf(buff, 40, "Vbat: %d (raw: 0x%04x)\r\n", (milli_volts * 2), val);
-			serial_write(0 , buff, len);
-		}
-
 		/* RF */
-		if (check_rx == 1) {
-			check_rx = 0;
-			handle_rf_rx_data();
+		if (cc_tx == 1) {
+			send_on_rf();
+			cc_tx = 0;
 		}
-		status = (cc1101_read_status() & CC1101_STATE_MASK);
+		/* Do not leave radio in an unknown or unwated state */
+        do {
+            status = (cc1101_read_status() & CC1101_STATE_MASK);
+        } while (status == CC1101_STATE_TX);
+
 		if (status != CC1101_STATE_RX) {
 			static uint8_t loop = 0;
 			loop++;
@@ -290,6 +332,10 @@ int main(void) {
 				cc1101_enter_rx_mode();
 				loop = 0;
 			}
+		}
+		if (check_rx == 1) {
+			check_rx = 0;
+			handle_rf_rx_data();
 		}
 	}
 	return 0;

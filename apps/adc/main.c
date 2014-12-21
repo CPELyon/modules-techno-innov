@@ -62,6 +62,8 @@ const struct pio_config adc_pins[] = {
 	ARRAY_LAST_PIO,
 };
 
+const struct pio status_led_green = LPC_GPIO_1_4;
+const struct pio status_led_red = LPC_GPIO_1_5;
 
 /***************************************************************************** */
 /* This will display the integer value read on the ADC, between 0 and 1024.
@@ -134,7 +136,7 @@ void system_init()
 	set_pins(common_pins);
 	set_pins(adc_pins);
 	gpio_on();
-	status_led_config();
+	status_led_config(&status_led_green, &status_led_red);
 	/* System tick timer MUST be configured and running in order to use the sleeping
 	 * functions */
 	systick_timer_on(1); /* 1ms */

@@ -64,6 +64,8 @@ const struct pio_config common_pins[] = {
 const struct pio cc1101_cs_pin = LPC_GPIO_0_15;
 const struct pio cc1101_miso_pin = LPC_SSP0_MISO_PIO_0_16;
 
+const struct pio status_led_green = LPC_GPIO_1_4;
+const struct pio status_led_red = LPC_GPIO_1_5;
 
 /***************************************************************************** */
 void system_init()
@@ -78,7 +80,7 @@ void system_init()
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
 	gpio_on();
-	status_led_config();
+	status_led_config(&status_led_green, &status_led_red);
 	/* System tick timer MUST be configured and running in order to use the sleeping
 	 * functions */
 	systick_timer_on(1); /* 1ms */

@@ -51,6 +51,8 @@ const struct pio_config common_pins[] = {
 
 const struct pio dht11_gpio = LPC_GPIO_0_6; /* Used for DTH11 */
 
+const struct pio status_led_green = LPC_GPIO_1_4;
+const struct pio status_led_red = LPC_GPIO_1_5;
 
 void system_init()
 {
@@ -64,7 +66,7 @@ void system_init()
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
 	gpio_on();
-	status_led_config();
+	status_led_config(&status_led_green, &status_led_red);
 	/* System tick timer MUST be configured and running in order to use the sleeping
 	 * functions */
 	systick_timer_on(1); /* 1ms */

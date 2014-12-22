@@ -260,7 +260,8 @@ void handle_uart_cmd(uint8_t c)
 void send_on_rf(void)
 {
 	uint8_t cc_tx_data[RF_BUFF_LEN + 2];
-	uint8_t len = 0, tx_len = cc_ptr;
+	uint8_t tx_len = cc_ptr;
+	int ret = 0;
 
 	/* Create a local copy */
 	memcpy((char*)&(cc_tx_data[2]), (char*)cc_tx_buff, tx_len);

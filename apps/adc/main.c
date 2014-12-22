@@ -29,6 +29,7 @@
 #include "core/system.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
+#include "drivers/gpio.h"
 #include "extdrv/status_led.h"
 #include "drivers/adc.h"
 

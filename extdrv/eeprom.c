@@ -33,63 +33,49 @@
 
 
 /***************************************************************************** */
-/*       EEPROM Chip select for the GPIO Demo module                           */
-/*******************************************************************************/
-/* Set the SPI SSEL pin low. */
-/* These functions are specific to the mod_gpio_demo and domotab modules.
- * It is used to release the gate that blocks the SCL signal to the EEPROM,
- *   allowing multiple eeproms with the same address to be accessed one at a time
- *   on the same I2C Bus, which gives a way to both identify modules presence and
- *   module function, name, and pther capabilities.
- * When the SPI is used as slave, the master has the control of the SPI SSEL signal
- *   and the EEPROM should not be accessed by the module.
- * Other I2C EEPROMs should not need these functions.
+/*          Read and Write for eeprom                                          */
+/***************************************************************************** */
+
+/* NOTE : This code does automatic detection of the eeprom type/size and thus does not
+ *        support multiple eeproms on the same I2C bus
  */
-static const struct pio i2c_eeprom_cs = LPC_GPIO_0_15;
-int mod_gpio_demo_eeprom_cs_pull_low(void)
-{
-    /* Configure SPI_CS as output and set it low. */
-    config_gpio(&i2c_eeprom_cs, 0, GPIO_DIR_OUT, 0);
-	return 0;
-}
-void mod_gpio_demo_eeprom_cs_release(void)
-{
-	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(i2c_eeprom_cs.port);
-    gpio_port_regs->set = (1 << i2c_eeprom_cs.pin);
-}
 
-
-/***************************************************************************** */
-/*          Read and Write for module eeprom                                   */
-/***************************************************************************** */
 /* Config */
 /* Small eeprom : up to 2k bytes. These use a segment address on the lower three bits
  *   of the address byte, and thus reply on 8 consecutive addresses */
-#define EEPROM_ID_SMALL_ADDR  0xA0
+#define EEPROM_ID_SMALL_ADDR_1  0xA0
+#define EEPROM_ID_SMALL_ADDR_2  0xA2
 #define EEPROM_ID_SMALL_I2C_SIZE  1024
 #define EEPROM_ID_SMALL_PAGE_SIZE 16
 /* Big eeprom : from 4k bytes and above : These use two address bytes, and the three
- *   physical address pins are used to set the chip address. On DTPlug modules they should
- *   have address 0xA8. */
-#define EEPROM_ID_BIG_ADDR  0xA8
+ *   physical address pins are used to set the chip address. */
 #define EEPROM_ID_BIG_I2C_SIZE  16*1024
 #define EEPROM_ID_BIG_PAGE_SIZE 64
 
 
+enum i2c_eeprom_type {
+	EEPROM_TYPE_NONE = 0,
+	EEPROM_TYPE_SMALL,
+	EEPROM_TYPE_BIG,
+};
 
 /* Detect the eeprom size */
-int eeprom_detect(void)
+int eeprom_detect(uint8_t eeprom_addr)
 {
 	int ret = 0;
-	char cmd_buf[1] = { EEPROM_ID_SMALL_ADDR, };
+	char cmd_buf[1] = { EEPROM_ID_SMALL_ADDR_1, };
 
-	/* Look for small eeproms first, only these would answer on EEPROM_ID_SMALL_ADDR */
+	/* Look for small eeproms first, only these would answer on all addresses */
+	if (eeprom_addr == EEPROM_ID_SMALL_ADDR_1) {
+		cmd_buf[0] = EEPROM_ID_SMALL_ADDR_2;
+	}
 	ret = i2c_read(cmd_buf, 1, NULL, NULL, 0);
 	if (ret == 0) {
 		return EEPROM_TYPE_SMALL;
 	}
+
 	/* No small eeprom ... look for big ones */
-	cmd_buf[0] = EEPROM_ID_BIG_ADDR;
+	cmd_buf[0] = eeprom_addr;
 	ret = i2c_read(cmd_buf, 1, NULL, NULL, 0);
 	if (ret == 0) {
 		return EEPROM_TYPE_BIG;
@@ -103,7 +89,7 @@ int eeprom_detect(void)
 	return ret; /* Error or module size */
 }
 
-int get_eeprom_type(void)
+int get_eeprom_type(uint8_t eeprom_addr)
 {
 	static int eeprom_type = -1;
 
@@ -111,7 +97,7 @@ int get_eeprom_type(void)
 		return eeprom_type; /* No need to check again */
 	}
 
-	eeprom_type = eeprom_detect();
+	eeprom_type = eeprom_detect(eeprom_addr);
 	if (eeprom_type <= 0) {
 		return -1;
 	}
@@ -134,36 +120,34 @@ int get_eeprom_type(void)
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CMD_BUF_SIZE 4
-int eeprom_read(uint32_t offset, void *buf, size_t count)
+int eeprom_read(uint8_t eeprom_addr, uint32_t offset, void *buf, size_t count)
 {
 	int ret = 0;
-	char cmd_buf[CMD_BUF_SIZE] = { EEPROM_ID_BIG_ADDR, 0, 0, (EEPROM_ID_BIG_ADDR | 0x01), };
+	char cmd_buf[CMD_BUF_SIZE];
 	char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
 	int eeprom_type = 0;
 
-	if (mod_gpio_demo_eeprom_cs_pull_low() != 0) {
-		return -EBUSY;
-	}
-	eeprom_type = get_eeprom_type();
+	eeprom_type = get_eeprom_type(eeprom_addr);
 
 	/* Read the requested data */
 	switch (eeprom_type) {
 		case EEPROM_TYPE_SMALL:
-			cmd_buf[0] = EEPROM_ID_SMALL_ADDR | ((offset & 0x700) >> 7);
+			cmd_buf[0] = EEPROM_ID_SMALL_ADDR_1 | ((offset & 0x700) >> 7);
 			cmd_buf[1] = offset & 0xFF;
-			cmd_buf[2] = EEPROM_ID_SMALL_ADDR | 0x01;
+			cmd_buf[2] = EEPROM_ID_SMALL_ADDR_1 | 0x01;
 			ret = i2c_read(cmd_buf, CMD_BUF_SIZE - 1, ctrl_buf + 1, buf, count);
 			break;
 		case EEPROM_TYPE_BIG:
+			cmd_buf[0] = eeprom_addr;
 			cmd_buf[1] = ((offset & 0xFF00) >> 8);
 			cmd_buf[2] = offset & 0xFF;
+			cmd_buf[3] = (eeprom_addr | 0x01);
 			ret = i2c_read(cmd_buf, CMD_BUF_SIZE, ctrl_buf, buf, count);
 			break;
 		default:
 			ret = -1;
 			break;
 	}
-	mod_gpio_demo_eeprom_cs_release();
 
 	return ret;
 }
@@ -187,19 +171,16 @@ int eeprom_read(uint32_t offset, void *buf, size_t count)
 #define CMD_SIZE_BIG 3
 #define MAX_CMD_SIZE CMD_SIZE_BIG
 #define EEPROM_ID_MAX_PAGE_SIZE EEPROM_ID_BIG_PAGE_SIZE
-int eeprom_write(uint32_t offset, const void *buf, size_t count)
+int eeprom_write(uint8_t eeprom_addr, uint32_t offset, const void *buf, size_t count)
 {
 	int ret = 0;
 	uint8_t cmd_size = CMD_SIZE_BIG, page_size = EEPROM_ID_BIG_PAGE_SIZE;
 	int write_count = 0, size = 0;
-	char cmd[MAX_CMD_SIZE] = { EEPROM_ID_BIG_ADDR, 0, 0 };
+	char cmd[MAX_CMD_SIZE];
 	char full_buff[(EEPROM_ID_MAX_PAGE_SIZE + MAX_CMD_SIZE)];
 	int eeprom_type = 0;
 
-	if (mod_gpio_demo_eeprom_cs_pull_low() != 0) {
-		return -EBUSY;
-	}
-	eeprom_type = get_eeprom_type();
+	eeprom_type = get_eeprom_type(eeprom_addr);
 
 	switch (eeprom_type) {
 		case EEPROM_TYPE_SMALL:
@@ -219,10 +200,11 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 	while (write_count < count) {
 		switch (eeprom_type) {
 			case EEPROM_TYPE_SMALL:
-				cmd[0] = EEPROM_ID_SMALL_ADDR | ((offset & 0x700) >> 7);
+				cmd[0] = EEPROM_ID_SMALL_ADDR_1 | ((offset & 0x700) >> 7);
 				cmd[1] = offset & 0xFF;
 				break;
 			case EEPROM_TYPE_BIG:
+				cmd[0] = eeprom_addr;
 				cmd[1] = ((offset & 0xFF00) >> 8);
 				cmd[2] = offset & 0xFF;
 				break;
@@ -251,7 +233,6 @@ int eeprom_write(uint32_t offset, const void *buf, size_t count)
 
 		write_count += size;
 	}
-	mod_gpio_demo_eeprom_cs_release();
 
 	if (write_count != count)
 		return ret;

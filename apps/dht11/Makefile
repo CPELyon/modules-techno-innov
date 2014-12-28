@@ -1,4 +1,4 @@
-# Makefile for DHT11 example for GPIO Demo Module
+# Makefile for GPIO Demo Module apps
 
 NAME = $(shell basename $(CURDIR))
 

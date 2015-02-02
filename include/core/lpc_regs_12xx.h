@@ -324,6 +324,41 @@ struct lpc_system_tick {
 
 
 /***************************************************************************** */
+/*                    Cortex-M0 RTC (Real-Time Clock)                          */
+/***************************************************************************** */
+/* Cortex-M0 RTC Registers */
+struct lpc_rtc {
+    volatile uint32_t data;     /* 0x000 : Data register (R/-) */
+    volatile uint32_t match;    /* 0x004 : Match register (R/W) */
+    volatile uint32_t load;     /* 0x008 : Load register (R/W) */
+    volatile uint32_t control;  /* 0x00C : Control register (R/W) */
+    volatile uint32_t intr_control;        /* 0x010 : Interrupt control set/clear register (R/W) */
+    volatile uint32_t raw_intr_status;     /* 0x014 : Raw interrupt status register (R/-) */
+    volatile uint32_t masked_intr_status;  /* 0x018 : Masked interrupt status register (R/-) */
+    volatile uint32_t intr_clear;          /* 0x01C : Interrupt clear register (-/W) */
+};
+#define LPC_RTC  ((struct lpc_rtc*) LPC_RTC_BASE) /* SysTick configuration struct */
+
+/* RTC Clock source selection */
+#define LPC_RTC_CLK_1HZ          (0)
+#define LPC_RTC_CLK_1HZ_DELAYED  (0x01)
+#define LPC_RTC_CLK_1KHZ         (0x0A)
+#define LPC_RTC_CLK_PCLK         (0x04)  /* Main clock divided by RTC clock divider value */
+
+/* RTC control register */
+#define LPC_RTC_START  (1UL << 0)
+#define LPC_RTC_DISABLE  (0)
+
+/* RTC interrupt control register */
+#define LPC_RTC_INT_ENABLE  (1UL << 0)
+#define LPC_RTC_INT_DISABLE  (0)
+
+/* RTC interrupt clear register */
+#define LPC_RTC_CLEAR_INTR  (1UL << 0)
+
+
+
+/***************************************************************************** */
 /*                     Power Management Unit                                   */
 /***************************************************************************** */
 /* Power Management Unit (PMU) */
@@ -335,6 +370,12 @@ struct lpc_pm_unit
 							/* (RTC clock control and hysteresis of the WAKEUP pin) */
 };
 #define LPC_PMU         ((struct lpc_pm_unit *) LPC_PMU_BASE)
+
+/* System config register */
+#define LPC_WAKEUP_PIN_HYST_MASK    (0x01 << 10)
+#define LPC_RTC_CLK_SRC_SHIFT       11
+#define LPC_RTC_CLK_SRC_MASK        (0x0F << LPC_RTC_CLK_SRC_SHIFT)
+/* See RTC section above for RTC Clock source selection bits */
 
 
 /***************************************************************************** */

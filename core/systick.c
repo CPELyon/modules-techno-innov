@@ -70,8 +70,8 @@ void SysTick_Handler(void)
 }
 
 
-/* Register a callback to be called every 'period' system ticks with 'param' parameter.
- * returns the callback number, to be used to remove the callback from the table of callbacks.
+/* Register a callback to be called every 'period' system ticks.
+ * returns the callback number if registration was OK.
  * returns negative value on error.
  * The callback will get the "global_wrapping_system_ticks" as argument, which wraps every 50 days
  *   or so with a 1ms tick
@@ -93,16 +93,34 @@ int add_systick_callback(void (*callback) (uint32_t), uint16_t period)
 	return -EBUSY;
 }
 
+int remove_systick_callback(void (*callback) (uint32_t))
+{
+	int i = 0;
+	for (i = 0; i < MAX_SYSTICK_CALLBACKS; i++) {
+		if (cbs[i].callback == callback) {
+			cbs[i].callback = NULL;
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
 
 /***************************************************************************** */
 /* systick timer control function */
 
-/* Start the system tick timer */
+/* Start the system tick timer
+ * Starting the systick timer also resets the internal tick counters.
+ * If you need a value that goes beyond one start/stop cycle and accross resets,
+ *    then it's up to you to keep track of this using systick_get_tick_count() and/or
+ *    systick_get_clock_cycles().
+ */
 void systick_start(void)
 {
 	struct lpc_system_tick* systick = LPC_SYSTICK;
 	systick->value = 0;
 	systick_running = 1;
+	global_wrapping_system_ticks = 0;
+	global_wrapping_system_clock_cycles = tick_reload;
 	systick->control |= LPC_SYSTICK_CTRL_ENABLE;
 }
 /* Stop the system tick timer */
@@ -113,18 +131,43 @@ void systick_stop(void)
 	systick_running = 0;
 	systick->value = 0;
 }
-/* Reset the system tick timer, making it count down from the reload value again */
+/* Reset the system tick timer, making it count down from the reload value again
+ * Reseting the systick timer also resets the internal tick counters.
+ * If you need a value that goes beyond one start/stop cycle and accross resets,
+ *    then it's up to you to keep track of this using systick_get_tick_count() and/or
+ *    systick_get_clock_cycles().
+ */
 void systick_reset(void)
 {
 	struct lpc_system_tick* systick = LPC_SYSTICK;
 	systick->value = 0;
+	global_wrapping_system_ticks = 0;
+	global_wrapping_system_clock_cycles = tick_reload;
 }
 
+/* Get system tick timer current value (counts at get_main_clock() !) */
 uint32_t systick_get_timer_val(void)
 {
 	struct lpc_system_tick* systick = LPC_SYSTICK;
 	return systick->value;
 }
+
+/* Check if systick is running (return 1) or not (return 0) */
+uint32_t is_systick_running(void)
+{
+	return systick_running;
+}
+
+/* Get the system tick period in ms
+ * A vaue of 0 means the system tick timer has not been configured.
+ * Note : calls to msleep() or usleep() will configure the system tick timer
+ *        with a value of 1ms if it was not configured yet.
+ */
+uint32_t systick_get_tick_ms_period(void)
+{
+	return tick_ms;
+}
+
 /* Get the "timer wrapped" indicator.
  * Used in usleep() function.
  * Note : the first to call this function will get the right information.

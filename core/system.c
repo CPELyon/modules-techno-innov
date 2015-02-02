@@ -122,6 +122,12 @@ void system_set_default_power_state(void)
 	sys_ctrl->sys_AHB_clk_ctrl = LPC_SYS_ABH_CLK_CTRL_MEM_ALL;
 }
 
+/* Enter deep sleep.
+ * NOTE : entering deep sleep implies a lot of side effects. I'll try to lost them all here 
+ *        so this can be done right.
+ *
+ * Note : see remark about RTC and deep sleep in section 5.3.3 of UM10441
+ */
 void enter_deep_sleep(void)
 {
 	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;

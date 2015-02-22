@@ -60,6 +60,31 @@ void remove_gpio_callback(const struct pio* gpio);
 void gpio_on(void);
 void gpio_off(void);
 
+#define gpio_dir_in(gpio) \
+{ \
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio.port); \
+	gpio_port->data_dir &= ~(1 << gpio->pin);\
+}
+
+#define gpio_dir_out(gpio) \
+{ \
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio.port); \
+	gpio_port->data_dir |= (1 << gpio->pin);\
+}
+
+
+#define gpio_set(gpio) \
+{ \
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio.port); \
+	gpio_port->set = (1 << gpio->pin);\
+}
+
+#define gpio_clear(gpio) \
+{ \
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio.port); \
+	gpio_port->clear = (1 << gpio.pin);\
+}
+
 
 /* GPIO Configuration
  * This function calls the config_pio() function for the gpio with the given

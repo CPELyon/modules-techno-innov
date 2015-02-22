@@ -28,10 +28,17 @@
 
 /***************************************************************************** */
 /* Status LED */
+
+/* Configure the status led, giving the red and green pio structure */
 void status_led_config(const struct pio* green, const struct pio* red);
 
+/* Change the status led according to "val" param
+ * Use values from "led_status" enum for "val"
+ */
 void status_led(uint32_t val);
 
+
+/* TODO : Add comment */
 void chenillard(uint32_t ms);
 
 enum led_status {

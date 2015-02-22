@@ -39,8 +39,21 @@ enum gpio_interrupt_senses {
 };
 
 /* GPIO Interrupts */
+/* Add a callback on a GPIO interrupt.
+ * This call will configure the GPIO (call to config_pio()), set it as input and
+ * activate the interrupt on the given 'sense' event. use the gpio_interrupt_senses
+ * enum for 'sense' values.
+ * The callback will receive the pin number as argument (but not the port number).
+ * Note :
+ *   The interrupt hanlers are not efficient if the pin is not a low numbered one (require
+ *   32 shifts + test for pin number 31).
+ *   Use them if you place the signals generating interrupts on low numbered pins.
+ *   When possible, get in touch with the people doing the electronic design, or change
+ *   the handlers in drivers/gpio.c
+ */
 int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8_t sense);
 void remove_gpio_callback(const struct pio* gpio);
+
 
 
 /* GPIO Activation */
@@ -51,6 +64,8 @@ void gpio_off(void);
 /* GPIO Configuration
  * This function calls the config_pio() function for the gpio with the given
  * mode, configures the direction of the pin and sets the initial state.
+ * Use GPIO_DIR_IN or GPIO_DIR_OUT for the direction "dir", and 0 or 1 for the initial
+ * value "ini_val".
  */
 void config_gpio(const struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini_val);
 

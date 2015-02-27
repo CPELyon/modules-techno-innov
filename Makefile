@@ -6,7 +6,7 @@ LPC = lpc1224
 CPU = cortex-m0
 ARCH = armv6-m
 
-CROSS_COMPILE ?= arm-linux-gnueabi-
+CROSS_COMPILE ?= arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
 FOPTS = -fno-builtin -ffunction-sections -fdata-sections -ffreestanding
 CFLAGS = -Wall -O2 -mthumb -mcpu=$(CPU) $(FOPTS)

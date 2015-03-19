@@ -71,7 +71,7 @@ uint16_t spi_transfer_single_frame(uint8_t ssp_num, uint16_t data);
  *  size : the number of frames, each one having the configured data width (4 to 16 bits).
  *  data_out : data to be sent. Data will be read in the lower bits of the 16 bits values
  *             pointed by "data_out" for each frame. If NULL, then the content of data_in
-               will be used.
+ *             will be used.
  *  data_in : buffer for read data. If NULL, read data will be discarded.
  * Returns the number of data words transfered or negative value on error.
  * As the SPI bus is full duplex, data can flow in both directions, but the clock is

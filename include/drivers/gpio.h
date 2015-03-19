@@ -85,6 +85,12 @@ void gpio_off(void);
 	gpio_port->clear = (1 << gpio.pin);\
 }
 
+#define gpio_toggle(gpio) \
+{ \
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio.port); \
+	gpio_port->toggle = (1 << gpio.pin);\
+}
+
 
 /* GPIO Configuration
  * This function calls the config_pio() function for the gpio with the given

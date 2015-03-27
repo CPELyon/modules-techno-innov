@@ -46,7 +46,7 @@ static struct lpc_desc_private lpc_private = {
 };
 
 /***************************************************************************** */
-/*                     Requiered system inits                                  */
+/*                     Required system inits                                  */
 /***************************************************************************** */
 /* Set up number of CPU clocks for flash access (see chapter 4.5.42 and 4.10.4 of
  *  LPC12xx User manual (UM10441.pdf))
@@ -217,9 +217,9 @@ void clock_config(uint32_t freq_sel)
 		lpc_private.main_clock = (((freq_sel >> 3) & 0xFF) * 12 * 1000 * 1000);
 		/* Setup PLL dividers */
 		sys_ctrl->sys_pll_ctrl = (((M - 1) & 0x1F) | (N << 5));
-		/* Set sys_pllclkin to internal RC */
+		/* Set sys_pll_clk to internal RC */
 		sys_ctrl->sys_pll_clk_sel = 0;
-		sys_ctrl->sys_pll_clk_upd_en = 0;  /* (SYSPLLCLKUEN must go from LOW to HIGH */
+		sys_ctrl->sys_pll_clk_upd_en = 0;  /* SYSPLLCLKUEN must go from LOW to HIGH */
 		sys_ctrl->sys_pll_clk_upd_en = 1;
 		/* Power-up PLL */
 		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_SYSPLL);

@@ -83,11 +83,8 @@ static struct uart_device uarts[NUM_UARTS] = {
 	},
 };
 
-/* Generic UART handler */
-static void UART_Handler(struct uart_device* uart)
+static void uart_check_rx(struct uart_device* uart, uint32_t intr)
 {
-	uint32_t intr = uart->regs->func.intr_pending;
-
 	if ((intr & LPC_UART_INT_MASK) == LPC_UART_INT_RX) {
 		uint8_t data = uart->regs->func.buffer;
 		if (uart->rx_callback != NULL) {
@@ -98,6 +95,10 @@ static void UART_Handler(struct uart_device* uart)
 			uart->regs->func.buffer = data;
 		}
 	}
+}
+
+static void uart_check_tx(struct uart_device* uart, uint32_t intr)
+{
 	/* We are currently sending, send next char */
 	if ((intr & LPC_UART_INT_MASK) == LPC_UART_INT_TX) {
 		if (uart->out_buff && uart->sending && (uart->out_length > uart->sending)) {
@@ -107,6 +108,15 @@ static void UART_Handler(struct uart_device* uart)
 			uart->sending = 0;
 		}
 	}
+}
+
+/* Generic UART handler */
+static void UART_Handler(struct uart_device* uart)
+{
+	uint32_t intr = uart->regs->func.intr_pending;
+
+	uart_check_rx(uart, intr);
+	uart_check_tx(uart, intr);
 }
 
 
@@ -163,7 +173,10 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 
 	/* If UART is sending wait for buffer empty */
 	/* FIXME : be smart for OS, call scheduler or return */
-	do {} while (uart->sending != 0);
+	while (uart->sending != 0) {
+		if (get_priority_mask() == 0)
+			uart_check_tx(uart, uart->regs->func.intr_pending);
+	}
 
 	if (length > SERIAL_OUT_BUFF_SIZE) {
 		length = SERIAL_OUT_BUFF_SIZE;
@@ -180,6 +193,35 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 	return length;
 }
 
+
+/***************************************************************************** */
+/*    Serial Flush
+ *
+ * Wait until all characters have been sent
+ * Returns -1 on error, 0 on success.
+ * Possible errors: requested uart does not exists or unable to acquire uart lock.
+ *
+ * Warning for Real Time : This implementation will block if there's already a
+ * transmission ongoing.
+ */
+int serial_flush(uint32_t uart_num)
+{
+	struct uart_device* uart = NULL;
+
+	if (uart_num >= NUM_UARTS)
+		return -1;
+
+	uart = &uarts[uart_num];
+
+	/* Active wait for message to be sent. If interrupts are
+	 * disabled, call the UART handler while waiting. */
+	while (uart->sending) {
+		if (get_priority_mask() == 0)
+			uart_check_tx(uart, uart->regs->func.intr_pending);
+	}
+
+	return 0;
+}
 
 
 /***************************************************************************** */

@@ -46,6 +46,17 @@
  */
 int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 
+/***************************************************************************** */
+/*    Serial Flush
+ *
+ * Wait until all characters have been sent
+ * Returns -1 on error, 0 on success.
+ * Possible errors: requested uart does not exists or unable to acquire uart lock.
+ *
+ * Warning for Real Time : This implementation will block if there's already a
+ * transmission ongoing.
+ */
+int serial_flush(uint32_t uart_num);
 
 
 

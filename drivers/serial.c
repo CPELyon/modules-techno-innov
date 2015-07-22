@@ -179,7 +179,16 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 	return length;
 }
 
-
+struct uart_clk_cfg {
+	uint32_t baudrate;
+	uint8_t divisor_latch_lsb;
+	uint8_t div_add_val;
+	uint8_t mul_val;
+};
+static struct uart_clk_cfg uart_clk_table[] = {
+	{ 1152000, 2, 4, 13},
+	{ 0, 0, 0, 0, },
+};
 
 /***************************************************************************** */
 /*   UART Setup : private part : Clocks, Pins, Power and Mode   */
@@ -199,12 +208,34 @@ static void uart_clk_on(uint32_t uart_num, uint32_t baudrate)
 	uarts[uart_num].baudrate = baudrate;
 	/* Configure UART clock */
 	pclk = get_main_clock(); /* See above note */
-	sys_ctrl->uart_clk_div[uart_num] = 0x01;
 	div = (pclk / (baudrate * 16));
-	uart->line_ctrl |= LPC_UART_ENABLE_DLAB;
-	uart->ctrl.divisor_latch_lsb = (div & 0xff);
-	uart->ctrl.divisor_latch_msb = ((div >> 8) & 0xFF);
-	uart->line_ctrl &= ~LPC_UART_ENABLE_DLAB;
+	sys_ctrl->uart_clk_div[uart_num] = 0x01;
+	/* The easy one : divider is an integer, or baudrate is low enought for the aproximation */
+	if ((baudrate <= 115200) || ((div * baudrate * 16) == pclk)) {
+		uart->line_ctrl |= LPC_UART_ENABLE_DLAB;
+		uart->ctrl.divisor_latch_lsb = (div & 0xff);
+		uart->ctrl.divisor_latch_msb = ((div >> 8) & 0xFF);
+		uart->line_ctrl &= ~LPC_UART_ENABLE_DLAB;
+	} else {
+		int i = 0;
+		/* Do not try to communicate at high speed with a low speed clock ... or compute the table
+		 * for your clock rate */
+		if (pclk != (48 * 1000 * 1000)) {
+			return;
+		}
+		while (uart_clk_table[i].baudrate != 0) {
+			if (uart_clk_table[i].baudrate < baudrate) {
+				i++;
+				continue;
+			}
+			uart->line_ctrl |= LPC_UART_ENABLE_DLAB;
+			uart->ctrl.divisor_latch_lsb = uart_clk_table[i].divisor_latch_lsb;
+			uart->ctrl.divisor_latch_msb = 0;
+			uart->fractional_div = (uart_clk_table[i].div_add_val | (uart_clk_table[i].mul_val << 4));
+			uart->line_ctrl &= ~LPC_UART_ENABLE_DLAB;
+			break;
+		}
+	}
 }
 static void uart_clk_off(uint32_t uart_num)
 {

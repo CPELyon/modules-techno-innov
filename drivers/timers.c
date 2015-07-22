@@ -57,7 +57,7 @@ void TIMER_Handler(struct timer_device* timer)
 	uint32_t intr_flags = regs->int_reg; /* Backup the flags */
 
 	/* Clear the interrupt */
-	regs->int_reg = 0xFF;
+	regs->int_reg = intr_flags;
 	/* And call the user routine if one has been registered */
 	if (timer->callback != NULL) {
 		timer->callback(intr_flags);

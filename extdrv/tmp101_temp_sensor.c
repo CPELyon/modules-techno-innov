@@ -1,5 +1,5 @@
 /****************************************************************************
- *   extdrv/temp.c
+ *   extdrv/tmp101_temp_sensor.c
  *
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
@@ -38,6 +38,7 @@
  */
 
 
+/* FIXME : this should be a parameter to the config function */
 /* Config */
 #define TMP101_ADDR  0x94
 

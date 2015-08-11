@@ -50,17 +50,6 @@ SECTIONS {
 		*(COMMON)
 		_end_bss = .;
 	} >sram
-
-	. = ALIGN(4);
-
-	.user_information_block :
-	{
-		_start_info = .;
-		*(.user_information_block*)
-		_end_info = .;
-	} >info
-
-	. = ALIGN(4);
 }
 
 _end = .;

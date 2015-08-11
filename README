@@ -1,9 +1,9 @@
-mod_gpio_demo is an example code for the development module made by
+This repository provides example code for the development modules made by
 Techno-Innov.
 
-It has support for the LPC1224 as used on this development module, and
-for the peripherals found on the development module (Led, eeprom and
-temperature sensor).
+It has support for the LPC1224 as used on the development modules, and
+for the peripherals found on the development modules (user led, eeprom,
+temperature sensor, CC1101 RF transceiver, ...).
 Support for various other cool stuff is added when we play with it.
 
 Example applications are created in the apps directory, with one
@@ -18,16 +18,11 @@ an example from apps/ to the name you want and start coding.
 BUID and FLASH
 
 Build has been tested using gcc, and only gcc, in the version provided by
-the emdebian project, and a few other binary versions available for
+Debian GNU/Linux distribution, and a few other binary versions available for
 download on the Internet, but any ARM gcc toolchain should do.
 
-In order to get the emdebian ARM gcc cross-toolchain you should add this
-repository to your apt sources :
-   deb http://www.emdebian.org/debian/ unstable main
-and then update and install package gcc-4.7-arm-linux-gnueabi
-It may be required that you update the alternatives for this compiler, with
-a line like this one :
-   update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-4.7 60
+In order to get the debian ARM gcc cross-toolchain you should install the
+following packaages : gcc-arm-none-eabi, binutils-arm-none-eabi
 
 There's no need for the related libc package here, the libc does not fit
 in our micro-controller memory. Instead have a look at the content of the
@@ -41,13 +36,12 @@ application alone.
 
 To flash the binary (the one with .bin) to the LPC Flash you will need the
 lpctool package, now packaged for Debian, starting with Jessie, or available
-in our git repository : http://git.techno-innov.fr/lpctools
-Clone using :
-   git clone http://gitclone.techno-innov.fr/lpctools
-Then build (make) and use :)
+in our git repository : http://git.techno-innov.fr/lpctools (Clone using :
+git clone http://gitclone.techno-innov.fr/lpctools and then build (make) and
+use :)
 Usual command lines :
-   ./lpcprog -d /dev/ttyUSB0 -c id
-   ./lpcprog -d /dev/ttyUSB0 -c flash app_name.bin
+   lpcprog -d /dev/ttyUSB0 -c id
+   lpcprog -d /dev/ttyUSB0 -c flash app_name.bin
 See lpctools readme and lpcprog or isp help (-h) or manpages for more
 information.
 
@@ -89,6 +83,7 @@ SUPPORTED FEATURES and INTERFACES
    - GPIO interrupts
    - SPI (SSP)
    - PWM
+   - RTC (partial)
 
 - External Device drivers
    - I²C EEPROM
@@ -96,6 +91,10 @@ SUPPORTED FEATURES and INTERFACES
    - DHT11 temperatur and Humidity sensor
    - CC1101 Sub 1GHz RF Transceiver
    - Status led
+   - Epaper display
+
+- Other
+   - 8x8 font for use with Epaper display
 
 
 ********************
@@ -104,7 +103,7 @@ TODO :
 - Deep sleep mode support.
 - Test all the GPIO in different modes
 - Add support for SDCard over SPI
-- RTC Support
+- Complete RTC Support
 - Comparator support
 - Watchdog support
 - CRC engine support

@@ -18,6 +18,11 @@
 *.zip
 *.svg
 *.dump
+<<<<<<< HEAD
+*.img
+*.bak
+=======
 .img
 .bak
+>>>>>>> 399cd0d9bcc1ce24503839f20b5709fd0568a6a6
 tags

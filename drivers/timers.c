@@ -39,7 +39,7 @@ struct timer_device
  	struct lpc_timer* regs;
 	uint32_t power_bit;
 	uint32_t irq;
-	void (*callback)(uint8_t); /* Possible RX callback */
+	void (*callback)(uint32_t); /* Possible RX callback */
 };
 static struct timer_device timer_devices[NUM_TIMERS] = {
 	{ LPC_TMR16B0, LPC_SYS_ABH_CLK_CTRL_CT16B0, TIMER0_IRQ }, 
@@ -53,11 +53,10 @@ static struct timer_device timer_devices[NUM_TIMERS] = {
 /* Handlers */
 void TIMER_Handler(struct timer_device* timer)
 {
-	struct lpc_timer* regs = timer->regs;
-	uint32_t intr_flags = regs->int_reg; /* Backup the flags */
+	uint32_t intr_flags = timer->regs->int_reg; /* Backup the flags */
 
 	/* Clear the interrupt */
-	regs->int_reg = intr_flags;
+	timer->regs->int_reg = intr_flags;
 	/* And call the user routine if one has been registered */
 	if (timer->callback != NULL) {
 		timer->callback(intr_flags);
@@ -107,8 +106,9 @@ void timer_stop(uint32_t timer_num)
 {
 	if (timer_num >= NUM_TIMERS)
 		return;
-	/* Remove timer enable flag */
-	timer_devices[timer_num].regs->timer_ctrl |= LPC_TIMER_COUNTER_RESET;
+	/* Remove timer enable flag and request reset */
+	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_RESET;
+	/* Remove reset flag */
 	timer_devices[timer_num].regs->timer_ctrl = 0;
 }
 /* Resets the timer and lets it count again imediately */
@@ -116,9 +116,10 @@ void timer_restart(uint32_t timer_num)
 {
 	if (timer_num >= NUM_TIMERS)
 		return;
-	/* Set and remove timer reset flag */
-	timer_devices[timer_num].regs->timer_ctrl |= LPC_TIMER_COUNTER_RESET;
-	timer_devices[timer_num].regs->timer_ctrl &= ~LPC_TIMER_COUNTER_RESET;
+	/* Set timer reset flag */
+	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_RESET;
+	/* Remove reset flag and start counter */
+	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_ENABLE;
 }
 
 uint32_t timer_get_capture_val(uint32_t timer_num, uint32_t channel)
@@ -140,7 +141,7 @@ void timer_set_match(uint32_t timer_num, uint32_t channel, uint32_t val)
 {
 	if (timer_num >= NUM_TIMERS)
 		return;
-	if (channel > 2)
+	if (channel > 3)
 		return;
 
 	timer_devices[timer_num].regs->match_reg[channel] = val;
@@ -225,7 +226,7 @@ int timer_setup(uint32_t timer_num, struct timer_config* conf)
  *   the prescaler value.
  * Set clkrate to 0 to disable the prescaler.
  */
-void timer_on(uint32_t timer_num, uint32_t clkrate, void (*callback)(uint8_t))
+void timer_on(uint32_t timer_num, uint32_t clkrate, void (*callback)(uint32_t))
 {
 	struct timer_device* timer = NULL;
 	uint32_t prescale; /* The clock divider for the counter */

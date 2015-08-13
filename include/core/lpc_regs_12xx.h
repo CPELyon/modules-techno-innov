@@ -700,6 +700,7 @@ struct lpc_timer
 #define LPC_TMR16B1     ((struct lpc_timer *) LPC_TIMER1_BASE)
 #define LPC_TMR32B0     ((struct lpc_timer *) LPC_TIMER2_BASE)
 #define LPC_TMR32B1     ((struct lpc_timer *) LPC_TIMER3_BASE)
+#define LPC_TIMER_REGS(x)  ((struct lpc_timer *) (LPC_TIMER0_BASE + ((x) * 0x4000)))
 
 #define LPC_TIMER_COUNTER_ENABLE (1 << 0) /* CEN */
 #define LPC_TIMER_COUNTER_RESET  (1 << 1) /* CRST */

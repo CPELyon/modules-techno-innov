@@ -92,6 +92,7 @@ SUPPORTED FEATURES and INTERFACES
    - CC1101 Sub 1GHz RF Transceiver
    - Status led
    - Epaper display
+   - WS2812 chainable leds
 
 - Other
    - 8x8 font for use with Epaper display

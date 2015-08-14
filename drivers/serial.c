@@ -47,6 +47,7 @@ struct uart_device
 	/* Output buffer */
 	volatile char out_buff[SERIAL_OUT_BUFF_SIZE];
 	volatile uint32_t sending; /* Actual sending position in out buffer */
+	/* This lock only prevents multiple calls to serial_write() to execute simultaneously */
 	volatile uint32_t out_lock;
 	volatile uint32_t out_length; /* actual position to add in out buffer */
 
@@ -179,6 +180,11 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 	return length;
 }
 
+
+
+/***************************************************************************** */
+/*   UART Setup : private part : Clocks, Pins, Power and Mode   */
+
 struct uart_clk_cfg {
 	uint32_t baudrate;
 	uint8_t divisor_latch_lsb;
@@ -189,9 +195,6 @@ static struct uart_clk_cfg uart_clk_table[] = {
 	{ 1152000, 2, 4, 13},
 	{ 0, 0, 0, 0, },
 };
-
-/***************************************************************************** */
-/*   UART Setup : private part : Clocks, Pins, Power and Mode   */
 
 /* UART Clock Setup */
 /* Note : for both uarts we use full peripheral clock.

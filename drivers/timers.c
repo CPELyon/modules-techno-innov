@@ -154,7 +154,7 @@ void timer_set_match(uint32_t timer_num, uint32_t channel, uint32_t val)
  * Takes a timer number and a timer config structure as arguments.
  * Refer to timer config structure for details.
  */
-int timer_setup(uint32_t timer_num, struct timer_config* conf)
+int timer_setup(uint32_t timer_num, const struct timer_config* conf)
 {
 	struct timer_device* timer = NULL;
 	int i = 0;

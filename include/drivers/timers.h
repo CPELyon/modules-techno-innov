@@ -98,7 +98,7 @@ void timer_set_match(uint32_t timer_num, uint32_t channel, uint32_t val);
  * Refer to timer config structure for details.
  * Note: use of channel 3 for PWM cycle length is enforced.
  */
-int timer_setup(uint32_t timer_num, struct timer_config* conf);
+int timer_setup(uint32_t timer_num, const struct timer_config* conf);
 
 
 

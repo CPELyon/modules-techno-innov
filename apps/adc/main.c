@@ -144,7 +144,7 @@ void system_init()
 	systick_start();
 }
 
-/* Define our fault handler. This one is not mandatory, the dummy fault handler 
+/* Define our fault handler. This one is not mandatory, the dummy fault handler
  * will be used when it's not overridden here.
  * Note : The default one does a simple infinite loop. If the watchdog is deactivated
  * the system will hang.
@@ -152,7 +152,10 @@ void system_init()
 void fault_info(const char* name, uint32_t len)
 {
 	serial_write(0, name, len);
-	/*FIXME : wait for end of Tx and perform soft reset of the micro-controller ! */
+	/* Wait for end of Tx */
+	serial_flush(0);
+	/* FIXME : Perform soft reset of the micro-controller ! */
+	while (1);
 }
 
 

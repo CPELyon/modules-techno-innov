@@ -87,7 +87,10 @@ void system_init()
 void fault_info(const char* name, uint32_t len)
 {
 	serial_write(0, name, len);
-	/*FIXME : wait for end of Tx and perform soft reset of the micro-controller ! */
+	/* Wait for end of Tx */
+	serial_flush(0);
+	/* FIXME : Perform soft reset of the micro-controller ! */
+	while (1);
 }
 
 

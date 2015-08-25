@@ -65,7 +65,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
-		.rx_callback = 0,
+		.rx_callback = NULL,
 		.capabilities = (SERIAL_CAP_UART | SERIAL_CAP_RS485),
 		.current_mode = SERIAL_MODE_UART,
 	},
@@ -77,7 +77,7 @@ static struct uart_device uarts[NUM_UARTS] = {
 		.out_buff = {0},
 		.sending = 0,
 		.out_lock = 0,
-		.rx_callback = 0,
+		.rx_callback = NULL,
 		.capabilities = (SERIAL_CAP_UART | SERIAL_CAP_IRDA),
 		.current_mode = SERIAL_MODE_UART,
 	},
@@ -429,6 +429,7 @@ void uart_off(uint32_t uart_num)
 	uart_clk_off(uart_num);
 	/* Turn Off power */
 	subsystem_power(uart->power_offset, 0);
+	uarts[uart_num].rx_callback = NULL;
 }
 
 

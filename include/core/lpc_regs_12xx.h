@@ -563,8 +563,9 @@ struct lpc_uart
 #define LPC_UART_ENABLE_DLAB   (0x01 << 7)
 /* FIFO Control Register */
 #define LPC_UART_FIFO_EN       (0x01 << 0)
-#define LPC_UART_TX_CLR        (0x01 << 1)
-#define LPC_UART_RX_CLR        (0x01 << 2)
+#define LPC_UART_RX_CLR        (0x01 << 1)
+#define LPC_UART_TX_CLR        (0x01 << 2)
+#define LPC_UART_DMA_MODE_EN   (0x01 << 3)
 #define LPC_UART_FIFO_TRIG(x)  ((x & 0x03) << 6) /* 1 / 4 / 8 / 14 chars */
 /* Interrupt Enable Register */
 #define LPC_UART_RX_INT_EN     (0x01 << 0)

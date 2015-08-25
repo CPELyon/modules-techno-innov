@@ -27,7 +27,8 @@
 
 /* Return the number of RTC ticks from system power on.
  * This count is from power being present, even if resets occured.
- * The calls maded during the first three seconds after RTC timer start will return 0.
+ * The calls made during the first three seconds after RTC timer start will return 0. (See
+ *    UM10441 section 16.6.1)
  */
 uint32_t rtc_get_count(void);
 

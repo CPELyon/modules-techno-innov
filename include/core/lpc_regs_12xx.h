@@ -636,7 +636,7 @@ struct lpc_ssp
 	volatile uint32_t raw_int_status;     /* 0x018 : Raw Interrupt Status Register (R/-) */
 	volatile uint32_t masked_int_status;  /* 0x01C : Masked Interrupt Status Register (R/-) */
 	volatile uint32_t int_clear;     /* 0x020 : SSPICR Interrupt Clear Register (-/W) */
-	volatile uint32_t dma_ctrl;;     /* 0x024 : DMA Control Register (R/W) */
+	volatile uint32_t dma_ctrl;      /* 0x024 : DMA Control Register (R/W) */
 };
 #define LPC_SSP0        ((struct lpc_ssp *) LPC_SSP0_BASE)
 

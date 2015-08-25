@@ -67,7 +67,6 @@ SUPPORTED FEATURES and INTERFACES
    - clock / PLL config
    - systick
    - precise msleep and usleep functions (using systick)
-   - counter / timers
    - pio configuration
 
 - Simple C Library
@@ -81,6 +80,7 @@ SUPPORTED FEATURES and INTERFACES
    - ADC
    - GPIO
    - GPIO interrupts
+   - Counter / Timers
    - SPI (SSP)
    - PWM
    - RTC (partial)

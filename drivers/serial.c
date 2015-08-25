@@ -240,7 +240,7 @@ static struct uart_clk_cfg uart_clk_table[] = {
 
 /* UART Clock Setup */
 /* Note : for both uarts we use full peripheral clock.
- *    With a minimum main clock of 12MHz, ths gives 12MHz/16 = 750kbauds at least
+ *    With a minimum main clock of 12MHz, this gives 12MHz/16 = 750kbauds at least
  *    for UARTs baudrates.
  * Note : IRQ are off, whether called by system update or by UART on helper
  */

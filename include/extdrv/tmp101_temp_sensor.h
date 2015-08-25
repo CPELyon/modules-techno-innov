@@ -50,8 +50,9 @@
 
 /* Check the sensor presence, return 1 if found
  * This is a basic check, it could be anything with the same address ...
+ * addr: the sensor address on most significant bits.
  */
-int tmp101_probe_sensor(void);
+int tmp101_probe_sensor(uint8_t addr);
 
 
 /* Convert raw temperature data (expressed as signed value of 16 times the
@@ -64,7 +65,9 @@ int tmp101_convert_to_deci_degrees(uint16_t raw);
 
 /* Temp Read
  * Performs a non-blocking read of the temperature from the sensor.
- * RETURN VALUE
+ * addr: the sensor address on most significant bits.
+ * 'raw' and 'deci_degrees': integer addresses for conversion result, may be NULL.
+ * Return value(s):
  *   Upon successfull completion, returns 0 and the temperature read is placed in the
  *   provided integer(s). On error, returns a negative integer equivalent to errors from
  *   glibc.
@@ -75,7 +78,7 @@ int tmp101_convert_to_deci_degrees(uint16_t raw);
  *   -EREMOTEIO : Device did not acknowledge : Any device present ?
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int tmp101_sensor_read(uint16_t* raw, int* deci_degrees);
+int tmp101_sensor_read(uint8_t addr, uint16_t* raw, int* deci_degrees);
 
 
 /* Sensor config
@@ -83,7 +86,8 @@ int tmp101_sensor_read(uint16_t* raw, int* deci_degrees);
  * The sensor is thus placed in shutdown mode, the thermostat is in interrupt mode,
  * and the polarity is set to active high.
  * The conversion resolution is set to the provided "resolution".
- * RETURN VALUE
+ * addr: the sensor address on most significant bits.
+ * Return value:
  *   Upon successfull completion, returns 0. On error, returns a negative integer
  *   equivalent to errors from glibc.
  *   -EBADFD : I2C not initialized
@@ -93,10 +97,12 @@ int tmp101_sensor_read(uint16_t* raw, int* deci_degrees);
  *   -EREMOTEIO : Device did not acknowledge : Any device present ?
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int tmp101_sensor_config(uint32_t resolution);
+int tmp101_sensor_config(uint8_t addr, uint32_t resolution);
 
-/* Start a conversion when the sensor is in shutdown mode. */
-int tmp101_sensor_start_conversion(void);
+/* Start a conversion when the sensor is in shutdown mode.
+ * addr : the sensor address on most significant bits.
+ */
+int tmp101_sensor_start_conversion(uint8_t addr);
 
 
 #endif /* EXTDRV_TEMP_H */

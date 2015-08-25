@@ -38,10 +38,6 @@
  */
 
 
-/* FIXME : this should be a parameter to the config function */
-/* Config */
-#define TMP101_ADDR  0x94
-
 enum tmp10x_internal_reg_numbers {
 	TMP_REG_TEMPERATURE = 0,
 	TMP_REG_CONFIG,
@@ -70,15 +66,16 @@ static int last_accessed_register = 0;
 
 /* Check the sensor presence, return 1 if sensor was found.
  * This is a basic check, it could be anything with the same address ...
+ * addr : the sensor address on most significant bits.
  */
-int tmp101_probe_sensor(void)
+int tmp101_probe_sensor(uint8_t addr)
 {
 	static int ret = -1;
-	char cmd_buf[1] = { (TMP101_ADDR | I2C_READ_BIT), };
+	char cmd_buf = (addr | I2C_READ_BIT);
 
 	/* Did we already probe the sensor ? */
 	if (ret != 1) {
-		ret = i2c_read(cmd_buf, 1, NULL, NULL, 0);
+		ret = i2c_read(&cmd_buf, 1, NULL, NULL, 0);
 	}
 	return ret;
 }
@@ -95,9 +92,11 @@ int tmp101_convert_to_deci_degrees(uint16_t raw)
 
 /* Temp Read
  * Performs a non-blocking read of the temperature from the sensor.
- * RETURN VALUE
+ * addr : the sensor address on most significant bits.
+ * 'raw' and 'deci_degrees' : integer addresses for conversion result, may be NULL.
+ * Return value(s):
  *   Upon successfull completion, returns 0 and the temperature read is placed in the
- *   provided integer. On error, returns a negative integer equivalent to errors from glibc.
+ *   provided integers. On error, returns a negative integer equivalent to errors from glibc.
  *   -EBADFD : I2C not initialized
  *   -EBUSY : Device or ressource Busy or Arbitration lost
  *   -EINVAL : Invalid argument (buf)
@@ -106,14 +105,14 @@ int tmp101_convert_to_deci_degrees(uint16_t raw)
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CMD_BUF_SIZE 3
-int tmp101_sensor_read(uint16_t* raw, int* deci_degrees)
+int tmp101_sensor_read(uint8_t addr, uint16_t* raw, int* deci_degrees)
 {
 	int ret = 0;
 	uint16_t temp = 0;
-	char cmd_buf[CMD_BUF_SIZE] = { TMP101_ADDR, TMP_REG_TEMPERATURE, (TMP101_ADDR | I2C_READ_BIT), };
+	char cmd_buf[CMD_BUF_SIZE] = { addr, TMP_REG_TEMPERATURE, (addr | I2C_READ_BIT), };
 	char ctrl_buf[CMD_BUF_SIZE] = { I2C_CONT, I2C_DO_REPEATED_START, I2C_CONT, };
 
-	if (tmp101_probe_sensor() != 1) {
+	if (tmp101_probe_sensor(addr) != 1) {
 		return -ENODEV;
 	}
 
@@ -145,7 +144,8 @@ int tmp101_sensor_read(uint16_t* raw, int* deci_degrees)
  * The sensor is thus placed in shutdown mode, the thermostat is in interrupt mode,
  * and the polarity is set to active high.
  * The conversion resolution is set to the provided "resolution".
- * RETURN VALUE
+ * addr : the sensor address on most significant bits.
+ * Return value :
  *   Upon successfull completion, returns 0. On error, returns a negative integer
  *   equivalent to errors from glibc.
  *   -EBADFD : I2C not initialized
@@ -157,12 +157,12 @@ int tmp101_sensor_read(uint16_t* raw, int* deci_degrees)
  */
 static uint8_t actual_config = 0;
 #define CONF_BUF_SIZE 4
-int tmp101_sensor_config(uint32_t resolution)
+int tmp101_sensor_config(uint8_t addr, uint32_t resolution)
 {
 	int ret = 0;
-	char cmd[CONF_BUF_SIZE] = { TMP101_ADDR, TMP_REG_CONFIG, };
+	char cmd[CONF_BUF_SIZE] = { addr, TMP_REG_CONFIG, };
 
-	if (tmp101_probe_sensor() != 1) {
+	if (tmp101_probe_sensor(addr) != 1) {
 		return -ENODEV;
 	}
 
@@ -178,13 +178,15 @@ int tmp101_sensor_config(uint32_t resolution)
 	return ret;
 }
 
-/* Start a conversion when the sensor is in shutdown mode. */
-int tmp101_sensor_start_conversion(void)
+/* Start a conversion when the sensor is in shutdown mode.
+ * addr : the sensor address on most significant bits.
+ */
+int tmp101_sensor_start_conversion(uint8_t addr)
 {
 	int ret = 0;
-	char cmd[CONF_BUF_SIZE] = { TMP101_ADDR, TMP_REG_CONFIG, };
+	char cmd[CONF_BUF_SIZE] = { addr, TMP_REG_CONFIG, };
 
-	if (tmp101_probe_sensor() != 1) {
+	if (tmp101_probe_sensor(addr) != 1) {
 		return -ENODEV;
 	}
 

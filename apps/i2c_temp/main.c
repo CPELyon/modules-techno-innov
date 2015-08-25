@@ -40,6 +40,7 @@
 
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
+#define TMP101_ADDR  0x94
 
 /***************************************************************************** */
 /* Pins configuration */
@@ -71,7 +72,7 @@ void WAKEUP_Handler(void)
 {
 }
 
-void temp_config(int uart_num)
+void temp_config(uint8_t addr, int uart_num)
 {
 	int ret = 0;
 
@@ -80,22 +81,22 @@ void temp_config(int uart_num)
 	/* FIXME : add a callback on temp_alert edge */
 
 	/* Temp sensor */
-	ret = tmp101_sensor_config(TMP_RES_ELEVEN_BITS);
+	ret = tmp101_sensor_config(addr, TMP_RES_ELEVEN_BITS);
 	if (ret != 0) {
 		serial_write(uart_num, "Temp config error\r\n", 19);
 	}
 }
 
-void temp_display(int uart_num)
+void temp_display(uint8_t addr, int uart_num)
 {
 	char buff[40];
 	uint16_t raw = 0;
 	int deci_degrees = 0;
 	int len = 0;
 
-	tmp101_sensor_start_conversion();
+	tmp101_sensor_start_conversion(addr);
 	msleep(250); /* Wait for the end of the conversion : 40ms */
-	len = tmp101_sensor_read(&raw, &deci_degrees);
+	len = tmp101_sensor_read(addr, &raw, &deci_degrees);
 	if (len != 0) {
 		serial_write(uart_num, "Temp read error\r\n", 19);
 	} else {
@@ -150,11 +151,11 @@ int main(void) {
 	i2c_on(I2C_CLK_100KHz);
 
 	/* Configure onboard temp sensor */
-	temp_config(0);
+	temp_config(TMP101_ADDR, 0);
 
 	while (1) {
 		chenillard(250);
-		temp_display(0);
+		temp_display(TMP101_ADDR, 0);
 	}
 	return 0;
 }

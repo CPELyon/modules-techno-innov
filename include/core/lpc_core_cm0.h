@@ -57,11 +57,11 @@ static inline uint32_t get_APSR(void)
 {
 	uint32_t r; __asm volatile ("mrs %0, apsr" : "=r" (r)); return (r);
 }
-#define APSR_SATURATION  (get_APSR & (0x1 << 27))  /* bit 27  Saturation condition flag */
-#define APSR_OVERFLOW    (get_APSR & (0x1 << 28))  /* bit 28  Overflow condition code flag */
-#define APSR_CARRY       (get_APSR & (0x1 << 29))  /* bit 29  Carry condition code flag */
-#define APSR_ZERO        (get_APSR & (0x1 << 30))  /* bit 30  Zero condition code flag */
-#define APSR_NEGATIVE    (get_APSR & (0x1 << 31))  /* bit 31  Negative condition code flag */
+#define APSR_SATURATION  (get_APSR() & (0x1 << 27))  /* bit 27  Saturation condition flag */
+#define APSR_OVERFLOW    (get_APSR() & (0x1 << 28))  /* bit 28  Overflow condition code flag */
+#define APSR_CARRY       (get_APSR() & (0x1 << 29))  /* bit 29  Carry condition code flag */
+#define APSR_ZERO        (get_APSR() & (0x1 << 30))  /* bit 30  Zero condition code flag */
+#define APSR_NEGATIVE    (get_APSR() & (0x1 << 31))  /* bit 31  Negative condition code flag */
 
 
 /* Access the Interrupt Program Status Register (IPSR). */
@@ -69,7 +69,7 @@ static inline uint32_t get_IPSR(void)
 {
 	uint32_t r; __asm volatile ("mrs %0, ipsr" : "=r" (r)); return (r);
 }
-#define IPSR      (get_IPSR & 0x1FF)  /* bit:  0..8  Exception number */
+#define IPSR      (get_IPSR() & 0x1FF)  /* bit:  0..8  Exception number */
 #define IPSR_IRQ0 16
 #define IRQ_NUM   (IPSR - IPSR_IRQ0)
 

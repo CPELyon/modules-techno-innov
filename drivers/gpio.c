@@ -77,9 +77,9 @@ void config_gpio(const struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini
 
 /***************************************************************************** */
 /* GPIO Interrupts Callbacks */
-static void (*gpio_calbacks_port0[PORT0_NB_PINS]) (uint32_t);
-static void (*gpio_calbacks_port1[PORT1_NB_PINS]) (uint32_t);
-static void (*gpio_calbacks_port2[PORT2_NB_PINS]) (uint32_t);
+static void (*gpio_callbacks_port0[PORT0_NB_PINS]) (uint32_t);
+static void (*gpio_callbacks_port1[PORT1_NB_PINS]) (uint32_t);
+static void (*gpio_callbacks_port2[PORT2_NB_PINS]) (uint32_t);
 
 int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8_t sense)
 {
@@ -92,19 +92,19 @@ int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8
 		case 0:
 			if (gpio->pin >= PORT0_NB_PINS)
 				return -EINVAL;
-			gpio_calbacks_port0[gpio->pin] = callback;
+			gpio_callbacks_port0[gpio->pin] = callback;
 			irq = PIO_0_IRQ;
 			break;
 		case 1:
 			if (gpio->pin >= PORT1_NB_PINS)
 				return -EINVAL;
-			gpio_calbacks_port1[gpio->pin] = callback;
+			gpio_callbacks_port1[gpio->pin] = callback;
 			irq = PIO_1_IRQ;
 			break;
 		case 2:
 			if (gpio->pin >= PORT2_NB_PINS)
 				return -EINVAL;
-			gpio_calbacks_port2[gpio->pin] = callback;
+			gpio_callbacks_port2[gpio->pin] = callback;
 			irq = PIO_2_IRQ;
 			break;
 		default:
@@ -156,19 +156,19 @@ void remove_gpio_callback(const struct pio* gpio)
 		case 0:
 			if (gpio->pin >= PORT0_NB_PINS)
 				return;
-			gpio_calbacks_port0[gpio->pin] = NULL;
+			gpio_callbacks_port0[gpio->pin] = NULL;
 			irq = PIO_0_IRQ;
 			break;
 		case 1:
 			if (gpio->pin >= PORT1_NB_PINS)
 				return;
-			gpio_calbacks_port1[gpio->pin] = NULL;
+			gpio_callbacks_port1[gpio->pin] = NULL;
 			irq = PIO_1_IRQ;
 			break;
 		case 2:
 			if (gpio->pin >= PORT2_NB_PINS)
 				return;
-			gpio_calbacks_port2[gpio->pin] = NULL;
+			gpio_callbacks_port2[gpio->pin] = NULL;
 			irq = PIO_2_IRQ;
 			break;
 		default:
@@ -197,8 +197,8 @@ void PIO_0_Handler(void)
 	while (status) {
 		if (status & 1) {
 			/* Is there an handler for this one ? */
-			if (gpio_calbacks_port0[i] != NULL) {
-				gpio_calbacks_port0[i](i);
+			if (gpio_callbacks_port0[i] != NULL) {
+				gpio_callbacks_port0[i](i);
 			}
 			/* Clear edge detection logic */
 			gpio0->int_clear |= (1 << i);
@@ -217,8 +217,8 @@ void PIO_1_Handler(void)
 	while (status) {
 		if (status & 1) {
 			/* Is there an handler for this one ? */
-			if (gpio_calbacks_port1[i] != NULL) {
-				gpio_calbacks_port1[i](i);
+			if (gpio_callbacks_port1[i] != NULL) {
+				gpio_callbacks_port1[i](i);
 			}
 			/* Clear pending interrupt */
 			gpio1->int_clear |= (1 << i);
@@ -237,8 +237,8 @@ void PIO_2_Handler(void)
 	while (status) {
 		if (status & 1) {
 			/* Is there an handler for this one ? */
-			if (gpio_calbacks_port2[i] != NULL) {
-				gpio_calbacks_port2[i](i);
+			if (gpio_callbacks_port2[i] != NULL) {
+				gpio_callbacks_port2[i](i);
 			}
 			/* Clear pending interrupt */
 			gpio2->int_clear |= (1 << i);

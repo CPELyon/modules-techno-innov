@@ -149,7 +149,7 @@ int rtc_set_match(uint32_t date, uint32_t offset, uint8_t periodic)
 }
 
 /* RTC Interrupts Callbacks */
-static void (*rtc_calback) (uint32_t);
+static void (*rtc_callback) (uint32_t);
 
 void setup_callback(uint32_t ticks)
 {
@@ -175,7 +175,7 @@ int set_rtc_callback(void (*callback) (uint32_t), uint32_t when, uint32_t period
 	int ret = 0;
 
 	/* Register the callback */
-	rtc_calback = callback;
+	rtc_callback = callback;
 	if (rtc_get_count() != 0) {
 		rtc_set_match(when, period, ((period == 0) ? 0 : 1));
 	} else {
@@ -194,7 +194,7 @@ void remove_rtc_callback()
 	struct lpc_rtc* rtc = LPC_RTC;
 
 	/* Remove the handler */
-	rtc_calback = NULL;
+	rtc_callback = NULL;
 	rtc->intr_control = LPC_RTC_INT_DISABLE;
 	/* And disable the interrupt */
 	NVIC_DisableIRQ(RTC_IRQ);
@@ -205,8 +205,8 @@ void RTC_Handler(void)
 {
 	struct lpc_rtc* rtc = LPC_RTC;
 	/* Call interrupt handler */
-	if (rtc_calback != NULL) {
-		rtc_calback(rtc->data);
+	if (rtc_callback != NULL) {
+		rtc_callback(rtc->data);
 	}
 	rtc->intr_clear = LPC_RTC_CLEAR_INTR;
 	if (periodic_match == 1) {

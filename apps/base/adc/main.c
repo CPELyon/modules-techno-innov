@@ -86,11 +86,7 @@ int adc_display(int adc_num, int uart_num)
 	if (ret < 0) {
 		return ret;
 	} else {
-		/* Always display, even if value has already been read */
-		char buff[40];
-		int len = 0;
-		len = snprintf(buff, 40, "ADC(%d): %d (raw: 0x%04x)\r\n", adc_num, val, val);
-		serial_write(uart_num, buff, len);
+		uprintf(uart_num, "ADC(%d): %d (raw: 0x%04x)\r\n", adc_num, val, val);
 	}
 	return val;
 }
@@ -111,15 +107,12 @@ void TMP36_display(int adc_num, int uart_num)
 	msleep(8);
 	ret = adc_get_value(&val, adc_num);
 	if (ret == 0) {
-		char buff[60];
-		int len = 0;
 		int micro_volts = 0;
 		/* depends on vref, should use a precise 3.0V Vref and multiply by 3000 */
 		micro_volts = (val * 3200);
 		int converted = ((micro_volts / 100) - 5000);
-		len = snprintf(buff, 60, "TMP36: %d,%d (orig: %d, raw: %04x)\r\n",
+		uprintf(uart_num, "TMP36: %d,%d (orig: %d, raw: %04x)\r\n",
 						(converted / 100), (converted % 100), val, val);
-		serial_write(uart_num, buff, len);
 	}
 }
 

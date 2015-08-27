@@ -144,7 +144,7 @@ int main(void) {
 		/* Any Data to send */
 		if (cc_tx) {
 			uint8_t cc_tx_data[RF_BUFF_LEN + 2];
-			uint8_t len = 0, tx_len = cc_ptr;
+			uint8_t tx_len = cc_ptr;
 			uint8_t val = 0;
 			int ret = 0;
 			/* Create a local copy */
@@ -157,16 +157,14 @@ int main(void) {
 			/* Send */
 			ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
 			/* Give some feedback on UART 1 */
-			len = snprintf(buff, BUFF_LEN, "Tx ret: %d\r\n", ret);
-			serial_write(1, buff, len);
+			uprintf(1, "Tx ret: %d\r\n", ret);
 			/* Wait a short time for data to be sent ... */
 			/* FIXME : This should be done using the packet sent signal from CC1101 on GDO pin */
 			msleep(2);
 			do {
 				ret = cc1101_tx_fifo_state();
 				if (ret < 0) {
-					len = snprintf(buff, BUFF_LEN, "Tx Underflow !\r\n");
-					serial_write(1, buff, len);
+					uprintf(1, "Tx Underflow !\r\n");
 					break;
 				}
 			} while (ret != 0);
@@ -174,8 +172,7 @@ int main(void) {
 			cc1101_enter_rx_mode();
 			/* And give some feedback again */
 			val = cc1101_read_status();
-			len = snprintf(buff, BUFF_LEN, "Status : 0x%02x, Sending : %d\r\n", val, tx_len);
-			serial_write(1, buff, len);
+			uprintf(1, "Status : 0x%02x, Sending : %d\r\n", val, tx_len);
 			serial_write(1, (char*)&(cc_tx_data[2]), tx_len);
 			cc_tx = 0;
 		}
@@ -198,12 +195,10 @@ int main(void) {
 				rxlen = buff[0];
 				addr = buff[1];
 				val = cc1101_get_signal_strength_indication();
-				len = snprintf(buff, BUFF_LEN, "Status: %d, link: %d, len: %d/%d, addr: %d\r\n", status, val, rxlen, len, addr);
-				serial_write(1, buff, len);
+				uprintf(1, "Status: %d, link: %d, len: %d/%d, addr: %d\r\n", status, val, rxlen, len, addr);
 			} else if (ret < 0) {
 				/* Send error on UART 1 */
-				len = snprintf(buff, BUFF_LEN, "Rx Error: %d, len: %d\r\n", -ret, (status & 0x7F));
-				serial_write(1, buff, len);
+				uprintf(1, "Rx Error: %d, len: %d\r\n", -ret, (status & 0x7F));
 			}
 		}
 	}

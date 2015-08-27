@@ -94,7 +94,6 @@ void temp_config(uint8_t addr, int uart_num)
 
 void temp_display(uint8_t addr, int uart_num)
 {
-	char buff[40];
 	uint16_t raw = 0;
 	int deci_degrees = 0;
 	int len = 0;
@@ -105,9 +104,8 @@ void temp_display(uint8_t addr, int uart_num)
 	if (len != 0) {
 		serial_write(uart_num, "Temp read error\r\n", 19);
 	} else {
-		len = snprintf(buff, 40, "Temp read: %d,%d - raw: 0x%04x.\r\n",
+		uprintf(uart_num, "Temp read: %d,%d - raw: 0x%04x.\r\n",
 				(deci_degrees/10), (deci_degrees%10), raw);
-		serial_write(uart_num, buff, len);
 	}
 }
 

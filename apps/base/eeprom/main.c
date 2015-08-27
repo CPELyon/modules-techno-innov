@@ -144,22 +144,14 @@ void module_desc_dump(uint8_t serial_num)
 	}
 	/* Send the content of the header */
 	serial_write(serial_num, "Module :\r\n", 10);
-	len = snprintf(buff, 16, "serial: %d, ", desc.serial_number);
-	len += snprintf((buff + len), 15, "ver: %d\r\n", desc.version);
-	len += snprintf((buff + len), 16, "cap: 0x%04x\r\n", desc.capabilities);
+	uprintf(1, "serial: %d, ", desc.serial_number);
+	uprintf(1, "ver: %d\r\n", desc.version);
+	uprintf(1, "cap: 0x%04x\r\n", desc.capabilities);
 	/* Get and send the module name */
 	if (desc.name_size >= DUMP_BUFF_SIZE) {
 		desc.name_size = DUMP_BUFF_SIZE - len - 3;
 	}
-	ret = eeprom_read(EEPROM_ADDR, desc.name_offset, (buff + len), desc.name_size);
-	if (ret == desc.name_size) {
-		len += ret;
-		len += snprintf((buff + len), 3, "\r\n");
-	}
-	ret = 0;
-	do {
-		ret += serial_write(serial_num, (buff + ret), (len - ret));
-	} while (ret < len);
+	eeprom_read(EEPROM_ADDR, desc.name_offset, (buff + len), desc.name_size);
 	mod_gpio_demo_eeprom_cs_release();
 }
 

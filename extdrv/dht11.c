@@ -85,8 +85,7 @@ void dht11_display(int serial_num, int epsilon_error)
 	struct lpc_gpio* gpio_port_regs = LPC_GPIO_REGS(dht11_gpio.port);
 	unsigned char data[5];
 	unsigned char checksum = 0;
-	char buff[60];
-	int len = 0, err = 0, i = 0;
+	int err = 0, i = 0;
 
 	/* Set pin as output */
 	gpio_port_regs->data_dir |= (1 << dht11_gpio.pin);
@@ -122,13 +121,11 @@ void dht11_display(int serial_num, int epsilon_error)
 	}
 	if (err == 1) {
 		status_led(red_only);
-		len = snprintf(buff, 60, "TH_ERR - H: 0x%02x,0x%02x - T: 0x%02x,0x%02x - C: 0x%02x\r\n",
+		uprintf(serial_num, "TH_ERR - H: 0x%02x,0x%02x - T: 0x%02x,0x%02x - C: 0x%02x\r\n",
 								 data[0], data[1], data[2], data[3], data[4]);
-		serial_write(serial_num, buff, len);
 		return;
 	}
 
-	len = snprintf(buff, 25, "H: %d,%d - T: %d,%d\r\n", data[0], data[1], data[2], data[3]);
-	serial_write(serial_num, buff, len);
+	uprintf(serial_num, "H: %d,%d - T: %d,%d\r\n", data[0], data[1], data[2], data[3]);
 	status_led(green_only);
 }

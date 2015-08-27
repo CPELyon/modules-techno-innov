@@ -123,8 +123,6 @@ void pulse_feedback(uint32_t gpio) {
 
 /***************************************************************************** */
 int main(void) {
-	char buff[60];
-	int len = 0;
 	uint32_t next_time = 0;
 	uint32_t delay = 0;
 
@@ -156,8 +154,7 @@ int main(void) {
 		distance = ((pulse_duration * 10) / (get_main_clock() / (1000*1000)));
 		distance = distance / 29;
 		/* Send value on serial */
-		len = snprintf(buff, 60, "dist: %dmm\n", distance);
-		serial_write(0, buff, len);
+		uprintf(0, "dist: %dmm\n", distance);
 	
 		/* And wait at least 50ms between loops */
 		delay = next_time - systick_get_tick_count();

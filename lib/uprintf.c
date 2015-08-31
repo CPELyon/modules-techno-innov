@@ -1,6 +1,8 @@
 /****************************************************************************
- *  lib/stdio.h
+ *  lib/uprintf.c
  *
+ * UART printf
+ * 
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,21 +20,26 @@
  *
  *************************************************************************** */
 
-#ifndef LIB_STDIO_H
-#define LIB_STDIO_H
-
 #include <stdarg.h>
 #include <stdint.h>
+#include "drivers/serial.h"
 #include "lib/string.h"
+#include "lib/stdio.h"
 
 
-int vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
+int uprintf(int uart_num, const char* format, ...)
+{
+	char printf_buf[SERIAL_OUT_BUFF_SIZE];
+	va_list args;
+	int r;
+
+	va_start(args, format);
+    r = vsnprintf(printf_buf, SERIAL_OUT_BUFF_SIZE, format, args);
+    va_end(args);
+
+	serial_write(uart_num, printf_buf, r);
+
+    return r;
+}
 
 
-int snprintf(char* buf, size_t size, const char *format, ...);
-
-
-int uprintf(int uart_num, const char *format, ...);
-
-
-#endif /* LIB_STDIO_H */

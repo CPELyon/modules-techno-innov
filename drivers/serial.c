@@ -34,7 +34,6 @@
 #include "lib/utils.h"
 #include "drivers/serial.h"
 
-#define SERIAL_OUT_BUFF_SIZE 64
 struct uart_device
 {
 	uint32_t num;

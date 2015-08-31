@@ -33,6 +33,15 @@
 #define SERIAL_MODE_RS485 SERIAL_CAP_RS485
 #define SERIAL_MODE_IRDA  SERIAL_CAP_IRDA
 
+
+/* This buffer size is the maximum write size for a serial_printf or a uprintf call.
+ * Previously this value was 64, but it is often too short, so I set it to 96, which
+ *    should be OK for most cases. In need of a bigger write buffer, change this value
+ *    or perform multiple write calls (better).
+ */
+#define SERIAL_OUT_BUFF_SIZE 96
+
+
 /***************************************************************************** */
 /*    Serial Write
  *

@@ -30,7 +30,7 @@ struct user_info {
 	char name[48];
 	uint32_t version;
 	uint32_t serial_number;
-	char user_info[8];
+	char user_info[200];
 } __attribute__ ((__packed__));
 
 

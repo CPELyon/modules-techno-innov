@@ -14,6 +14,10 @@ _sram_base = 0x10000000;
 /* Leave 32 bytes for IAP functions, see UM10441 Chapter 20, section 20.8 */
 _end_stack = (_sram_base + _sram_size - 32);
 
+_start_info = 0x00040200;
+_end_info = (_start_info + 1536);
+
+
 ENTRY(Reset_Handler)
 
 SECTIONS {

@@ -48,11 +48,27 @@
 #define TMP_RES_TWELVE_BITS ((0x03 & 0x03) << 5)   /* 320ms */
 
 
+/* TMP101 sensor instance data.
+ * Use one of this for each sensor you want to access.
+ * - addr is the sensor address on most significant bits.
+ * - last_accessed_register is used to keep track of the last register accessed to
+ * prevent sending the pointer register again if we want to read the same register again.
+ * - resolution is one of the above resolution defined values.
+ */
+struct tmp101_sensor_config {
+	uint8_t addr;
+	uint8_t probe_ok;
+	uint8_t actual_config;
+	int last_accessed_register;
+	uint32_t resolution;
+};
+
+
 /* Check the sensor presence, return 1 if found
  * This is a basic check, it could be anything with the same address ...
  * addr: the sensor address on most significant bits.
  */
-int tmp101_probe_sensor(uint8_t addr);
+int tmp101_probe_sensor(struct tmp101_sensor_config* conf);
 
 
 /* Convert raw temperature data (expressed as signed value of 16 times the
@@ -78,7 +94,7 @@ int tmp101_convert_to_deci_degrees(uint16_t raw);
  *   -EREMOTEIO : Device did not acknowledge : Any device present ?
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int tmp101_sensor_read(uint8_t addr, uint16_t* raw, int* deci_degrees);
+int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* deci_degrees);
 
 
 /* Sensor config
@@ -97,12 +113,12 @@ int tmp101_sensor_read(uint8_t addr, uint16_t* raw, int* deci_degrees);
  *   -EREMOTEIO : Device did not acknowledge : Any device present ?
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int tmp101_sensor_config(uint8_t addr, uint32_t resolution);
+int tmp101_sensor_config(struct tmp101_sensor_config* conf);
 
 /* Start a conversion when the sensor is in shutdown mode.
  * addr : the sensor address on most significant bits.
  */
-int tmp101_sensor_start_conversion(uint8_t addr);
+int tmp101_sensor_start_conversion(struct tmp101_sensor_config* conf);
 
 
 #endif /* EXTDRV_TEMP_H */

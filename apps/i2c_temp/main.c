@@ -27,6 +27,7 @@
 #include "core/lpc_core_cm0.h"
 #include "core/pio.h"
 #include "core/system.h"
+#include "core/systick.h"
 #include "lib/stdio.h"
 #include "drivers/i2c.h"
 #include "drivers/serial.h"

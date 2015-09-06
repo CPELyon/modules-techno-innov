@@ -67,7 +67,8 @@ void time_to_buff_swapped(uint8_t* buf, struct time_spec* src_time);
 
 
 /* Get a snapshot of the time when this is called.
- * It is unsafe to call this one when in interrupt, use get_time_in_interrupt()
+ * When in interrupt, use get_time_in_interrupt(). It will get called anyway, but it
+ *   will be longer.
  */
 void get_time(struct time_spec* save_time);
 
@@ -76,8 +77,17 @@ void get_time(struct time_spec* save_time);
  */
 void get_time_in_interrupt(struct time_spec* save_time);
 
-/* Must be called once to register the systick callback. */
+
+/* Must be called once to register the systick callback.
+ * Can be called anytime, will just return if it has already been called.
+ */
 void time_init(void);
+
+
+/* Compute a time difference
+ * Return 0 if both times are the same, 1 if (t1 > t2), -1 if (t1 < t2)
+ */
+int get_time_diff(const struct time_spec* t1, const struct time_spec* t2, struct time_spec* diff);
 
 
 

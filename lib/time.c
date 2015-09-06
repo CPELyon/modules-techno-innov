@@ -135,6 +135,10 @@ void time_to_buff_swapped(uint8_t* buf, struct time_spec* src_time)
 void get_time(struct time_spec* save_time)
 {
 	/* FIXME : Check that we are not in interrupt ... */
+	if (get_priority_mask() == 0) {
+		get_time_in_interrupt(save_time);
+		return;
+	}
     /* We are not in interrupt context, we can wait for the lock to be released */
     while (sync_lock_test_and_set(&time_lock, 1) == 1) {};
 	save_time->seconds = time.seconds;
@@ -147,7 +151,7 @@ void get_time(struct time_spec* save_time)
  */
 void get_time_in_interrupt(struct time_spec* save_time)
 {
-    /* We are in interrupt context, we can wait for the lock to be released */
+    /* We are in interrupt context, we can't wait for the lock to be released */
 	save_time->seconds = time.seconds;
 	save_time->msec = time.msec;
 }
@@ -156,14 +160,48 @@ void get_time_in_interrupt(struct time_spec* save_time)
 static uint8_t time_configured = 0;
 void time_init(void)
 {
-    while (sync_lock_test_and_set(&time_lock, 1) == 1) {};
 	if (time_configured != 0) {
-    	sync_lock_release(&time_lock);
 		return;
 	}
 	time_configured = 1;
 	add_systick_callback(time_track, 1); /* callback, period (ms) */
-    sync_lock_release(&time_lock);
+}
+
+
+/* Compute a time difference
+ * Return 0 if both times are the same, 1 if (t1 > t2), -1 if (t1 < t2)
+ */
+int get_time_diff(const struct time_spec* t1, const struct time_spec* t2, struct time_spec* diff)
+{
+	if (t1->seconds < t2->seconds) {
+		diff->seconds = (t2->seconds - t1->seconds - 1);
+		diff->msec = ((t2->msec + 1000) - t1->msec);
+		if (diff->msec >= 1000) {
+			diff->msec -= 1000;
+			diff->seconds++;
+		}
+		return -1;
+	} else if (t1->seconds == t2->seconds) {
+		diff->seconds = 0;
+		if (t1->msec < t2->msec) {
+			diff->msec = t2->msec - t1->msec;
+			return -1;
+		} else if (t1->msec == t2->msec) {
+			diff->msec = 0;
+			return 0;
+		} else {
+			diff->msec = t1->msec - t2->msec;
+			return 1;
+		}
+	} else {
+		diff->seconds = (t1->seconds - t2->seconds - 1);
+		diff->msec = ((t1->msec + 1000) - t2->msec);
+		if (diff->msec >= 1000) {
+			diff->msec -= 1000;
+			diff->seconds++;
+		}
+		return 1;
+	}
 }
 
 

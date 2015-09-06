@@ -41,7 +41,6 @@
 
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
-#define TMP101_ADDR  0x94
 
 /***************************************************************************** */
 /* Pins configuration */
@@ -59,6 +58,11 @@ const struct pio_config common_pins[] = {
 	ARRAY_LAST_PIO,
 };
 
+#define TMP101_ADDR  0x94
+struct tmp101_sensor_config tmp101_sensor = {
+	.addr = TMP101_ADDR,
+	.resolution = TMP_RES_ELEVEN_BITS,
+};
 
 const struct pio temp_alert = LPC_GPIO_0_7;
 
@@ -82,7 +86,7 @@ void temp_config(uint8_t addr, int uart_num)
 	/* FIXME : add a callback on temp_alert edge */
 
 	/* Temp sensor */
-	ret = tmp101_sensor_config(addr, TMP_RES_ELEVEN_BITS);
+	ret = tmp101_sensor_config(&tmp101_sensor);
 	if (ret != 0) {
 		serial_write(uart_num, "Temp config error\r\n", 19);
 	}
@@ -95,9 +99,9 @@ void temp_display(uint8_t addr, int uart_num)
 	int deci_degrees = 0;
 	int len = 0;
 
-	tmp101_sensor_start_conversion(addr);
+	tmp101_sensor_start_conversion(&tmp101_sensor);
 	msleep(250); /* Wait for the end of the conversion : 40ms */
-	len = tmp101_sensor_read(addr, &raw, &deci_degrees);
+	len = tmp101_sensor_read(&tmp101_sensor, &raw, &deci_degrees);
 	if (len != 0) {
 		serial_write(uart_num, "Temp read error\r\n", 19);
 	} else {

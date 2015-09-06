@@ -28,6 +28,7 @@
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
+#include "core/systick.h"
 
 
 /* Static variables */
@@ -145,11 +146,18 @@ void systick_reset(void)
 	global_wrapping_system_clock_cycles = tick_reload;
 }
 
-/* Get system tick timer current value (counts at get_main_clock() !) */
+/* Get system tick timer current value (counts at get_main_clock() !)
+ * systick_get_timer_val returns a value between 0 and systick_get_timer_reload_val()
+ */
 uint32_t systick_get_timer_val(void)
 {
 	struct lpc_system_tick* systick = LPC_SYSTICK;
 	return systick->value;
+}
+/* Get system tick timer reload value */
+uint32_t systick_get_timer_reload_val(void)
+{
+	return tick_reload;
 }
 
 /* Check if systick is running (return 1) or not (return 0) */
@@ -253,21 +261,16 @@ void systick_timer_off(void)
  * Note that calls to this function while a sleep() has been initiated will change the
  *   sleep duration ....
  */
-void set_sleep(uint32_t ticks)
+static inline  void set_sleep(uint32_t ticks)
 {
 	sleep_count = ticks;
 }
-/* Return current sleep count_down counter */
-uint32_t get_sleep(void)
-{
-	return sleep_count;
-}
 
 /* Actual sleep function, checks that system tick counter is configured to generate
- * an interrupt to move sleep_count down to 0
+ * an interrupt and to move sleep_count down to 0
  */
 #define SYSTICK_CAN_SLEEP   (LPC_SYSTICK_CTRL_TICKINT | LPC_SYSTICK_CTRL_ENABLE)
-uint32_t sleep(void)
+static uint32_t sleep(void)
 {
 	struct lpc_system_tick* systick = LPC_SYSTICK;
 	if ((systick->control & SYSTICK_CAN_SLEEP) != SYSTICK_CAN_SLEEP) {

@@ -26,6 +26,10 @@
  * artists on the GPIO Demo module.
  */
 
+
+#ifndef EXTDRV_EPAPER_H
+#define EXTDRV_EPAPER_H
+
 #include <stdint.h>
 #include "core/pio.h"
 #include "drivers/timers.h"
@@ -118,4 +122,6 @@ void epaper_send_frame(uint8_t* image, uint8_t stage);
  *   new lines gives better results.
  */
 void epaper_send_partial_frame(uint8_t* image, uint8_t start_line, uint8_t nb_lines, uint8_t stage);
+
+#endif /* EXTDRV_EPAPER_H */
 

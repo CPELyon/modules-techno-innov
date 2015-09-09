@@ -1,6 +1,6 @@
 # Makefile for GPIO Demo Module
 
-TARGET_DIR = apps/$(NAME)
+TARGET_DIR = apps/$(MODULE)/$(NAME)
 
 LPC = lpc1224
 CPU = cortex-m0
@@ -15,7 +15,7 @@ LINKOPTS = -static -nostartfiles -nostdlib \
 		   -Wl,-Map=$(TARGET_DIR)/lpc_map_$(LPC).map -Tlpc_link_$(LPC).ld
 
 
-APPS = $(subst apps/,,$(wildcard apps/*))
+APPS = $(subst apps/,,$(wildcard apps/*/*))
 
 .PHONY: all $(APPS)
 all: $(APPS)
@@ -37,7 +37,7 @@ NAME_DEPS = ${NAME_OBJS:%.o=$(OBJDIR)/%.d}
 .SECONDARY: $(OBJS) $(NAME_OBJS)
 .PRECIOUS: %.elf
 %.elf: $(OBJS) $(NAME_OBJS)
-	@echo "Linking $(NAME) ..."
+	@echo "Linking $(MODULE)/$(NAME) ..."
 	@$(CC) $(LINKOPTS) $(OBJS) $(NAME_OBJS) -o $@
 
 %.bin: %.elf
@@ -54,7 +54,7 @@ ${OBJDIR}/%.o: %.c
 
 
 $(APPS):
-	@make --no-print-directory NAME=$@ apps/$@/$@.bin
+	@make --no-print-directory MODULE=$(shell dirname $@) NAME=$(shell basename $@) apps/$(shell dirname $@)/$(shell basename $@)/$(shell basename $@).bin
 
 all_apps: $(APPS)
 
@@ -62,7 +62,7 @@ clean:
 	rm -rf $(OBJDIR)
 
 mrproper: clean
-	rm -f apps/*/*.bin apps/*/*.elf apps/*/*.map
+	rm -f apps/*/*/*.bin apps/*/*/*.elf apps/*/*/*.map
 
 
 # Some notes :

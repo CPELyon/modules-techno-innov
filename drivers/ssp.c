@@ -309,7 +309,8 @@ void ssp_clk_update(void)
 /* SSP Setup as master */
 /* Returns 0 on success
  * Parameters :
- *  frame_type is SPI, TI or MICROWIRE (use apropriate defines for this one).
+ *  frame_type is SPI, TI or MICROWIRE (use apropriate defines for this one:
+ *     LPC_SSP_FRAME_SPI - LPC_SSP_FRAME_TI - LPC_SSP_FRAME_MICROWIRE).
  *  data_width is a number between 4 and 16.
  *  rate : The bit rate, in Hz.
  * The SPI Chip Select is not handled by the SPI driver in master SPI mode as it's

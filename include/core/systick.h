@@ -95,4 +95,11 @@ int add_systick_callback(void (*callback) (uint32_t), uint16_t period);
 int remove_systick_callback(void (*callback) (uint32_t));
 
 
+
+/* This function can be used when you are absolutly certain that systick timer is running, and when
+ * you need to sleep less than 1000us (1ms)
+ */
+void usleep_short(uint32_t us);
+
+
 #endif /* CORE_SYSTEM_H */

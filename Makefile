@@ -44,6 +44,7 @@ NAME_DEPS = ${NAME_OBJS:%.o=$(OBJDIR)/%.d}
 	@echo "Creating image : [32m$@[39m"
 	@$(CROSS_COMPILE)objcopy -R .stack -R .bss -O binary $^ $@
 	@ls -l $@
+	@$(CROSS_COMPILE)size $^
 	@echo Done.
 
 ${OBJDIR}/%.o: %.c

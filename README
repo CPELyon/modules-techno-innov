@@ -6,12 +6,14 @@ for the peripherals found on the development modules (user led, eeprom,
 temperature sensor, CC1101 RF transceiver, ...).
 Support for various other cool stuff is added when we play with it.
 
-Example applications are created in the apps directory, with one
-sub-directory for each application. These are (and must stay) independent.
+Example applications are created in the apps/[module name] directories for
+each module, with one sub-directory for each application. These are (and must
+stay) independent.
+Each module has it's own directory under apps/.
 
 More usefull stuff is up to you. Creating an app is *very* simple. Copy
-an example from apps/ to the name you want and start coding.
-** Please, no spaces (or special characters) in the directory name ! **
+an example from apps/[module name]/ to the name you want and start coding.
+** Please, no spaces (or special characters) in the directory names ! **
 
 
 ********************
@@ -30,9 +32,9 @@ lib/ directory, and add stuff there.
 
 Once done you should build using the provided makefile by running the
 simple "make" command in the base directory, which will build all apps, or
-run "make <app_name>" to build a specific application. You can also run the
-simple "make" command in the specific app subdirectory to compile this
-application alone.
+run "make <module_name>/<app_name>" to build a specific application. You can
+also run the simple "make" command in the specific app subdirectory to compile
+this application alone.
 
 To flash the binary (the one with .bin) to the LPC Flash you will need the
 lpctool package, now packaged for Debian, starting with Jessie, or available
@@ -93,9 +95,13 @@ SUPPORTED FEATURES and INTERFACES
    - Status led
    - Epaper display
    - WS2812 chainable leds
+   - LCD Character displays
+   - Maxim Max31855 thermocouple to digital converters
+   - NXP NCN5120 KNX bus interface (under test)
 
 - Other
    - 8x8 font for use with Epaper display
+   - DTPlug (or any host) communication protocol
 
 
 ********************
@@ -109,4 +115,7 @@ TODO :
 - Watchdog support
 - CRC engine support
 - Test UART IrDA mode
+- DTPlug communication protocol tests + continue development of other functionalities.
+- Continue tests for NCN5120 support
+- More external drivers !
 

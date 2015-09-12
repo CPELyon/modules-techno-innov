@@ -97,7 +97,7 @@ SUPPORTED FEATURES and INTERFACES
    - WS2812 chainable leds
    - LCD Character displays
    - Maxim Max31855 thermocouple to digital converters
-   - NXP NCN5120 KNX bus interface (under test)
+   - On semiconductor NCN5120 KNX bus interface (under test)
 
 - Other
    - 8x8 font for use with Epaper display

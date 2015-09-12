@@ -36,7 +36,7 @@
 /* DTPlug (or DomoTab, PC, ...) Communication */
 
 /* Store two packets, one being received, one being used */
-struct packet packets[2];
+static struct packet packets[2];
 static struct packet* rx_packet = packets;
 static volatile struct packet* packet_ok = NULL;
 
@@ -57,7 +57,7 @@ static void dtplug_protocol_decode(uint8_t c);
 
 
 /* Setup the UART used for communication with the host / master (the module is slave) */
-void set_dtplug_comm_uart(uint8_t uart_num) {
+void dtplug_protocol_set_dtplug_comm_uart(uint8_t uart_num) {
 	dtplug_uart = uart_num;
 	uart_on(uart_num, 115200, dtplug_protocol_decode);
 }
@@ -66,7 +66,7 @@ void set_dtplug_comm_uart(uint8_t uart_num) {
 /* Tell the receive and decode routine that the "packet_ok" packet is no more un use and that
  *  we are ready to handle a new one.
  */
-void release_old_packet(void)
+void dtplug_protocol_release_old_packet(void)
 {
 	packet_ok = NULL;
 	done_with_old_packet = 1;
@@ -77,7 +77,7 @@ void release_old_packet(void)
 /* When a packet has not been handled we must not count it as acknowledged
  * On the next ping request the master will then see wich packet caused the problem.
  */
-void add_error_to_list(struct header* info, uint8_t error_code)
+void dtplug_protocol_add_error_to_list(struct header* info, uint8_t error_code)
 {
 	if (num_errors_stored < (MAX_ERROR_STORED * 2)) {
 		if (error_code == NO_ERROR) {
@@ -137,14 +137,14 @@ static void dtplug_protocol_decode(uint8_t c)
 		/* From here on, the packet is valid, we can provide some feedback */
 		/* Check data checksum */
 		if (!(info->seq_num & QUICK_DATA_PACKET) && (sum != info->data.checksum)) {
-			add_error_to_list(info, ERROR_IN_DATA_CHECKSUM);
+			dtplug_protocol_add_error_to_list(info, ERROR_IN_DATA_CHECKSUM);
 			errors_count++;
 			goto next_packet;
 		}
 		/* Warning, if we are still using the old packet there's a problem */
 		if (done_with_old_packet == 0) {
 			/* FIXME : what to do then ? inform the master ? ignore the new packet ? */
-			add_error_to_list(info, ERROR_LAST_PKT_IN_PROCESS);
+			dtplug_protocol_add_error_to_list(info, ERROR_LAST_PKT_IN_PROCESS);
 			errors_count++;
 			goto next_packet;
 		}
@@ -188,7 +188,7 @@ next_packet:
  * When a reply is effectively sent, the PACKET_NEEDS_REPLY bit is removed from the sequence number so the
  *   packet handling code will know if there is still a PING request to be answered.
  */
-void send_reply(struct packet* question, uint8_t error, int size, uint8_t* data)
+void dtplug_protocol_send_reply(struct packet* question, uint8_t error, int size, uint8_t* data)
 {
 	struct packet reply;
 	struct header* tx_info = &(reply.info);
@@ -206,7 +206,7 @@ void send_reply(struct packet* question, uint8_t error, int size, uint8_t* data)
 		/* If we still have some room for the error, then keep track of it (if any),
 		 * otherwise ... drop it, we don't have that much memory to keep track of hundreds of errors */
 		if (error != NO_ERROR) {
-			add_error_to_list(&(question->info), error);
+			dtplug_protocol_add_error_to_list(&(question->info), error);
 		}
 		return;
 	}
@@ -222,7 +222,7 @@ void send_reply(struct packet* question, uint8_t error, int size, uint8_t* data)
 	if (num_errors_stored != 0) {
 		/* Store the new error if any */
 		if (error != NO_ERROR) {
-			add_error_to_list(&(question->info), error);
+			dtplug_protocol_add_error_to_list(&(question->info), error);
 		}
 		/* The master wants to get all errors, give them even if there is an error in the sequence number */
 		if (question->info.type == PKT_TYPE_GET_ERRORS) {
@@ -299,7 +299,7 @@ void send_reply(struct packet* question, uint8_t error, int size, uint8_t* data)
 				sent += ret;
 			} else {
 				/* Store a sending error, though it may never be sent ... */
-				add_error_to_list(&(question->info), ERROR_IN_UART_TX);
+				dtplug_protocol_add_error_to_list(&(question->info), ERROR_IN_UART_TX);
 				errors_count++;
 				return;
 			}
@@ -336,12 +336,12 @@ static int user_flash_update(struct packet* question, void* data, int size)
 	/* Erase the user flash information pages */
 	ret = iap_erase_info_page(0, 2);
 	if (ret != 0) {
-		send_reply(question, ERROR_FLASH_ERASE, 0, NULL);
+		dtplug_protocol_send_reply(question, ERROR_FLASH_ERASE, 0, NULL);
 		return -1;
 	}
 	ret = iap_copy_ram_to_flash((uint32_t)get_user_info(), (uint32_t)data, size);
 	if (ret != 0) {
-		send_reply(question, ERROR_FLASH_WRITE, 0, NULL);
+		dtplug_protocol_send_reply(question, ERROR_FLASH_WRITE, 0, NULL);
 		return -1;
 	}
 	return 0;
@@ -360,8 +360,8 @@ static int common_handles(struct packet* question)
 	switch (question->info.type) {
 		case PKT_TYPE_PING:
 			question->info.seq_num |= PACKET_NEEDS_REPLY; /* Make sure the reply will be sent */
-			send_reply(question, NO_ERROR, 0, NULL); /* A ping needs no aditional data */
-			release_old_packet();
+			dtplug_protocol_send_reply(question, NO_ERROR, 0, NULL); /* A ping needs no aditional data */
+			dtplug_protocol_release_old_packet();
 			break;
 		case PKT_TYPE_RESET:
 			/* Software reset of the board. No way out. */
@@ -374,11 +374,11 @@ static int common_handles(struct packet* question)
 				uint16_t* msec = (uint16_t*)&(question->data[4]);
 				uint8_t time_buff[6];
 				if (question->info.seq_num & QUICK_DATA_PACKET) {
-					send_reply(question, ERROR_IN_PKT_STRUCTURE, 0, NULL);
+					dtplug_protocol_send_reply(question, ERROR_IN_PKT_STRUCTURE, 0, NULL);
 					break;
 				}
 				if (question->info.data.size != 6) {
-					send_reply(question, ERROR_IN_DATA_VALUES, 0, NULL);
+					dtplug_protocol_send_reply(question, ERROR_IN_DATA_VALUES, 0, NULL);
 					break;
 				}
 				new_time.seconds = byte_swap_32(*seconds);
@@ -388,10 +388,10 @@ static int common_handles(struct packet* question)
 				} else {
 					set_time_and_get_difference(&new_time, &time_diff);
 					time_to_buff_swapped(time_buff, &time_diff);
-					send_reply(question, NO_ERROR, 6, time_buff);
+					dtplug_protocol_send_reply(question, NO_ERROR, 6, time_buff);
 				}
 			}
-			release_old_packet();
+			dtplug_protocol_release_old_packet();
 			break;
 		case PKT_TYPE_SET_USER_INFO:
 			{
@@ -399,12 +399,12 @@ static int common_handles(struct packet* question)
 				uint8_t offset = question->data[0];
 				uint8_t size = question->data[1];
 				if (question->info.seq_num & QUICK_DATA_PACKET) {
-					send_reply(question, ERROR_IN_PKT_STRUCTURE, 0, NULL);
+					dtplug_protocol_send_reply(question, ERROR_IN_PKT_STRUCTURE, 0, NULL);
 					break;
 				}
 				/* Check that amount of data provided is OK and does not go beyond user_info structure end */
 				if ((question->info.data.size != (size + 2)) || ((offset + size) > sizeof(struct user_info))) {
-					send_reply(question, ERROR_IN_DATA_VALUES, 0, NULL);
+					dtplug_protocol_send_reply(question, ERROR_IN_DATA_VALUES, 0, NULL);
 					break;
 				}
 				/* Copy all board data before flash erase */
@@ -423,19 +423,19 @@ static int common_handles(struct packet* question)
 		case PKT_TYPE_GET_NUM_PACKETS:
 			question->info.seq_num |= PACKET_NEEDS_REPLY; /* Make sure the reply will be sent */
 			tmp_val_swap = byte_swap_32(packet_count);
-			send_reply(question, NO_ERROR, 4, (uint8_t*)(&tmp_val_swap));
-			release_old_packet();
+			dtplug_protocol_send_reply(question, NO_ERROR, 4, (uint8_t*)(&tmp_val_swap));
+			dtplug_protocol_release_old_packet();
 			break;
 		case PKT_TYPE_GET_ERRORS:
 			question->info.seq_num |= PACKET_NEEDS_REPLY; /* Make sure the reply will be sent */
-			send_reply(question, NO_ERROR, 0, NULL); /* Error handling code will take care of filling the message */
-			release_old_packet();
+			dtplug_protocol_send_reply(question, NO_ERROR, 0, NULL); /* Error handling code will take care of filling the message */
+			dtplug_protocol_release_old_packet();
 			break;
 		case PKT_TYPE_GET_NUM_ERRORS:
 			question->info.seq_num |= PACKET_NEEDS_REPLY; /* Make sure the reply will be sent */
 			tmp_val_swap = byte_swap_32(errors_count);
-			send_reply(question, NO_ERROR, 4, (uint8_t*)(&tmp_val_swap));
-			release_old_packet();
+			dtplug_protocol_send_reply(question, NO_ERROR, 4, (uint8_t*)(&tmp_val_swap));
+			dtplug_protocol_release_old_packet();
 			break;
 		default:
 			/* We do not handle this type, it must be a board specific one */
@@ -451,7 +451,7 @@ static int common_handles(struct packet* question)
  * Return NULL when no new packet were received since last packet was released.
  * If a new packet is present, call the common handles first.
  */
-struct packet* get_next_packet_ok(void)
+struct packet* dtplug_protocol_get_next_packet_ok(void)
 {
 	if (packet_ok != NULL) {
 		struct packet* pkt_tmp = (struct packet*)packet_ok;

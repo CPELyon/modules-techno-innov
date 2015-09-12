@@ -32,24 +32,24 @@
 
 
 /* Setup the UART used for communication with the host / master (the module is slave) */
-void set_dtplug_comm_uart(uint8_t uart_num);
+void dtplug_protocol_set_dtplug_comm_uart(uint8_t uart_num);
 
 
 /* Tell the receive routine that the "packet_ok" packet is no more in use and that
  *  we are ready to handle a new one */
-void release_old_packet(void);
+void dtplug_protocol_release_old_packet(void);
 
 
 /* Get a pointer to the new packet received.
  * Return NULL when no new packet were received since last packet was released.
  */
-struct packet* get_next_packet_ok(void);
+struct packet* dtplug_protocol_get_next_packet_ok(void);
 
 
 /* When a packet has not been handled we must not count it as acknowledged
  * On the next ping request the master will then see wich packet caused the problem.
  */
-void add_error_to_list(struct header* info, uint8_t error_code);
+void dtplug_protocol_add_error_to_list(struct header* info, uint8_t error_code);
 
 
 /* This function handle sending replies when requested by the host.
@@ -58,7 +58,7 @@ void add_error_to_list(struct header* info, uint8_t error_code);
  * When a reply is effectively sent, the PACKET_NEEDS_REPLY bit is removed from the sequence filed
  *   packet handling code will know if there is still a PING request to be answered.
  */
-void send_reply(struct packet* question, uint8_t error, int size, uint8_t* data);
+void dtplug_protocol_send_reply(struct packet* question, uint8_t error, int size, uint8_t* data);
 
 
 

@@ -217,7 +217,7 @@ void handle_uart_commands(struct packet* command)
 					values[i] = (uint16_t)byte_swap_16(values[i]);
 				}
 				/* And send reply */
-				send_reply(command, NO_ERROR, 4, (uint8_t*)values);
+				dtplug_protocol_send_reply(command, NO_ERROR, 4, (uint8_t*)values);
 			}
 			break;
 		case PKT_TYPE_START_ADC_CONVERSION:
@@ -225,22 +225,22 @@ void handle_uart_commands(struct packet* command)
 				/* Start an ADC conversion on selected ADC channel */
 				adc_start_convertion_once(channel, 0);
 			} else {
-				send_reply(command, ERROR_IN_DATA_VALUES, 0, NULL);
+				dtplug_protocol_send_reply(command, ERROR_IN_DATA_VALUES, 0, NULL);
 			}
 			break;
 		case PKT_TYPE_GET_ADC_VALUE:
 			{
 				uint16_t value = 0;
 				adc_get_value(&value, channel);
-				send_reply(command, NO_ERROR, 2, (uint8_t*)(&value));
+				dtplug_protocol_send_reply(command, NO_ERROR, 2, (uint8_t*)(&value));
 			}
 			break;
 		default:
 			uprintf(0, "Unknown packet type : packet not handled\n");
-			send_reply(command, ERROR_PKT_NOT_HANDLED, 0, NULL);
+			dtplug_protocol_send_reply(command, ERROR_PKT_NOT_HANDLED, 0, NULL);
 			break;
 	}
-	release_old_packet();
+	dtplug_protocol_release_old_packet();
 }
 
 
@@ -251,7 +251,7 @@ int main(void) {
 	adc_on();
 	status_led_config(&status_led_green, &status_led_red);
 	timer_on(LPC_TIMER_32B1, 0, NULL);
-	set_dtplug_comm_uart(0);
+	dtplug_protocol_set_dtplug_comm_uart(0);
 
 	/* Temperature sensor */
 	temp_config();
@@ -265,7 +265,7 @@ int main(void) {
 		status_led(red_off);
 
 		/* UART */
-		pkt = get_next_packet_ok();
+		pkt = dtplug_protocol_get_next_packet_ok();
 		if (pkt != NULL) {
 			handle_uart_commands(pkt);
 			status_led(green_off);

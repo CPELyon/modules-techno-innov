@@ -173,8 +173,9 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 	/* If UART is sending wait for buffer empty */
 	/* FIXME : be smart for OS, call scheduler or return */
 	while (uart->sending != 0) {
-		if (get_priority_mask() == 0)
+		if (get_priority_mask() == 0) {
 			uart_check_tx(uart, uart->regs->func.intr_pending);
+		}
 	}
 
 	if (length > SERIAL_OUT_BUFF_SIZE) {

@@ -66,14 +66,14 @@ mrproper: clean
 
 
 # Some notes :
-# The command "make -f /path/to/here/Makefile app_name" does not work, as well
-# as the command "make -f /path/to/here/apps/app_name/Makefile".
+# The command "make -f /path/to/here/Makefile module/app_name" does not work, as well
+# as the command "make -f /path/to/here/apps/module/app_name/Makefile".
 # This could be solved in the app Makefiles by replacing
 #   "NAME = $(shell basename $(CURDIR))"
 # with
 #   "NAME = $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))"
 # and possibly some similar trick for the base Makefile but this is just
 # unreadable and moslty unusefull, so it won't be supported.
-# Use "make -C /path/to/here/ app_name" or "make -C /path/to/here/apps/app_name"
+# Use "make -C /path/to/here/ module/app_name" or "make -C /path/to/here/apps/module/app_name"
 # instead.
 

@@ -267,7 +267,7 @@ void systick_timer_off(void)
  * Note that calls to this function while a sleep() has been initiated will change the
  *   sleep duration ....
  */
-static inline  void set_sleep(uint32_t ticks)
+static inline void set_sleep(uint32_t ticks)
 {
 	sleep_count = ticks;
 }

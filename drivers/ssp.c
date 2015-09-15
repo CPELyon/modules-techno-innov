@@ -283,8 +283,8 @@ uint32_t ssp_clk_on(uint8_t ssp_num, uint32_t rate)
 	/* Activate the SSP clock (maybe divide main clock) */
 	switch (ssp_num) {
 		case 0 :
-		sys_ctrl->ssp0_clk_div = pclk_div;
-		break;
+			sys_ctrl->ssp0_clk_div = pclk_div;
+			break;
 	}
 
 	/* Set the prescaler */

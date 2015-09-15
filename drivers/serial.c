@@ -216,8 +216,9 @@ int serial_flush(uint32_t uart_num)
 	/* Active wait for message to be sent. If interrupts are
 	 * disabled, call the UART handler while waiting. */
 	while (uart->sending) {
-		if (get_priority_mask() == 0)
+		if (get_priority_mask() == 0) {
 			uart_check_tx(uart, uart->regs->func.intr_pending);
+		}
 	}
 
 	return 0;

@@ -21,6 +21,8 @@
  ****************************************************************************/
 
 
+/* Host side implementation of the DTPlug communication protocol */
+
 #ifndef DTPLUG_PROTOCOL_HOST_H
 #define DTPLUG_PROTOCOL_HOST_H
 

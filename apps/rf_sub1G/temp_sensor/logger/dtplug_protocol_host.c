@@ -20,6 +20,9 @@
  *
  ****************************************************************************/
 
+
+/* Host side implementation of the DTPlug communication protocol */
+
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>

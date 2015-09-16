@@ -28,6 +28,10 @@
 /*                Analog to Digital Converter (ADC)                            */
 /***************************************************************************** */
 
+/* ADC driver for the integrated ADC module of the LPC1224.
+ * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+ */
+
 enum adc_events {
 	/* CT32B0 */
 	ADC_CONV_ON_CT32B0_CAP0_RISING,

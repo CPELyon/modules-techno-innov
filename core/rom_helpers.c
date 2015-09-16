@@ -18,6 +18,13 @@
  *
  *************************************************************************** */
 
+/* ROM helpers are functions avalable for the user which do not use space in the
+ *  internal reprogrammable flash.
+ * They are stored in the internal ROM memory and may be called using specific
+ *  calls with defined parameters depending on the ROM call used.
+ * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+ */
+
 #include <stdint.h>
 #include "core/system.h"
 #include "core/lpc_core_cm0.h"

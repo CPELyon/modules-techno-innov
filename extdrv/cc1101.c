@@ -28,6 +28,10 @@
 #include "drivers/gpio.h"
 #include "extdrv/cc1101.h"
 
+/* Driver for the CC1101 Sub-1GHz RF transceiver from Texas Instrument.
+ * Refer to CC1101 documentation for more information (swrs061i.pdf)
+ */
+
 
 /***************************************************************************** */
 /*                CC1101                                                       */

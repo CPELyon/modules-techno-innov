@@ -20,6 +20,16 @@
  *
  *************************************************************************** */
 
+/* This file holds the interface to the code used to handle LCD character displays that are
+ *   compatible with the Hitachi HD44780 driver.
+ * There are many of them out there, and you can usually tell them by the 16-pin interface.
+ *
+ * Driver inspired by Arduino LiquidCrystal library code submited by
+ *   David A. Mellis, Limor Fried (http://www.ladyada.net) and Tom Igoe.
+ *
+ * Refer to HD44780U documentation from Hitachi for more information.
+ */
+
 
 #ifndef EXTDRV_LCD_CHAR_H
 #define EXTDRV_LCD_CHAR_H

@@ -24,6 +24,11 @@
 /*                Timers                                                       */
 /***************************************************************************** */
 
+/* Timers driver for the integrated timers of the LPC1224.
+ * The LPC1224 Has two 16bits timers and 2 32bits timers.
+ * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+ */
+
 #include <stdint.h>
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"

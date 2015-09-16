@@ -23,6 +23,10 @@
 /***************************************************************************** */
 /*                UARTs                                                        */
 /***************************************************************************** */
+/* UART driver for the integrated UARTs of the LPC1224.
+ * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+ */
+
 /* Both UARTs are available, UART numbers are in the range 0 - 1 */
 
 #include <stdint.h>

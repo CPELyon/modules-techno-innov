@@ -22,6 +22,11 @@
  *
  *****************************************************************************/
 
+/* Default "fault" handlers, which catch the fault exceptions.
+ * These are defined as weak aliases of a dummy fault handler which enters an empty infinite
+ *   loop and chould be overidden by user defined handlers.
+ */
+
 #include "core/lpc_regs_12xx.h"
 
 void fault_info(const char* name, uint32_t len) __attribute__ ((weak, alias ("Dummy_Fault_Handler")));

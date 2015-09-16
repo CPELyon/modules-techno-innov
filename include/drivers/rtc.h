@@ -1,7 +1,7 @@
 /****************************************************************************
  *  drivers/rtc.h
  *
- * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
+ * Copyright 2014 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,10 @@
 /***************************************************************************** */
 /*                RTC and RTC Interrupts                                    */
 /***************************************************************************** */
+
+/* The RTC is an integrated module of the LPC1224.
+ * Refer to LPC12xx documentation (UM10441.pdf) for more information
+ */
 
 #include <stdint.h>
 

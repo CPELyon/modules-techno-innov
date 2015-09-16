@@ -21,6 +21,26 @@
  *
  *************************************************************************** */
 
+/* The user information block is persistant flash memory block which can be programmed
+ *   and read by user code using IAP calls.
+ * It can provide the same functionnality as an EEPROM, though the reading access is
+ *   much more simple.
+ * Writting to the user flash is slightly more complicated though, mainly because flash
+ *   pages in the user information block are big 512 bytes blocks, much more than the
+ *   usual small eeprom pages.
+ * One must erase a full page before modifying data in it, thus reading it first to RAM,
+ *   modifying the RAM area, erasing the page, and then writting back.
+ * Reading/modify/write may be limited to the required size, but erase size will always
+ *   be a full page.
+ */
+
+/* The user information block of the LPC1224 has three 512 bytes pages. */
+
+/* Actually, the only purpose of this code is to return the address of the begining
+ *   of the user information block in flash, set by the linker from information in
+ *   the liker script (lpc_link_lpc1224.ld).
+*/
+
 #ifndef USER_INFORMATION_BLOCK_H
 #define USER_INFORMATION_BLOCK_H
 

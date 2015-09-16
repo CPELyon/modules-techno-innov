@@ -28,6 +28,9 @@
 
 /***************************************************************************** */
 /* Status LED */
+/* The status led is a bicolor led found on all Techno-Innov modules.
+ * It could be any two leds found on your module if you are not using one of Techno-Innov's modules.
+ */
 
 /* Configure the status led, giving the red and green pio structure */
 void status_led_config(const struct pio* green, const struct pio* red);

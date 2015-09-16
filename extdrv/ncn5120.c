@@ -34,6 +34,13 @@
 /* Debug */
 #include "lib/stdio.h"
 
+
+/* NCN5120 driver
+ * The NCN5120 chip is a KNX to serial transceiver made by On Semiconductor.
+ * Refer to the NCN5120 documentation or http://www.onsemi.com/ for more information.
+ */
+
+
 static struct ncn5120_device ncn5120 = {
 	.serial_num = 1,
 	.current_state = NCN5120_STATE_NORMAL,

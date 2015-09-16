@@ -26,9 +26,11 @@
 /***************************************************************************** */
 /*                Timers                                                       */
 /***************************************************************************** */
-/* Four timers are available, Two 16 bits and two 32 bits
+/* Timers driver for the integrated timers of the LPC1224.
+ * Four timers are available, Two 16 bits and two 32 bits
  * All timers have 4 channels though 32 bits timers have all 4 channels available
  *   on capture /match pins while 16bits ones have only two (channels 0 and 1).
+ * Refer to LPC1224 documentation (UM10441.pdf) for more information.
  */
 #define NUM_TIMERS 4
 #define NUM_CHANS 4

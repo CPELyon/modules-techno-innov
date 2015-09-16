@@ -19,10 +19,13 @@
  *************************************************************************** */
 
 
-
 /***************************************************************************** */
 /*               System Tick Timer                                             */
 /***************************************************************************** */
+
+/* Driver for the internal systick timer of the LPC1224.
+ * Refer to the LPC1224 documentation (UM10441.pdf) for more information
+ */
 
 #include <stdint.h>
 #include "core/lpc_regs_12xx.h"

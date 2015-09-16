@@ -1,6 +1,17 @@
-/**
+/****************************************************************************
+ *   extdrv/cc1101.h
+ *
+ * CC1101 Low-Power Sub-1 GHz RF Transceiver.
+ *
+ * Copyright 2013 Nathael Pajani <nathael.pajani@ed3l.fr>
+ */
+
+
+/*
  * @author Athanassios Mavrogeorgiadis
- * @author TI CC1101 library  developed by Athanassios Mavrogeorgiadis (tmav Electronics) as template based on TI C8051 SOURCE CODE swrc021f
+ * @author TI CC1101 library developed by Athanassios Mavrogeorgiadis (tmav Electronics)
+ *    as template based on TI C8051 SOURCE CODE swrc021f
+ *
  * @section LICENSE
  *
  * Copyright (c) 2010 ARM Limited

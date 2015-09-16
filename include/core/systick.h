@@ -30,6 +30,11 @@
 /*               System Tick Timer                                             */
 /***************************************************************************** */
 
+/* Driver for the internal systick timer of the LPC1224.
+ * Refer to the LPC1224 documentation (UM10441.pdf) for more information
+ */
+
+
 /* Start the system tick timer
  * Starting the systick timer also resets the internal tick counters.
  * If you need a value that goes beyond one start/stop cycle and accross resets,

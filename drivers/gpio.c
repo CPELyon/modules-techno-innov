@@ -22,6 +22,9 @@
 /*                GPIOs and GPIO Interrupts                                    */
 /***************************************************************************** */
 
+/* Driver for GPIO configuration and access (including GPIO interrupts) on the LPC1224.
+ * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+ */
 
 
 #include <stdint.h>

@@ -22,6 +22,11 @@
  *
  *************************************************************************** */
 
+/*
+ * This file holds some system wide initialisation functions and clock or sleep
+ *   related functions.
+ */
+
 #include <stdint.h>
 
 #include "core/lpc_regs_12xx.h"

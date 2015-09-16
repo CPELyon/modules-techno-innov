@@ -18,6 +18,10 @@
  *
  *************************************************************************** */
 
+/* NCN5120 driver
+ * The NCN5120 chip is a KNX to serial transceiver made by On Semiconductor.
+ * Refer to the NCN5120 documentation or http://www.onsemi.com/ for more information.
+ */
 
 #ifndef EXTDRV_NCN5120_H
 #define EXTDRV_NCN5120_H

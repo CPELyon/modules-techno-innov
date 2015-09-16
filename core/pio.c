@@ -22,7 +22,9 @@
 /*                GPIOs                                                        */
 /***************************************************************************** */
 
-/*   Public access to Pins setup   */
+/*   Public access to Pins setup
+ * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+ */
 
 
 #include <stdint.h>

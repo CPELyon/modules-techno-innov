@@ -25,6 +25,7 @@ TARGET_INCLUDES = $(TARGET_DIR)/
 OBJDIR = objs
 
 SRC = $(wildcard */*.c)
+SRC += $(wildcard lib/*/*.c)
 OBJS = ${SRC:%.c=${OBJDIR}/%.o}
 DEPS = ${OBJS:%.o=$(OBJDIR)/%.d}
 

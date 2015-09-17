@@ -186,6 +186,8 @@ uint8_t cc1101_read_pkt_status(void);
 /***************************************************************************** */
 /* Enter Rx mode */
 void cc1101_enter_rx_mode(void);
+/* Prepare for entering Tx mode by moving to FSTXON state */
+void cc1101_enter_fstxon_state(void);
 
 
 /***************************************************************************** */
@@ -196,6 +198,8 @@ uint8_t cc1101_get_signal_strength_indication(void);
 /* Return the link quality indication based in the last packet received */
 uint8_t cc1101_get_link_quality(void);
 
+/* Request a calibration */
+void cc1101_send_calibration_request(void);
 
 /***************************************************************************** */
 /* Rx fifo state :

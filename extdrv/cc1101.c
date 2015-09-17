@@ -174,7 +174,15 @@ static uint8_t cc1101_enter_tx_mode(void)
 	return 0;
 }
 
+void cc1101_enter_fstxon_state(void)
 {
+	uint8_t status = (cc1101_read_status() & CC1101_STATE_MASK);
+	if (status != CC1101_STATE_FSTON) {
+		if ((status != CC1101_STATE_TX) && (status != CC1101_STATE_RX)) {
+			cc1101_send_cmd(CC1101_CMD(state_idle));
+		}
+		cc1101_send_cmd(CC1101_CMD(start_freq_synth));
+	}
 }
 
 
@@ -196,6 +204,12 @@ uint8_t cc1101_get_link_quality(void)
 	return (0x3F - (cc1101.link_quality & 0x3F));
 }
 
+
+/* Request a calibration */
+void cc1101_send_calibration_request(void)
+{
+	cc1101_send_cmd(CC1101_CMD(synth_calibration));
+}
 
 /***************************************************************************** */
 /* Rx fifo state :

@@ -137,6 +137,8 @@ struct cc1101_command_strobes {
 #define CC1101_FIFO_SIZE            64
 
 #define CC1101_CRC_OK              0x80
+#define CC1101_CARIER_SENSE        0x40
+#define CC1101_CHANNEL_CLEAR       0x10
 
 
 /* Errors definitions */
@@ -166,8 +168,7 @@ struct cc1101_command_strobes {
 /***************************************************************************** */
 /* SPI registers and commands access Wrappers */
 
-/* Send command and return global status byte */
-uint8_t cc1101_send_cmd(uint8_t addr);
+/* Reset CC1101 chip */
 void cc1101_reset(void);
 /* Power Up Reset is the same as a usual reset, the function will only wait longer for
  *   the "chip ready" signal before starting SPI transfers .... */
@@ -176,20 +177,15 @@ void cc1101_power_up_reset(void);
 void cc1101_flush_tx_fifo(void);
 void cc1101_flush_rx_fifo(void);
 
-void cc1101_enter_rx_mode(void);
-
+/***************************************************************************** */
 /* Read global status byte */
 uint8_t cc1101_read_status(void);
+/* Read packet status byte */
+uint8_t cc1101_read_pkt_status(void);
 
-/* Read and return single register value */
-uint8_t cc1101_read_reg(uint8_t addr);
-/* Read nb registers from start_addr into buffer. Return the global status byte. */
-uint8_t cc1101_read_burst_reg(uint8_t start_addr, uint8_t* buffer, uint8_t nb);
-
-/* Write single register value. Return the global status byte */
-uint8_t cc1101_write_reg(uint8_t addr, uint8_t val);
-uint8_t cc1101_write_burst_reg(uint8_t start_addr, uint8_t* buffer, uint8_t nb);
-
+/***************************************************************************** */
+/* Enter Rx mode */
+void cc1101_enter_rx_mode(void);
 
 
 /***************************************************************************** */
@@ -265,6 +261,13 @@ int cc1101_receive_packet(uint8_t* buffer, uint8_t size, uint8_t* status);
  */
 void cc1101_set_address(uint8_t address);
 
+/* Set current channel to use.
+ * The caller is responsible for checking that the channel spacing and channel bandwith are configures
+ * correctly to prevent overlaping channels, or to use only non-overlaping channel numbers.
+ * This function places the CC1101 chip in idle state.
+ */
+void cc1101_set_channel(uint8_t chan);
+
 /* Change a configuration byte.
  * This function places the CC1101 chip in idle state.
  */
@@ -273,12 +276,15 @@ void cc1101_set_config(uint8_t byte_addr, uint8_t value);
 /* Configure pins, reset the CC1101, and put the CC1101 chip in idle state */
 void cc1101_init(uint8_t ssp_num, const struct pio* cs_pin, const struct pio* miso_pin);
 
-/* Write / send all the configuration register values to the CC1101 chip */
+/* Write / send all the configuration register values to the CC1101 chip
+ * This function places the CC1101 chip in idle state.
+ */
 void cc1101_config(void);
 
 /* Update CC1101 config
  * Arguments are the settings table which is a table of address and value pairs,
  *   and the table length, which must be even.
+ * This function places the CC1101 chip in idle state.
  */
 void cc1101_update_config(uint8_t* settings, uint8_t len);
 

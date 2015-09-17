@@ -76,14 +76,40 @@ uint8_t cc1101_spi_transfer(uint8_t addr, uint8_t* out, uint8_t* in, uint8_t siz
 }
 
 
-/***************************************************************************** */
-/* SPI registers and commands access Wrappers */
+/* Read and return single register value */
+static uint8_t cc1101_read_reg(uint8_t addr)
+{
+	uint8_t ret = 0;
+	cc1101_spi_transfer((addr | CC1101_READ_OFFSET), NULL, &ret, 1);
+	return ret;
+}
+/* Read nb registers from start_addr into buffer. Return the global status byte. */
+static uint8_t cc1101_read_burst_reg(uint8_t start_addr, uint8_t* buffer, uint8_t nb)
+{
+	uint8_t addr = (start_addr | CC1101_READ_OFFSET | CC1101_BURST_MODE);
+	return cc1101_spi_transfer(addr, NULL, buffer, nb);
+}
+/* Write single register value. Return the global status byte */
+static uint8_t cc1101_write_reg(uint8_t addr, uint8_t val)
+{
+	return cc1101_spi_transfer((addr | CC1101_WRITE_OFFSET), &val, NULL, 1);
+}
+static uint8_t cc1101_write_burst_reg(uint8_t start_addr, uint8_t* buffer, uint8_t nb)
+{
+	uint8_t addr = (start_addr | CC1101_WRITE_OFFSET | CC1101_BURST_MODE);
+	return cc1101_spi_transfer(addr, buffer, NULL, nb);
+}
+
 
 /* Send command and return global status byte */
-uint8_t cc1101_send_cmd(uint8_t addr)
+static uint8_t cc1101_send_cmd(uint8_t addr)
 {
 	return cc1101_spi_transfer((addr | CC1101_WRITE_OFFSET), NULL, NULL, 0);
 }
+
+
+/***************************************************************************** */
+/* SPI registers and commands access Wrappers */
 void cc1101_reset(void)
 {
 	cc1101_send_cmd(CC1101_CMD(reset));
@@ -103,6 +129,22 @@ void cc1101_flush_rx_fifo(void)
 	cc1101_send_cmd(CC1101_CMD(flush_rx));
 }
 
+
+/***************************************************************************** */
+/* Read global status byte */
+uint8_t cc1101_read_status(void)
+{
+	return cc1101_send_cmd(CC1101_CMD(no_op));
+}
+/* Read packet status byte */
+uint8_t cc1101_read_pkt_status(void)
+{
+	return cc1101_send_cmd(CC1101_STATUS(packet_status));
+}
+
+
+/***************************************************************************** */
+/* Change Current mode / status to RX */
 void cc1101_enter_rx_mode(void)
 {
 	cc1101_send_cmd(CC1101_CMD(state_idle));
@@ -132,36 +174,8 @@ static uint8_t cc1101_enter_tx_mode(void)
 	return 0;
 }
 
-/* Read global status byte */
-uint8_t cc1101_read_status(void)
 {
-	return cc1101_send_cmd(CC1101_CMD(no_op));
 }
-
-/* Read and return single register value */
-uint8_t cc1101_read_reg(uint8_t addr)
-{
-	uint8_t ret = 0;
-	cc1101_spi_transfer((addr | CC1101_READ_OFFSET), NULL, &ret, 1);
-	return ret;
-}
-/* Read nb registers from start_addr into buffer. Return the global status byte. */
-uint8_t cc1101_read_burst_reg(uint8_t start_addr, uint8_t* buffer, uint8_t nb)
-{
-	uint8_t addr = (start_addr | CC1101_READ_OFFSET | CC1101_BURST_MODE);
-	return cc1101_spi_transfer(addr, NULL, buffer, nb);
-}
-/* Write single register value. Return the global status byte */
-uint8_t cc1101_write_reg(uint8_t addr, uint8_t val)
-{
-	return cc1101_spi_transfer((addr | CC1101_WRITE_OFFSET), &val, NULL, 1);
-}
-uint8_t cc1101_write_burst_reg(uint8_t start_addr, uint8_t* buffer, uint8_t nb)
-{
-	uint8_t addr = (start_addr | CC1101_WRITE_OFFSET | CC1101_BURST_MODE);
-	return cc1101_spi_transfer(addr, buffer, NULL, nb);
-}
-
 
 
 /***************************************************************************** */
@@ -347,6 +361,17 @@ void cc1101_set_address(uint8_t address)
 	cc1101_write_reg(CC1101_REGS(device_addr), address);
 }
 
+/* Set current channel to use.
+ * The caller is responsible for checking that the channel spacing and channel bandwith are configures
+ * correctly to prevent overlaping channels, or to use only non-overlaping channel numbers.
+ * This function places the CC1101 chip in idle state.
+ */
+void cc1101_set_channel(uint8_t chan)
+{
+	cc1101_send_cmd(CC1101_CMD(state_idle));
+	cc1101_write_reg(CC1101_REGS(channel_number), chan);
+}
+
 /* Change a configuration byte.
  * This function places the CC1101 chip in idle state.
  */
@@ -466,6 +491,7 @@ void cc1101_config(void)
 /* Update CC1101 config
  * Arguments are the settings table which is a table of address and value pairs,
  *   and the table length, which must be even.
+ * Puts the CC1101 chip in idle state
  */
 void cc1101_update_config(uint8_t* settings, uint8_t len)
 {
@@ -473,6 +499,9 @@ void cc1101_update_config(uint8_t* settings, uint8_t len)
 	if (len & 0x01) {
 		return;
 	}
+	/* Chip must be in idle state when modifying any of the Frequency or channel registers.
+	 * Move to idle state for all cases, easier. */
+	cc1101_send_cmd(CC1101_CMD(state_idle));
 	for (i = 0; i < len; i += 2) {
 		cc1101_write_reg(settings[i], settings[i + 1]);
 	}

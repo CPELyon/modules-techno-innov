@@ -192,6 +192,8 @@ static uint8_t rf_specific_settings[] = {
 	CC1101_REGS(gdo_config[2]), 0x07, /* GDO_0 - Assert on CRC OK | Disable temp sensor */
 	CC1101_REGS(gdo_config[0]), 0x2E, /* GDO_2 - FIXME : do something usefull with it for tests */
 	CC1101_REGS(pkt_ctrl[0]), 0x0F, /* Accept all sync, CRC err auto flush, Append, Addr check and Bcast */
+	CC1101_REGS(radio_stm[1]), 0x3F, /* CCA mode "if RSSI below threshold", Stay in RX, Go to RX (page 81) */
+	CC1101_REGS(agc_ctrl[1]), 0x20, /* LNA 2 gain decr first, Carrier sense relative threshold set to 10dB increase in RSSI value */
 #if (RF_915MHz == 1)
 	/* FIXME : Add here a define protected list of settings for 915MHz configuration */
 #endif

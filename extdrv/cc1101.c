@@ -408,12 +408,12 @@ static uint8_t rf_init_settings[] = {
 	CC1101_REGS(gdo_config[2]), 0x07, /* GDO_0 - Assert on CRC OK | Disable temp sensor */
 
 	/* RX FIFO and TX FIFO thresholds - 0x03 - FIFOTHR */
-	CC1101_REGS(fifo_thresholds), 0x07, /* Bytes in TX FIFO:33 - Bytes in RX FIFO:32 */
+	CC1101_REGS(fifo_thresholds), 0x47, /* ADC_retention - Bytes in TX FIFO:33 - Bytes in RX FIFO:32 */
 	/* Packet length - 0x06 - PKTLEN */
 	CC1101_REGS(packet_length), 0x3F, /* Max packet length of 63 bytes */
 
 	/* Packet automation control - 0x07 .. 0x08 - PKTCTRL1..0 */
-	CC1101_REGS(pkt_ctrl[0]), 0x07, /* Accept all sync, No CRC auto flush, Append, Addr check and Bcast */
+	CC1101_REGS(pkt_ctrl[0]), 0x0F, /* Accept all sync, CRC err auto flush, Append, Addr check and Bcast */
 	CC1101_REGS(pkt_ctrl[1]), 0x05, /* No data Whitening, Use fifos, CRC check, Variable pkt length */
 
 	/* Device address - 0x09 - ADDR */

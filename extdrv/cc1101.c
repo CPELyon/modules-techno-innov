@@ -159,12 +159,11 @@ void cc1101_enter_rx_mode(void)
 static uint8_t cc1101_enter_tx_mode(void)
 {
 	uint8_t status = (cc1101_read_status() & CC1101_STATE_MASK);
-	if (status != CC1101_STATE_TX) {
-		if ((status != CC1101_STATE_FSTON) && (status != CC1101_STATE_RX)) {
+	if (status > CC1101_STATE_FSTON) {
 			cc1101_send_cmd(CC1101_CMD(state_idle));
-		}
-		cc1101_send_cmd(CC1101_CMD(state_tx));
 	}
+	cc1101_send_cmd(CC1101_CMD(state_tx));
+
 	/* Wait until chip is in Tx state */
 	do {
 		status = (cc1101_read_status() & CC1101_STATE_MASK);

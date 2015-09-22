@@ -43,22 +43,10 @@
  * into a centimal integer value of ten times the actual temperature.
  * The value returned is thus in tenth of celcius degrees.
  */
-int max31855_convert_to_centi_degrees(uint16_t raw)
+int32_t max31855_convert_to_centi_degrees(uint32_t raw)
 {
-	uint16_t val16 = ((raw >> 2) & 0x07FF);
-	int val = 0;
-
-	if (raw & 0x2000) {
-		val16 = (~(val16) & 0x07FF);;
-		val = -val16;
-		val--;
-	} else {
-		val = val16;
-	}
-	val = val * 100;
-
-	val += (25 * (raw & 0x03));
-	return val;
+	int32_t deg = ((int32_t) raw) >> 18;
+	return ((deg * 100) >> 2);
 }
 
 /* Temp Read
@@ -100,10 +88,9 @@ int max31855_sensor_read(const struct max31855_sensor_config* conf, uint16_t* ra
 	}
 
 	/* Convert result */
-	raw_temp = MAX31855_TH_TEMP_DATA(data);
-	temp = max31855_convert_to_centi_degrees(raw_temp);
+	temp = max31855_convert_to_centi_degrees(data);
 	if (raw != NULL) {
-		*raw = raw_temp;
+		*raw = data;
 	}
 	if (centi_degrees != NULL) {
 		*centi_degrees = temp;

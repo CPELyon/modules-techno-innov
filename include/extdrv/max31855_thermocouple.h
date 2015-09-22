@@ -47,7 +47,7 @@ struct max31855_sensor_config {
  * into a decimal integer value of ten times the actual temperature.
  * The value returned is thus in tenth of celcius degrees.
  */
-int max31855_convert_to_deci_degrees(uint16_t raw);
+int32_t max31855_convert_to_deci_degrees(uint32_t raw);
 
 /* Temp Read
  * Performs a non-blocking read of the temperature from the sensor.

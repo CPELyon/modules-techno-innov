@@ -107,4 +107,4 @@ int remove_systick_callback(void (*callback) (uint32_t));
 void usleep_short(uint32_t us);
 
 
-#endif /* CORE_SYSTEM_H */
+#endif /* CORE_SYSTICK_H */

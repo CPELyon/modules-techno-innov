@@ -9,8 +9,8 @@ ARCH = armv6-m
 CROSS_COMPILE ?= arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
 FOPTS = -fno-builtin -ffunction-sections -fdata-sections -ffreestanding
-CFLAGS = -Wall -O2 -mthumb -mcpu=$(CPU) $(FOPTS)
-LINKOPTS = -static -nostartfiles -nostdlib \
+CFLAGS = -Wall -g -O2 -mthumb -mcpu=$(CPU) $(FOPTS)
+LINKOPTS = -static -g -nostartfiles -nostdlib \
 		   -Wl,--gc-sections -Wl,--build-id=none \
 		   -Wl,-Map=$(TARGET_DIR)/lpc_map_$(LPC).map -Tlpc_link_$(LPC).ld
 

@@ -1,0 +1,42 @@
+Support for remote bitbang SWD access using openOCD
+
+Copyright 2015 Cyprien Laplace <cyprien@cypou.net>
+
+/* ****************************************************************************
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *************************************************************************** */
+
+
+This app provides an SWD bridge for remote bitbang SWD access using openocd.
+This allows remote debugging using gdb.
+
+Get openOCD with the SWD bitbang patch from this git repository:
+   http://gitweb.cypou.net/?p=openocd-code.git;a=shortlog;h=refs/heads/bitbang
+Compile using:
+  ./bootstrap
+  ./configure --enable-remote-bitbang
+
+Use with (change the /dev/ttyXXX and target/XXX according to your needs):
+ openocd -c "interface remote_bitbang; remote_bitbang_host /dev/ttyUSB0; transport select swd; gdb_port 3333; telnet_port 4444" -f target/lpc12xx.cfg
+
+
+Connection to the remote target :
+You must connect P0_23 and P0_24 from this board to swdio and swdclk on target board.
+Local         Remote
+  P0_23  --->   swdio
+  P0_24  --->   swdclk
+
+
+

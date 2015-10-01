@@ -63,6 +63,7 @@ const struct pio led_red = LPC_GPIO_0_29;
 #define LED_RED    (1 << led_red.pin)
 #define LED_GREEN  (1 << led_green.pin)
 
+/* These two MUST be on the same port */
 const struct pio swd_io  = LPC_GPIO_0_23;
 const struct pio swd_clk = LPC_GPIO_0_24;
 #define SWD_IO   (1 << swd_io.pin)

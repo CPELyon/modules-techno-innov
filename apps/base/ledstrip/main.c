@@ -63,6 +63,7 @@ const struct pio_config common_pins[] = {
 	{ LPC_ADC_AD0_PIO_0_30, LPC_IO_ANALOG },
 	{ LPC_ADC_AD1_PIO_0_31, LPC_IO_ANALOG },
 	{ LPC_ADC_AD2_PIO_1_0,  LPC_IO_ANALOG },
+	{ LPC_ADC_AD3_PIO_1_1,  LPC_IO_ANALOG },
 	/* GPIO */
 	{ LPC_GPIO_0_19, (LPC_IO_MODE_PULL_UP | LPC_IO_DIGITAL) },
 	ARRAY_LAST_PIO,
@@ -112,6 +113,7 @@ void fault_info(const char* name, uint32_t len)
 
 enum all_modes {
 	adc_colors = 0,
+	noise,
 	random_colors,
 	single_color_grade_red,
 	single_color_grade_green,
@@ -155,6 +157,50 @@ void mode_adc_colors(void)
 	}
 }
 
+/* The "noise" mode sets the color of the led strip according to the ambient sound level.
+ * It uses a Loudness sensor as input.
+ * When there's no sound, the leds are Off. They turn to green with low sound level, then yellow,
+ *   orange and finally red as the sound level increases.
+ */
+void mode_noise(void)
+{
+	int i = 0;
+	uint16_t loudness = 0;
+	uint16_t zoom = 0;
+	uint8_t red = 0, green = 0, blue = 0;
+	/* Get ADC value for noise */
+	adc_get_value(&zoom, LPC_ADC_NUM(0));
+	adc_get_value(&loudness, LPC_ADC_NUM(3));
+	/* Noise is usually in the 120 - 550 range, offset and zoom on this range */
+	if (loudness < 100) {
+		loudness = 0;
+	} else {
+		zoom = ((zoom & 0x3FF) >> 7) + 1;
+		loudness = ((loudness - 100) * zoom);
+	}
+
+	if (loudness < 150) {
+		blue = 150 - loudness;
+		green = loudness;
+	} else if (loudness <= 255) {
+		green = loudness;
+	} else if (loudness <= 511) {
+		green = 255;
+		red = loudness - 256;
+	} else if (loudness <= 767) {
+		green = 255 - (loudness - 512);
+		red = 255;
+	} else {
+		red = 255;
+	}
+	uprintf(0, "Loudness: %d - 0x%02x, r: %d, g:%d, b:%d, z:%d\n", loudness, loudness, red, green, blue, zoom);
+	for (i = 0; i < NB_LEDS; i++) {
+		ws2812_set_pixel(i, red, green, blue);
+	}
+	ws2812_send_frame(0);
+	msleep(500); /* FIXME : Set to 100 and remove uprintf */
+}
+
 void strip_control(uint8_t c)
 {
 }
@@ -170,7 +216,7 @@ int main(void)
 
 	/* ADC for potentiometer color settings */
 	adc_on();
-	adc_start_burst_conversion(LPC_ADC_CHANNEL(0) | LPC_ADC_CHANNEL(1) | LPC_ADC_CHANNEL(2));
+	adc_start_burst_conversion(LPC_ADC_CHANNEL(0) | LPC_ADC_CHANNEL(1) | LPC_ADC_CHANNEL(2) | LPC_ADC_CHANNEL(3));
 
 	/* Led strip configuration */
 	ws2812_config(&ws2812_data_out_pin);
@@ -179,6 +225,9 @@ int main(void)
 		switch (new_mode) {
 			case adc_colors:
 				mode_adc_colors();
+				break;
+			case noise:
+				mode_noise();
 				break;
 			default:
 				ws2812_stop();

@@ -56,6 +56,7 @@ enum lpc_timer_mode {
 /* Notes:
  * In counter or PWM mode, the config is done using config[0] for enabled channels and config[1] holds
  *   the channel number used to control PWM cycle.
+ *   Note that the manual recommends Channel 3 be used for PWM cycle length.
  * The field "reset_on_capture" must be set to LPC_COUNTER_CLEAR_ON_EVENT_EN ored with one
  *   of the LPC_COUNTER_CLEAR_ON_CHAN*_* to activate the clear timer on event functionality
  */

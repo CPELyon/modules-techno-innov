@@ -710,14 +710,14 @@ struct lpc_timer
 #define LPC_TIMER_INTERRUPT_ON_MATCH   0x01
 #define LPC_TIMER_RESET_ON_MATCH       0x02
 #define LPC_TIMER_STOP_ON_MATCH        0x04
-#define LPC_TIMER_MATCH_ERASE(x)       (0x07 << ((x) * 3))
-#define LPC_TIMER_MATCH_SHIFT(x)       ((x) * 3)
+#define LPC_TIMER_MATCH_ERASE(x)       (0x07 << (((x) & 0x03) * 3))
+#define LPC_TIMER_MATCH_SHIFT(x)       (((x) & 0x03) * 3)
 /* Capture internal configuration */
 #define LPC_TIMER_CAP_ON_RISING_EDGE   0x01
 #define LPC_TIMER_CAP_ON_FALLING_EDGE  0x02
 #define LPC_TIMER_INTERRUPT_ON_CAPTURE 0x04
-#define LPC_TIMER_CAPTURE_ERASE(x)     (0x07 << ((x) * 3))
-#define LPC_TIMER_CAPTURE_SHIFT(x)     ((x) * 3)
+#define LPC_TIMER_CAPTURE_ERASE(x)     (0x07 << (((x) & 0x03) * 3))
+#define LPC_TIMER_CAPTURE_SHIFT(x)     (((x) & 0x03) * 3)
 /* Match external configuration */
 #define LPC_TIMER_NOTHING_ON_MATCH     0x00
 #define LPC_TIMER_CLEAR_ON_MATCH       0x01
@@ -745,7 +745,7 @@ struct lpc_timer
 #define LPC_COUNTER_CLEAR_ON_CHAN3_RISE   0x06
 #define LPC_COUNTER_CLEAR_ON_CHAN3_FALL   0x07
 /* PWM */
-#define LPC_PWM_CHANNEL_ENABLE(x)    (0x01 << (x))
+#define LPC_PWM_CHANNEL_ENABLE(x)    (0x01 << ((x) & 0x03))
 
 
 

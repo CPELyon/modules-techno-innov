@@ -77,10 +77,24 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 int serial_flush(uint32_t uart_num);
 
 
+/****************************************************************************** */
+/*    Serial send byte - quick function with almost no tests.
+ * If the uart is not sending, the byte is placed directly in the data buffer and
+ * the call returns 0.
+ * Else, the call returns -EBUSY and nothing is sent.
+ */
+int serial_send_quickbyte(uint32_t uart_num, uint8_t data);
 
 
 /***************************************************************************** */
 /*   Public access to UART setup   */
+
+
+/* Change UART configuration (number of data, parity and stop bits).
+ * config is a mask of LPC_UART_xBIT (x = 5..8), LPC_UART_xSTOP (x = 1..2)
+ *   and one of LPC_UART_NO_PAR, LPC_UART_ODD_PAR or LPC_UART_EVEN_PAR.
+ */
+int uart_set_config(uint8_t uart_num, uint8_t config);
 
 /* Change uart mode to RS485
  * return -ENODEV when the device does not support RS485 mode.

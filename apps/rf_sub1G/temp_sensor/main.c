@@ -94,6 +94,9 @@ const struct pio status_led_green = LPC_GPIO_0_28;
 const struct pio status_led_red = LPC_GPIO_0_29;
 
 
+static struct dtplug_protocol_handle uart_handle;
+
+
 #define ADC_VBAT  LPC_ADC_NUM(0)
 #define ADC_EXT1  LPC_ADC_NUM(1)
 #define ADC_EXT2  LPC_ADC_NUM(2)
@@ -217,7 +220,7 @@ void handle_uart_commands(struct packet* command)
 					values[i] = (uint16_t)byte_swap_16(values[i]);
 				}
 				/* And send reply */
-				dtplug_protocol_send_reply(command, NO_ERROR, 4, (uint8_t*)values);
+				dtplug_protocol_send_reply(&uart_handle, command, NO_ERROR, 4, (uint8_t*)values);
 			}
 			break;
 		case PKT_TYPE_START_ADC_CONVERSION:
@@ -225,22 +228,22 @@ void handle_uart_commands(struct packet* command)
 				/* Start an ADC conversion on selected ADC channel */
 				adc_start_convertion_once(channel, 0);
 			} else {
-				dtplug_protocol_send_reply(command, ERROR_IN_DATA_VALUES, 0, NULL);
+				dtplug_protocol_send_reply(&uart_handle, command, ERROR_IN_DATA_VALUES, 0, NULL);
 			}
 			break;
 		case PKT_TYPE_GET_ADC_VALUE:
 			{
 				uint16_t value = 0;
 				adc_get_value(&value, channel);
-				dtplug_protocol_send_reply(command, NO_ERROR, 2, (uint8_t*)(&value));
+				dtplug_protocol_send_reply(&uart_handle, command, NO_ERROR, 2, (uint8_t*)(&value));
 			}
 			break;
 		default:
 			uprintf(0, "Unknown packet type : packet not handled\n");
-			dtplug_protocol_send_reply(command, ERROR_PKT_NOT_HANDLED, 0, NULL);
+			dtplug_protocol_send_reply(&uart_handle, command, ERROR_PKT_NOT_HANDLED, 0, NULL);
 			break;
 	}
-	dtplug_protocol_release_old_packet();
+	dtplug_protocol_release_old_packet(&uart_handle);
 }
 
 
@@ -251,7 +254,7 @@ int main(void) {
 	adc_on();
 	status_led_config(&status_led_green, &status_led_red);
 	timer_on(LPC_TIMER_32B1, 0, NULL);
-	dtplug_protocol_set_dtplug_comm_uart(0);
+	dtplug_protocol_set_dtplug_comm_uart(0, &uart_handle);
 
 	/* Temperature sensor */
 	temp_config();
@@ -265,7 +268,7 @@ int main(void) {
 		status_led(red_off);
 
 		/* UART */
-		pkt = dtplug_protocol_get_next_packet_ok();
+		pkt = dtplug_protocol_get_next_packet_ok(&uart_handle);
 		if (pkt != NULL) {
 			handle_uart_commands(pkt);
 			status_led(green_off);

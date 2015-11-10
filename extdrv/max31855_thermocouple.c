@@ -29,14 +29,10 @@
 #include "drivers/ssp.h"
 #include "extdrv/max31855_thermocouple.h"
 
-/* Debug */
-#include "lib/stdio.h"
-
 
 /* Support for thermocouple temperature sensors using Maxim's MAX31855 themocouple
  *   to digital converter.
  */
-
 
 
 /* Convert raw temperature data (expressed as ....)
@@ -63,7 +59,6 @@ int max31855_sensor_read(const struct max31855_sensor_config* conf, uint16_t* ra
 {
 	int temp = 0;
 	uint32_t data = 0;
-	uint16_t raw_temp = 0;
 
 	/* Get hold of the SPI bus */
 	if (spi_get_mutex(conf->ssp_bus_num) != 1) {
@@ -95,9 +90,6 @@ int max31855_sensor_read(const struct max31855_sensor_config* conf, uint16_t* ra
 	if (centi_degrees != NULL) {
 		*centi_degrees = temp;
 	}
-
-	/* Debug */
-	uprintf(0, "TC: data(0x%08x) - raw(0x%04x) - deg: %d,%d\r\n", data, raw_temp, (temp / 100), (temp % 100));
 
 	return 0;
 }

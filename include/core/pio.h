@@ -150,7 +150,7 @@ void set_pins(const struct pio_config* pins);
 #define LPC_UART0_RI_PIO_0_6  {0,  6, 2}
 #define LPC_UART0_RI_PIO_2_5  {2,  5, 4}
 #define LPC_UART0_RTS_PIO_0_0 {0,  0, 2}
-#define LPC_UART0_RTS_PIO_2_0 {2,  0, 5}  /* FIXME: Doc does not list func 1 ... maybe its func 4 */
+#define LPC_UART0_RTS_PIO_2_0 {2,  0, 5}  /* FIXME: Doc does not list func 1 ... maybe it is func 4 */
 
 /*  UART1 Rx/Tx Pins  */
 #define LPC_UART1_RX_PIO_0_8  {0,  8, 2}

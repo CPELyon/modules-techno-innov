@@ -30,26 +30,47 @@
 /******************************************************************************/
 /* DTPlug (or DomoTab, PC, ...) Communication */
 
+#define DTPP_MAX_ERROR_STORED 8
+
+struct dtplug_protocol_handle {
+	/* Store two packets, one being received, one being used */
+	struct packet packets[2];
+	struct packet* rx_packet;
+	volatile struct packet* packet_ok;
+
+	uint32_t packet_count;
+
+	uint32_t errors_count;
+	uint8_t error_storage[(DTPP_MAX_ERROR_STORED * 2)];
+	uint8_t num_errors_stored;
+
+	/* Set to 1 when the packet is handled to tell the decoder we can handle a new one.
+	 * MUST be initialised to 1 or the handle will think we have a valid packet to handle upon
+	 * system startup */
+	uint8_t done_with_old_packet;
+	uint8_t uart;
+};
+
 
 /* Setup the UART used for communication with the host / master (the module is slave) */
-void dtplug_protocol_set_dtplug_comm_uart(uint8_t uart_num);
+void dtplug_protocol_set_dtplug_comm_uart(uint8_t uart_num, struct dtplug_protocol_handle* handle);
 
 
 /* Tell the receive routine that the "packet_ok" packet is no more in use and that
  *  we are ready to handle a new one */
-void dtplug_protocol_release_old_packet(void);
+void dtplug_protocol_release_old_packet(struct dtplug_protocol_handle* handle);
 
 
 /* Get a pointer to the new packet received.
  * Return NULL when no new packet were received since last packet was released.
  */
-struct packet* dtplug_protocol_get_next_packet_ok(void);
+struct packet* dtplug_protocol_get_next_packet_ok(struct dtplug_protocol_handle* handle);
 
 
 /* When a packet has not been handled we must not count it as acknowledged
  * On the next ping request the master will then see wich packet caused the problem.
  */
-void dtplug_protocol_add_error_to_list(struct header* info, uint8_t error_code);
+void dtplug_protocol_add_error_to_list(struct dtplug_protocol_handle* handle, struct header* info, uint8_t error_code);
 
 
 /* This function handle sending replies when requested by the host.
@@ -58,7 +79,8 @@ void dtplug_protocol_add_error_to_list(struct header* info, uint8_t error_code);
  * When a reply is effectively sent, the PACKET_NEEDS_REPLY bit is removed from the sequence filed
  *   packet handling code will know if there is still a PING request to be answered.
  */
-void dtplug_protocol_send_reply(struct packet* question, uint8_t error, int size, uint8_t* data);
+void dtplug_protocol_send_reply(struct dtplug_protocol_handle* handle,
+									struct packet* question, uint8_t error, int size, uint8_t* data);
 
 
 

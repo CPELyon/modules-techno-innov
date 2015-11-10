@@ -120,19 +120,39 @@ enum packet_types {
 	PKT_TYPE_GET_ERRORS, /* Ask the slave to return any active error code in the data */
 	PKT_TYPE_GET_NUM_ERRORS, /* Get the number of errors since system start */
 	PKT_TYPE_SET_USER_INFO, /* Change the current board user information (and reset board) */
+
+	/* Config */
+	PKT_TYPE_ADD_GPIO, /* Configure one of the GPIO or ADC as GPIO */
+	PKT_TYPE_ADD_CS,   /* Configure one of the GPIO or ADC as SPI Chip select */
+	/* ADC config specifies :
+	 *   the channel number,
+	 *   periodicity of sample (from on request up to continuous),
+	 *   and number of values for the continuous average computation
+	 */
+	PKT_TYPE_ADD_ADC,  /* Configure one of the ADC as ADC */
+	/* PWM config specifies :
+	 *   the channel number,
+	 *   the PWM period,
+	 *   the channel duty cycle,
+	 */
+	PKT_TYPE_ADD_PWM,  /* Configure one of the PWM capable GPIO as PWM */
+
 	/* Continued data. Use for protocols with data size that goes beyond PACKET_DATA_SIZE */
 	PKT_TYPE_CONTINUED_DATA,
+
 	/* Temperature packets */
 	PKT_TYPE_START_TEMP_CONVERSION, /* Requiered to update the temperature value */
 	PKT_TYPE_GET_TEMPERATURE, /* Get temprature values */
+
 	/* ADC, PWM and GPIO packets */
 	PKT_TYPE_START_ADC_CONVERSION,
 	PKT_TYPE_GET_ADC_VALUE,
 	PKT_TYPE_SET_GPIO,
 	PKT_TYPE_GET_GPIO,
 	PKT_TYPE_SET_PWM_CHAN,
-	/* RF */
-	SEND_ON_RF,
+
+	/* Communication */
+	SEND_ON_BUS,
 };
 
 /* Error / status codes */

@@ -352,7 +352,8 @@ void dtplug_protocol_send_reply(struct dtplug_protocol_handle* handle,
 /* User information block re-programming
  * Make sure that data is aligned on 4 bytes boundary, and that size is a multiple of 4.
  */
-static int user_flash_update(struct dtplug_protocol_handle* handle, struct packet* question, void* data, int size)
+static int dtplug_protocol_user_flash_update(struct dtplug_protocol_handle* handle,
+											 struct packet* question, void* data, int size)
 {
 	int ret = 0;
 	/* Erase the user flash information pages */
@@ -375,7 +376,7 @@ static int user_flash_update(struct dtplug_protocol_handle* handle, struct packe
  * Return 1 when packet has been handled, or 0 if the type is not a common one and some
  *   board or application specific code should take care of it.
  */
-static int common_handles(struct dtplug_protocol_handle* handle, struct packet* question)
+static int dtplug_protocol_common_handles(struct dtplug_protocol_handle* handle, struct packet* question)
 {
 	uint32_t tmp_val_swap = 0;
 	/* These we can always handle */
@@ -434,7 +435,7 @@ static int common_handles(struct dtplug_protocol_handle* handle, struct packet* 
 				/* Update information in the copy */
 				memcpy(&(tmp_data[offset]), &(question->data[2]), size);
 				/* Update the user flash information pages */
-				if (user_flash_update(handle, question, tmp_data, sizeof(struct user_info)) != 0) {
+				if (dtplug_protocol_user_flash_update(handle, question, tmp_data, sizeof(struct user_info)) != 0) {
 					/* Reply got sent, if return value is not 0 */
 					break;
 				}
@@ -477,7 +478,7 @@ struct packet* dtplug_protocol_get_next_packet_ok(struct dtplug_protocol_handle*
 {
 	if (handle->packet_ok != NULL) {
 		struct packet* pkt_tmp = (struct packet*)handle->packet_ok;
-		if (common_handles(handle, pkt_tmp) == 0) {
+		if (dtplug_protocol_common_handles(handle, pkt_tmp) == 0) {
 			return pkt_tmp;
 		}
 	}

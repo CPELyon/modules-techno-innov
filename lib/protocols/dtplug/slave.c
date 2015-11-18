@@ -1,5 +1,5 @@
 /****************************************************************************
- *   lib/dtplug_protocol.c
+ *   lib/protocol/dtplug/slave.c
  *
  *
  * Copyright 2013-2015 Nathael Pajani <nathael.pajani@ed3l.fr>
@@ -29,9 +29,9 @@
 #include "drivers/serial.h"
 #include "extdrv/status_led.h"
 #include "lib/time.h"
-#include "lib/dtplug_protocol.h"
 
-#include "lib/dtplug_protocol_slave.h"
+#include "lib/protocols/dtplug/defs.h"
+#include "lib/protocols/dtplug/slave.h"
 
 /******************************************************************************/
 /* DTPlug (or DomoTab, PC, ...) Communication */

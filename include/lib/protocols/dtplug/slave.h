@@ -1,5 +1,5 @@
 /*
- * lib/dtplug_protocol_slave.h
+ * lib/protocols/dtplug/slave.h
  *
  *
  * Copyright 2013-2014 Nathael Pajani <nathael.pajani@ed3l.fr>
@@ -19,12 +19,12 @@
  *
  */
 
-#ifndef LIB_DTPLUG_PROTOCOL_SLAVE_H
-#define LIB_DTPLUG_PROTOCOL_SLAVE_H
+#ifndef LIB_PROTOCOLS_DTPLUG_SLAVE_H
+#define LIB_PROTOCOLS_DTPLUG_SLAVE_H
 
 
 #include <stdint.h>
-#include "lib/dtplug_protocol.h"
+#include "lib/protocols/dtplug/defs.h"
 
 
 /******************************************************************************/
@@ -84,4 +84,4 @@ void dtplug_protocol_send_reply(struct dtplug_protocol_handle* handle,
 
 
 
-#endif /* LIB_DTPLUG_PROTOCOL_SLAVE_H */
+#endif /* LIB_PROTOCOLS_DTPLUG_SLAVE_H */

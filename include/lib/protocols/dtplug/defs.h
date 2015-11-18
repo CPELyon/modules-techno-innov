@@ -1,8 +1,8 @@
 /*
- * lib/dtplug_protocol.h
+ * lib/protocols/dtplug/defs.h
  *
  *
- * Copyright 2013-2014 Nathael Pajani <nathael.pajani@ed3l.fr>
+ * Copyright 2013-2015 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LIB_DTPLUG_PROTOCOL_H
-#define LIB_DTPLUG_PROTOCOL_H
+#ifndef LIB_PROTOCOLS_DTPLUG_DEFS_H
+#define LIB_PROTOCOLS_DTPLUG_DEFS_H
 
 
 #include <stdint.h>
@@ -203,9 +203,9 @@ enum reply_statuses {
  * When a slave has an internal error, it has two options.
  * Either it's the first one, and the master requested a reply. The slave can then send the error
  *   code in the reply.
- * Or it's not the first one or the master did not ask for an reply or ACK. Then the slave stores the
+ * Or it's not the first one or the master did not ask for a reply or ACK. Then the slave stores the
  *   error code for future transmission.
- *   When the master asked for a reply, the slave then uses "GOT_MANY_ERRORS" as error code.
+ *   If the master asked for a reply and the slave has many errors, the slave send "GOT_MANY_ERRORS" as error code.
  * When the master receives the "GOT_MANY_ERRORS" error code, it must send a "PKT_TYPE_GET_ERRORS" request.
  * The slave then replies with a list of all errors in the packet data with a header which does not indicate an
  *   error packet (this is the normal reply to a PKT_TYPE_GET_ERRORS request.
@@ -215,4 +215,4 @@ enum reply_statuses {
 
 
 
-#endif /* LIB_DTPLUG_PROTOCOL_H */
+#endif /* LIB_PROTOCOLS_DTPLUG_DEFS_H */

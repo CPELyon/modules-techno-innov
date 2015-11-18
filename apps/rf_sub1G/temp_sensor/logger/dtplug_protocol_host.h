@@ -28,7 +28,7 @@
 
 
 #include <stdint.h>
-#include "dtplug_protocol.h"
+#include "dtplug_protocol_defs.h"
 
 
 /******************************************************************************/

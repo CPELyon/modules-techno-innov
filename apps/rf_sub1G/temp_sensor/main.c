@@ -38,7 +38,7 @@
 #include "extdrv/status_led.h"
 #include "extdrv/tmp101_temp_sensor.h"
 #include "lib/stdio.h"
-#include "lib/dtplug_protocol_slave.h"
+#include "lib/protocols/dtplug/slave.h"
 
 
 #define MODULE_VERSION	0x02

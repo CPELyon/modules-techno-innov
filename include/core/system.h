@@ -56,9 +56,6 @@
  * interfaces */
 void system_set_default_power_state(void);
 
-/* Configure all default pin functions for dtplug, even if modules or functions
- * are not used */
-void system_set_default_pins(void);
 
 /* Stop the watchdog */
 void stop_watchdog(void);

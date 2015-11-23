@@ -78,25 +78,6 @@ static void flash_accelerator_config(uint32_t freq_sel)
 	}
 }
 
-/* Stop the watchdog */
-void stop_watchdog(void)
-{
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
-    struct lpc_watchdog* wdt = LPC_WDT;
-
-	/* Power wadchdog block before changing it's configuration */
-	if (! (sys_ctrl->sys_AHB_clk_ctrl & LPC_SYS_ABH_CLK_CTRL_Watchdog)) {
-		sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_Watchdog;
-	}
-	/* Stop watchdog */
-    wdt->mode = 0;
-    wdt->feed_seqence = 0xAA;
-    wdt->feed_seqence = 0x55;
-	/* And power it down */
-	sys_ctrl->sys_AHB_clk_ctrl &= ~(LPC_SYS_ABH_CLK_CTRL_Watchdog);
-	sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_WDT_OSC;
-}
-
 /* Configure the brown-out detection */
 void system_brown_out_detection_config(uint32_t level)
 {

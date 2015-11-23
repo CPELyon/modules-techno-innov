@@ -29,6 +29,7 @@
 
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
+#include "core/watchdog.h"
 
 
 /* Error Values, from glibc errno.h and errno-base.h */
@@ -55,10 +56,6 @@
 /* Change reset power state to our default, removing power from unused
  * interfaces */
 void system_set_default_power_state(void);
-
-
-/* Stop the watchdog */
-void stop_watchdog(void);
 
 /***************************************************************************** */
 /*                       Power                                                 */

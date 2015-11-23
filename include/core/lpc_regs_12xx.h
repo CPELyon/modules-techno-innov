@@ -212,6 +212,8 @@ struct lpc_sys_control
 #define LPC_CLKOUT_SRC_WATCHDOG_OSC  0x02
 #define LPC_CLKOUT_SRC_MAIN_CLK      0x03
 
+#define LPC_WDT_DIVSEL(x)  (((x) / 2) - 1)
+#define LPC_WDT_FREQSEL_600KHz  (0x01 << 5)
 
 /***************************************************************************** */
 /*                  Flash Control                                              */
@@ -772,6 +774,27 @@ struct lpc_watchdog
 	volatile uint32_t window_compare;      /* 0x018 : Watchdog Window compare value. */
 };
 #define LPC_WDT         ((struct lpc_watchdog *) LPC_WDT_BASE)
+
+#define LPC_WDT_TIMER_MAX  0xFFFFFF
+
+/* Mode register */
+#define LPC_WDT_EN                  (0x01 << 0)
+#define LPC_WDT_RESET_ON_TIMEOUT    (0x01 << 1)
+#define LPC_WDT_TIMEOUT_FLAG        (0x01 << 2)
+#define LPC_WDT_INTR_FLAG           (0x01 << 3)
+#define LPC_WDT_TIMER_VAL_PROTECT   (0x01 << 4) /* WDPROTECT */
+#define LPC_WDT_CLK_POWER_LOCK      (0x01 << 5) /* WDLOCKCLK */
+#define LPC_WDT_POWER_DOWN_DISABLE  (0x01 << 6) /* WDLOCKDP */
+#define LPC_WDT_EN_LOCK             (0x01 << 7) /* WDLOCKDP */
+
+/* Clk source */
+#define LPC_WDT_CLK_IRC       (0x00 <<  0)
+#define LPC_WDT_CLK_WDOSC     (0x01 <<  0)
+#define LPC_WDT_CLK_SRC_LOCK  (0x01 << 31)
+
+/* Warning Interupt */
+#define LPC_WDT_WARNINT_CMPVAL(x)  ((x) & 0x3FF)
+#define LPC_WDT_WARNINT_MAXVAL     0x3FF
 
 
 /***************************************************************************** */

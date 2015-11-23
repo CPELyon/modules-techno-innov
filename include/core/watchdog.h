@@ -45,9 +45,12 @@ struct wdt_config {
 	int clk_sel;
 	int intr_mode_only; /* If set to 1, a watchdog timeout will trigger an interrupt instead of a reset */
 	uint32_t locks; /* Bitfield from WDT_*_LOCK defined in watchdog.h */
-	uint32_t nb_clk;  /* Watchdog timer reload value : 0x3FF to 0x03FFFFFF */
-	uint32_t nb_clk_win; /* Watchdog window value : 0x100 to 0x00FFFFFF */
-	uint16_t nb_clk_warn; /* 0x00 to 0x3FF */
+	/* Number of clk_src clocks before the watchdog timer times out. Will be divided by 4 to give
+	 *   the watchdog reload value */
+	uint32_t nb_clk;  /* 0x3FF to 0x03FFFFFF */
+	/* The next two values are relative to the timer value, not the number of clk_src clocks. */
+	uint32_t wdt_window; /* Watchdog window value : 0x100 to 0x00FFFFFF */
+	uint16_t wdt_warn; /* 0x00 to 0x3FF */
 };
 
 /***************************************************************************** */

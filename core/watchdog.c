@@ -161,17 +161,17 @@ void watchdog_config(const struct wdt_config* wd_conf)
 		wdt->clk_src_sel = LPC_WDT_CLK_WDOSC;
 	}
 	/* Use the windows functionnality ? */
-	if (wd_conf->nb_clk_win > 0x100) {
-		wdt->window_compare = (wd_conf->nb_clk_win & LPC_WDT_TIMER_MAX);
+	if (wd_conf->wdt_window > 0x100) {
+		wdt->window_compare = (wd_conf->wdt_window & LPC_WDT_TIMER_MAX);
 	} else {
 		wdt->window_compare = LPC_WDT_TIMER_MAX;
 	}
 	/* Warning interrupt ? */
-	if (wd_conf->nb_clk_warn != 0) {
-		if (wd_conf->nb_clk_warn > LPC_WDT_WARNINT_MAXVAL) {
+	if (wd_conf->wdt_warn != 0) {
+		if (wd_conf->wdt_warn > LPC_WDT_WARNINT_MAXVAL) {
 			wdt->warning_int_compare = LPC_WDT_WARNINT_MAXVAL;
 		} else {
-			wdt->warning_int_compare = wd_conf->nb_clk_warn;
+			wdt->warning_int_compare = wd_conf->wdt_warn;
 		}
 	}
 	/* Protect any of the watchdog functions now ? */

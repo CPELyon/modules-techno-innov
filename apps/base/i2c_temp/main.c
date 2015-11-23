@@ -114,7 +114,7 @@ void temp_display(uint8_t addr, int uart_num)
 void system_init()
 {
 	/* Stop the watchdog */
-	stop_watchdog(); /* Do it right now, before it gets a chance to break in */
+	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
 
 	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
 	 *  it back on if called after system_init() */

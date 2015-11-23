@@ -87,7 +87,7 @@ const struct pio status_led_red = LPC_GPIO_0_29;
 void system_init()
 {
 	/* Stop the watchdog */
-	stop_watchdog(); /* Do it right now, before it gets a chance to break in */
+	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
 
 	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
 	 *  it back on if called after system_init() */

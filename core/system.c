@@ -43,11 +43,13 @@
 /***************************************************************************** */
 struct lpc_desc_private {
 	uint32_t main_clock;
-	uint32_t brown_out_detection_enabled;
+	uint8_t brown_out_detection_enabled;
+	uint8_t need_IRC;
 };
 static struct lpc_desc_private lpc_private = {
 	.main_clock = LPC_IRC_OSC_CLK,
 	.brown_out_detection_enabled = 0,
+	.need_IRC = 1,
 };
 
 /***************************************************************************** */
@@ -138,7 +140,7 @@ void enter_deep_sleep(void)
 	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
 
 	/* Ask for the same clock status when waking up */
-	sys_ctrl->powerdown_awake_cfg = sys_ctrl->powerdown_run_cfg;
+	sys_ctrl->powerdown_wake_cfg = sys_ctrl->powerdown_run_cfg;
 	/* Set deep_sleep config */
 	if (lpc_private.brown_out_detection_enabled) {
 		sys_ctrl->powerdown_sleep_cfg = LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_ON;
@@ -187,7 +189,8 @@ void clock_config(uint32_t freq_sel)
 	sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC);
 	sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
 	/* Use IRC clock for main clock */
-	sys_ctrl->main_clk_sel = 0;
+	sys_ctrl->main_clk_sel = LPC_MAIN_CLK_SRC_IRC_OSC;
+	lpc_private.need_IRC = 1;
 	/* Switch the main clock source */
 	sys_ctrl->main_clk_upd_en = 0;
 	sys_ctrl->main_clk_upd_en = 1;
@@ -223,7 +226,7 @@ void clock_config(uint32_t freq_sel)
 		/* Setup PLL dividers */
 		sys_ctrl->sys_pll_ctrl = (((M - 1) & 0x1F) | (N << 5));
 		/* Set sys_pll_clk to internal RC */
-		sys_ctrl->sys_pll_clk_sel = 0;
+		sys_ctrl->sys_pll_clk_sel = LPC_PLL_CLK_SRC_IRC_OSC;
 		sys_ctrl->sys_pll_clk_upd_en = 0;  /* SYSPLLCLKUEN must go from LOW to HIGH */
 		sys_ctrl->sys_pll_clk_upd_en = 1;
 		/* Power-up PLL */
@@ -231,7 +234,7 @@ void clock_config(uint32_t freq_sel)
 		/* Wait Until PLL Locked */
 		while (!(sys_ctrl->sys_pll_status & 0x01));
 		/* Use PLL as main clock */
-		sys_ctrl->main_clk_sel = 0x03;
+		sys_ctrl->main_clk_sel = LPC_MAIN_CLK_SRC_PLL_OUT;
 		/* Switch the main clock source */
 		sys_ctrl->main_clk_upd_en = 0;
 		sys_ctrl->main_clk_upd_en = 1;

@@ -142,7 +142,7 @@ struct lpc_sys_control
 	uint32_t reserved_11[4];
 
 	volatile uint32_t powerdown_sleep_cfg;  /* 0x230 : Power-down states in Deep-sleep mode (R/W) */
-	volatile uint32_t powerdown_awake_cfg;  /* 0x234 : Power-down states after wake-up (R/W) */
+	volatile uint32_t powerdown_wake_cfg;  /* 0x234 : Power-down states after wake-up (R/W) */
 	volatile uint32_t powerdown_run_cfg;        /* 0x238 : Power-down configuration Register (R/W) */
 	uint32_t reserved_12[110];
 	volatile const uint32_t device_id;  /* 0x3F4 : Device ID (R/ ) */
@@ -198,6 +198,14 @@ struct lpc_sys_control
 
 #define LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_ON  0x0000FFF7
 #define LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_OFF 0x0000FFFF
+
+#define LPC_MAIN_CLK_SRC_IRC_OSC       0x00
+#define LPC_MAIN_CLK_SRC_PLL_IN        0x01
+#define LPC_MAIN_CLK_SRC_WATCHDOG_OSC  0x02
+#define LPC_MAIN_CLK_SRC_PLL_OUT       0x03
+
+#define LPC_PLL_CLK_SRC_IRC_OSC        0x00
+#define LPC_PLL_CLK_SRC_EXT_OSC        0x01
 
 #define LPC_CLKOUT_SRC_IRC_OSC       0x00
 #define LPC_CLKOUT_SRC_XTAL_OSC      0x01

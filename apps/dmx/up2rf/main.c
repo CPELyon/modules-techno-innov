@@ -26,7 +26,7 @@
  *   https://en.wikipedia.org/wiki/DMX512
  *
  * DMX uses an RS485 line with a few glitches (the break and start pulse).
- * The DMW module uses an ADM2482 isolated RS485 bridge from analog devices.
+ * The DMX module uses an ADM2482 isolated RS485 bridge from analog devices.
  */
 
 #include <stdint.h>
@@ -45,7 +45,7 @@
 #include "extdrv/max31855_thermocouple.h"
 
 
-#define MODULE_VERSION    0x04
+#define MODULE_VERSION    0x02
 #define MODULE_NAME "DMX Module"
 
 

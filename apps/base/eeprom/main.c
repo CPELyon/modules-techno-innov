@@ -37,13 +37,13 @@
 
 
 #ifndef MODULE_SERIAL_NUM
-#define MODULE_SERIAL_NUM 10
+#define MODULE_SERIAL_NUM 42
 #endif
 #define MODULE_VERSION    0x04
 #define MODULE_NAME "GPIO Demo Module"
 
 
-#define EEPROM_WRITE
+#define EEPROM_WRITE 1
 #undef EEPROM_WRITE
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
@@ -88,7 +88,7 @@ const struct pio i2c_eeprom_cs = LPC_GPIO_0_15;
 #define UEXT_MOD_HAS_SPI  (1 << 2)
 
 struct module_desc {
-	uint16_t serial_number;
+	uint16_t uart_number;
 	uint8_t version;
 	uint8_t header_size;
 	uint8_t capabilities; /* Bit mask of UEXT_MOD_HAS_* */
@@ -128,7 +128,7 @@ void mod_gpio_demo_eeprom_cs_release(void)
 /* Module description support */
 
 #define DUMP_BUFF_SIZE 80
-void module_desc_dump(uint8_t serial_num)
+void module_desc_dump(uint8_t uart_num)
 {
 	char buff[DUMP_BUFF_SIZE];
 	int len = 0, ret = 0;
@@ -139,27 +139,28 @@ void module_desc_dump(uint8_t serial_num)
 	ret = eeprom_read(EEPROM_ADDR, 0, (char*)&desc, sizeof(struct module_desc));
 	if (ret != sizeof(struct module_desc)) {
 		mod_gpio_demo_eeprom_cs_release();
-		serial_write(serial_num, "EEPROM read error\r\n", 19);
+		serial_write(uart_num, "EEPROM read error\n", 19);
 		return;
 	}
-	/* Send the content of the header */
-	serial_write(serial_num, "Module :\r\n", 10);
-	uprintf(1, "serial: %d, ", desc.serial_number);
-	uprintf(1, "ver: %d\r\n", desc.version);
-	uprintf(1, "cap: 0x%04x\r\n", desc.capabilities);
 	/* Get and send the module name */
 	if (desc.name_size >= DUMP_BUFF_SIZE) {
-		desc.name_size = DUMP_BUFF_SIZE - len - 3;
+		desc.name_size = DUMP_BUFF_SIZE - 1;
 	}
-	eeprom_read(EEPROM_ADDR, desc.name_offset, (buff + len), desc.name_size);
+	len = eeprom_read(EEPROM_ADDR, desc.name_offset, buff, desc.name_size);
+	buff[len] = '\0';
+
+	/* Send the content of the header and the module name */
+	uprintf(uart_num, "Module : %s\n", buff);
+	uprintf(uart_num, "serial number: %d, version: %d, capabilities: 0x%04x\n",
+						desc.uart_number, desc.version, desc.capabilities);
 	mod_gpio_demo_eeprom_cs_release();
 }
 
-int module_desc_set(char* name, uint8_t module_version, uint16_t serial_num)
+int module_desc_set(char* name, uint8_t module_version, uint16_t serial_num, uint8_t uart_num)
 {
 	int ret = 0;
 	struct module_desc desc = {
-		.serial_number = serial_num,
+		.uart_number = serial_num,
 		.version = module_version,
 		.capabilities = (UEXT_MOD_HAS_UART | UEXT_MOD_HAS_I2C | UEXT_MOD_HAS_SPI),
 		.name_offset = sizeof(struct module_desc),
@@ -172,10 +173,12 @@ int module_desc_set(char* name, uint8_t module_version, uint16_t serial_num)
 	ret = eeprom_write(EEPROM_ADDR, 0, (char*)&desc, sizeof(struct module_desc));
 	if (ret != sizeof(struct module_desc)) {
 		mod_gpio_demo_eeprom_cs_release();
+		uprintf(uart_num, "EEPROM Write error, check eeprom write protection.\n");
 		return -1;
 	}
 	ret += eeprom_write(EEPROM_ADDR, ret, name, desc.name_size);
 	mod_gpio_demo_eeprom_cs_release();
+	uprintf(uart_num, "EEPROM Write OK.\n");
 	return ret;
 }
 
@@ -223,7 +226,7 @@ int main(void) {
 
 	/* Set or read Module identification header in EEPROM */
 #ifdef EEPROM_WRITE
-	module_desc_set(MODULE_NAME, MODULE_VERSION, MODULE_SERIAL_NUM);
+	module_desc_set(MODULE_NAME, MODULE_VERSION, MODULE_SERIAL_NUM, 0);
 #else
 	module_desc_dump(0);
 #endif

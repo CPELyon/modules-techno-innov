@@ -319,7 +319,7 @@ static uint32_t uart_setup(uint32_t uart_num)
 	/* Set up UART mode */
 	uart->line_ctrl = uarts[uart_num].config;
 	/* Clear all fifo, reset and enable them */
-	/* Note : fifo trigger level is one bit */
+	/* Note : fifo trigger level is one byte */
 	uart->ctrl.fifo_ctrl = (LPC_UART_FIFO_EN | LPC_UART_TX_CLR | LPC_UART_RX_CLR);
 	/* Clear the Line Status Register, return it to prevent compiler from removing the read */
 	status = uart->line_status;
@@ -440,9 +440,6 @@ int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(uint8_t))
 	uarts[uart_num].rx_callback = rx_callback;
 
 	NVIC_DisableIRQ( uart->irq );
-	/* Setup pins, must be done before clock setup and with uart powered off. */
-	uart_clk_off(uart_num);
-	subsystem_power(uart->power_offset, 0);
 	/* Turn On power */
 	subsystem_power(uart->power_offset, 1);
 	/* Setup clock acording to baudrate */

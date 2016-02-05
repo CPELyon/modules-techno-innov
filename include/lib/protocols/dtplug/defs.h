@@ -53,7 +53,7 @@
  *      This bit cannot be used for error packets.
  *      A packet with "quick-data" cannot have additional data.
  *    When bit 6 is not set, and the packet is not an error packet, the union holds a
- *      'data_information' structure whith the packet data 'size' (if any) and 'data_checksum'
+ *      'data_information' structure with the packet data 'size' (if any) and 'data_checksum'
  *      for the packet data part.
  *
  * Data size and big (continued) data packets
@@ -94,7 +94,9 @@ struct header {
 #define PACKET_NEEDS_REPLY (0x01 << 7) /* Host to slave */
 #define PACKET_IS_ERROR    (0x01 << 7) /* Slave to host */
 #define QUICK_DATA_PACKET  (0x01 << 6)
-#define SEQUENCE_MASK  (0x3F)
+#define QUICK_DATA_PACKET_ONE_BYTE  (0x00 << 5)
+#define QUICK_DATA_PACKET_TWO_BYTES (0x01 << 5)
+#define SEQUENCE_MASK  (0x1F)
 /* Data size decoding */
 #define BIG_DATA_PKT       (0x01 << 7) /* The total data size is above PACKET_DATA_SIZE, the packet will be continued. */
 #define PKT_SIZE_MASK  (0x7F)

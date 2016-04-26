@@ -38,17 +38,23 @@
 void watchdog_feed(void)
 {
 	struct lpc_watchdog* wdt = LPC_WDT;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_Watchdog, 1);
 	lpc_disable_irq();
 	wdt->feed_seqence = 0xAA;
 	wdt->feed_seqence = 0x55;
 	lpc_enable_irq();
 }
 
+static void (*wdt_callback)(void) = NULL;
+
 void WDT_Handler(void)
 {
-	/* Nothing to do, we are only waking up the vehicule by generating an interrupt */
 	struct lpc_watchdog* wdt = LPC_WDT;
 	wdt->mode |= LPC_WDT_INTR_FLAG;
+	/* Call user callback if the user registered one */
+	if (wdt_callback != NULL) {
+		wdt_callback();
+	}
 }
 
 /* Lock the watchdog clock source. Once the clock is locked, the configuration is
@@ -143,14 +149,16 @@ void watchdog_config(const struct wdt_config* wd_conf)
 	NVIC_DisableIRQ(WDT_IRQ);
 	/* Power wadchdog block before changing it's configuration */
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_Watchdog, 1);
-	/* Configure watchdog timeout for normal operation */
-	wdt->timer_const = ((wd_conf->nb_clk >> 2) & LPC_WDT_TIMER_MAX);
 	/* If intr_mode_only is set, a watchdog timeout will trigger an interrupt instead of a reset */
 	if (wd_conf->intr_mode_only == 1) {
 		wdt->mode = LPC_WDT_EN;
 	} else {
 		wdt->mode = LPC_WDT_EN | LPC_WDT_RESET_ON_TIMEOUT;
 	}
+	/* Register the callback for the interrupt */
+	wdt_callback = wd_conf->callback;
+	/* Configure watchdog timeout for normal operation */
+	wdt->timer_const = ((wd_conf->nb_clk >> 2) & LPC_WDT_TIMER_MAX);
 	/* Watchdog clock select */
 	if (wd_conf->clk_sel == LPC_WDT_CLK_IRC) {
 		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC);
@@ -163,8 +171,6 @@ void watchdog_config(const struct wdt_config* wd_conf)
 	/* Use the windows functionnality ? */
 	if (wd_conf->wdt_window > 0x100) {
 		wdt->window_compare = (wd_conf->wdt_window & LPC_WDT_TIMER_MAX);
-	} else {
-		wdt->window_compare = LPC_WDT_TIMER_MAX;
 	}
 	/* Warning interrupt ? */
 	if (wd_conf->wdt_warn != 0) {
@@ -274,7 +280,7 @@ void startup_watchdog_disable(void)
 	struct lpc_watchdog* wdt = LPC_WDT;
 
 	/* Power wadchdog block before changing it's configuration */
-	sys_ctrl->sys_AHB_clk_ctrl |= LPC_SYS_ABH_CLK_CTRL_Watchdog;
+	subsystem_power(LPC_SYS_ABH_CLK_CTRL_Watchdog, 1);
 	/* Stop watchdog */
 	wdt->mode = 0;
 	watchdog_feed();

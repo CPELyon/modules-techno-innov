@@ -44,6 +44,7 @@ struct wdt_config {
  	/* clk_sel is either 0 (IRC) or 1 (WDTCLK). The corresponding clock source will be powered on. */
 	int clk_sel;
 	int intr_mode_only; /* If set to 1, a watchdog timeout will trigger an interrupt instead of a reset */
+	void (*callback)(void);
 	uint32_t locks; /* Bitfield from WDT_*_LOCK defined in watchdog.h */
 	/* Number of clk_src clocks before the watchdog timer times out. Will be divided by 4 to give
 	 *   the watchdog reload value */

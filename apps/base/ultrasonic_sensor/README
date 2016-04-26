@@ -24,6 +24,6 @@ http://www.seeedstudio.com/wiki/index.php?title=Ultra_Sonic_range_measurement_mo
 
 The distance is sent over UART0 every 50ms.
 
-Note tha for the tests the ultrasonic module is powered at 3.3V and that the right distance
+Note that for the tests the ultrasonic module is powered at 3.3V and that the right distance
 is given by dividing the pulse width by 29 instead of 58 (value given on the ultrasonic
 module wiki page).

@@ -59,7 +59,7 @@ const struct pio_config common_pins[] = {
 const struct pio status_led_green = LPC_GPIO_1_4;
 const struct pio status_led_red = LPC_GPIO_1_5;
 
-const struct pio sensor = LPC_GPIO_0_7; /* Ultrasonic sensor signal */
+const struct pio sensor = LPC_GPIO_0_6; /* Ultrasonic sensor signal */
 
 
 /***************************************************************************** */
@@ -133,6 +133,8 @@ int main(void) {
 	/* Callback on pulse start and end */
 	set_gpio_callback(pulse_feedback, &sensor, EDGES_BOTH);
 
+	uprintf(0, "Ultrasonic distance sensor using GPIO %d.%d\n", sensor.port, sensor.pin);
+	
 	while (1) {
 		uint32_t distance = 0;
 

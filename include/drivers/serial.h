@@ -34,6 +34,11 @@
 #include <stdint.h>
 
 
+#define UART0  0
+#define UART1  1
+#define UART2  2
+#define UART3  3
+
 #define SERIAL_CAP_UART   (1 << 0)
 #define SERIAL_CAP_RS485  (1 << 1)
 #define SERIAL_CAP_IRDA   (1 << 2)

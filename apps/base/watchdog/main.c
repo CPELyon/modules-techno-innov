@@ -51,6 +51,8 @@ const struct pio_config common_pins[] = {
 	/* UART 0 */
 	{ LPC_UART0_RX_PIO_0_1,  LPC_IO_DIGITAL },
 	{ LPC_UART0_TX_PIO_0_2,  LPC_IO_DIGITAL },
+	{ LPC_UART1_RX_PIO_0_8,  LPC_IO_DIGITAL },
+	{ LPC_UART1_TX_PIO_0_9,  LPC_IO_DIGITAL },
 	ARRAY_LAST_PIO,
 };
 
@@ -67,13 +69,22 @@ const struct pio_config adc_pins[] = {
 const struct pio status_led_green = LPC_GPIO_1_4;
 const struct pio status_led_red = LPC_GPIO_1_5;
 
+
+static volatile int got_wdt_int = 0;
+void tmp_callback(void)
+{
+	got_wdt_int = 1;
+}
+
+
 const struct wdt_config wdconf = {
 	.clk_sel = WDT_CLK_IRC,
 	.intr_mode_only = 0,
+	.callback = tmp_callback,
 	.locks = 0,
 	.nb_clk = 0x4FFFFF,
 	.wdt_window = 0,
-	.wdt_warn = 0,
+	.wdt_warn = 0x3FF,
 };
 
 /***************************************************************************** */
@@ -141,18 +152,27 @@ void fault_info(const char* name, uint32_t len)
 int main(void) {
 	system_init();
 	uart_on(0, 115200, NULL);
+	uart_on(1, 115200, NULL);
 	adc_on();
 
+	uprintf(1, "System started\n");
 	uprintf(0, "System started\n");
 	msleep(5);
 	watchdog_config(&wdconf);
 	uprintf(0, "Watchdog started\n");
+	uprintf(1, "Watchdog started\n");
 
 	while (1) {
 		watchdog_feed();
 		chenillard(50);
 		/* ADC Test */
 		adc_display(LPC_ADC_NUM(0), 0);
+		adc_display(LPC_ADC_NUM(0), 1);
+		if (got_wdt_int != 0) {
+			uprintf(1, "Watchdog intr !\n");
+			watchdog_feed();
+			got_wdt_int = 0;
+		}
 	}
 	return 0;
 }

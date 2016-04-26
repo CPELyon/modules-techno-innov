@@ -720,6 +720,8 @@ struct lpc_timer
 #define LPC_TIMER_INTERRUPT_ON_MATCH   0x01
 #define LPC_TIMER_RESET_ON_MATCH       0x02
 #define LPC_TIMER_STOP_ON_MATCH        0x04
+#define LPC_TIMER_INT_RESET_AND_STOP_ON_MATCH  \
+			(LPC_TIMER_INTERRUPT_ON_MATCH | LPC_TIMER_RESET_ON_MATCH | LPC_TIMER_STOP_ON_MATCH)
 #define LPC_TIMER_MATCH_ERASE(x)       (0x07 << (((x) & 0x03) * 3))
 #define LPC_TIMER_MATCH_SHIFT(x)       (((x) & 0x03) * 3)
 /* Capture internal configuration */

@@ -99,6 +99,12 @@ void gpio_off(void);
 	gpio_port->toggle = (1 << gpio.pin);\
 }
 
+static inline uint32_t gpio_read(const struct pio gpio)
+{
+	struct lpc_gpio* gpio_port = LPC_GPIO_REGS(gpio.port);
+	return (gpio_port->in & (1 << gpio.pin));
+}
+
 
 /* GPIO Configuration
  * This function calls the config_pio() function for the gpio with the given

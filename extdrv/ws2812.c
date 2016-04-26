@@ -21,7 +21,7 @@
  *************************************************************************** */
 
 /*
- * Support for the WS2812 Chainable RGB Leds
+ * Support for the WS2812 and WS2812B Chainable RGB Leds
  *
  * WS2812 protocol can be found here : https://www.adafruit.com/datasheets/WS2812.pdf
  *
@@ -48,7 +48,7 @@ void ws2812_config(const struct pio* gpio)
 }
 
 static uint8_t led_data[NB_LEDS * 3];
-static uint16_t max_led = 0;
+static int16_t max_led = -1;
 static uint32_t nb_bytes = 0;
 
 
@@ -136,7 +136,12 @@ int ws2812_send_frame(uint16_t nb_leds)
 		return -1;
 	}
 	if (nb_leds == 0) {
+		if (max_led == -1) {
+			return 0;
+		}
 		nb_leds = max_led;
+		/* All leds set previously will be sent, back to no leds set */
+		max_led = -1;
 	}
 	nb_bytes = (nb_leds + 1) * 3;
 	ws2812_bit_sender();
@@ -159,12 +164,23 @@ int ws2812_set_pixel(uint16_t pixel_num, uint8_t red, uint8_t green, uint8_t blu
 	}
 	return 0;
 }
+/* Get a pixel (led) color from the data buffer */
+int ws2812_get_pixel(uint16_t pixel_num, uint8_t* red, uint8_t* green, uint8_t* blue)
+{
+	if (pixel_num >= NB_LEDS) {
+		return -1;
+	}
+	*green = led_data[ ((pixel_num * 3) + 0) ];
+	*red = led_data[ ((pixel_num * 3) + 1) ];
+	*blue = led_data[ ((pixel_num * 3) + 2) ];
+	return 0;
+}
 
 /* Clear the internal data buffer. */
 void ws2812_clear_buffer(void)
 {
 	memset(led_data, 0, (NB_LEDS * 3));
-	max_led = 0;
+	max_led = -1;
 }
 
 /* Clear the internal data buffer and send it to the Leds, turning them all off */
@@ -173,7 +189,7 @@ void ws2812_clear(void)
 	/* Start at first led and send all leds off */
 	ws2812_clear_buffer();
 	ws2812_send_frame(NB_LEDS);
-	max_led = 0;
+	max_led = -1;
 }
 
 void ws2812_stop(void) __attribute__ ((alias ("ws2812_clear")));

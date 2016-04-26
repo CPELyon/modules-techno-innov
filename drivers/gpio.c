@@ -145,6 +145,9 @@ int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8
 		default: /* Not handled, do not activate the interrupt */
 			return -EINVAL;
 	}
+	/* Clear edge detection logic */
+	gpio_port->int_clear |= (1 << gpio->pin);
+	/* Enable interrupt */
 	gpio_port->int_enable |= (1 << gpio->pin);
 	NVIC_EnableIRQ(irq);
 	return 0;

@@ -39,8 +39,8 @@
  *        modulo 256 is equal to 0. (Use a mask with 0xFF to get the modulo)
  *    The data checksum the sum of all data bytes modulo 256.
  *
- * Sequence numbers, data checksums and error codes
- *    The sequence number is on the 6 least significant bits of the sequence number field.
+ * Sequence numbers, Quick data packets, data checksums and error codes
+ *    The sequence number is on the 5 least significant bits of the sequence number field.
  *      this gives 64 sequence numbers which is more than enough.
  *    When the most significant bit (bit 7) of the sequence number field (seq_num) is set
  *      in a request (master to slave), the slave MUST send an acknowledge packet or a reply
@@ -52,6 +52,8 @@
  *    When set, bit 6 of the sequence number indicates that the union holds 'quick_data'.
  *      This bit cannot be used for error packets.
  *      A packet with "quick-data" cannot have additional data.
+ *      The number of bytes in the 'quick_data' packet is set by bit 5, which is 1 for two
+ *      bytes and 0 for one byte.
  *    When bit 6 is not set, and the packet is not an error packet, the union holds a
  *      'data_information' structure with the packet data 'size' (if any) and 'data_checksum'
  *      for the packet data part.
@@ -124,20 +126,22 @@ enum packet_types {
 	PKT_TYPE_SET_USER_INFO, /* Change the current board user information (and reset board) */
 
 	/* Config */
-	PKT_TYPE_ADD_GPIO, /* Configure one of the GPIO or ADC as GPIO */
-	PKT_TYPE_ADD_CS,   /* Configure one of the GPIO or ADC as SPI Chip select */
+	PKT_TYPE_ADD_GPIO, /* Configure one of the IO as GPIO */
+	PKT_TYPE_ADD_CS,   /* Configure one of the IO as SPI Chip select */
+
 	/* ADC config specifies :
 	 *   the channel number,
 	 *   periodicity of sample (from on request up to continuous),
 	 *   and number of values for the continuous average computation
 	 */
-	PKT_TYPE_ADD_ADC,  /* Configure one of the ADC as ADC */
+	PKT_TYPE_ADD_ADC,  /* Configure one of the ADC capable IO as ADC */
+
 	/* PWM config specifies :
 	 *   the channel number,
 	 *   the PWM period,
-	 *   the channel duty cycle,
+	 *   the channel default duty cycle,
 	 */
-	PKT_TYPE_ADD_PWM,  /* Configure one of the PWM capable GPIO as PWM */
+	PKT_TYPE_ADD_PWM,  /* Configure one of the PWM capable IO as PWM */
 
 	/* Continued data. Use for protocols with data size that goes beyond PACKET_DATA_SIZE */
 	PKT_TYPE_CONTINUED_DATA,
@@ -153,8 +157,22 @@ enum packet_types {
 	PKT_TYPE_GET_GPIO,
 	PKT_TYPE_SET_PWM_CHAN,
 
+	/* RGB Leds control */
+	/* Get and set have the following arguments :
+	 *   the led (pixel) number (uint8_t)
+	 *   red value (uint8_t)
+	 *   green value (uint8_t)
+	 *   blue value (uint8_t)
+	 */
+	PKT_TYPE_SET_RGB_LED, /* If in quick data packet, set the led to off (0,0,0) */
+	PKT_TYPE_GET_RGB_LED,
+	PKT_TYPE_CLEAR_LEDS, /* No arguments */
+
 	/* Communication */
-	SEND_ON_BUS,
+	PKT_TYPE_SEND_ON_BUS,
+
+	/* End of list, to be used as offset for user defined values */
+	PKT_TYPE_LAST,
 };
 
 /* Error / status codes */

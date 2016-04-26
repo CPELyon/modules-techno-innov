@@ -76,7 +76,7 @@ void dtplug_protocol_add_error_to_list(struct dtplug_protocol_handle* handle, st
 /* This function handle sending replies when requested by the host.
  * When there is an error but the host did not request a reply, this function stores the error for
  *    future request.
- * When a reply is effectively sent, the PACKET_NEEDS_REPLY bit is removed from the sequence filed
+ * When a reply is effectively sent, the PACKET_NEEDS_REPLY bit is removed from the sequence field
  *   packet handling code will know if there is still a PING request to be answered.
  */
 void dtplug_protocol_send_reply(struct dtplug_protocol_handle* handle,

@@ -53,10 +53,12 @@
 
 
 
-int16_t temperature = 0;
+int16_t temperature0 = 0;
+int16_t temperature1 = 0;
 struct timeval temp_timestamp;
 
-uint16_t adc = 0;
+uint16_t adc0 = 0;
+uint16_t adc1 = 0;
 struct timeval adc_timestamp;
 
 uint16_t smoke = 0;
@@ -66,10 +68,6 @@ struct timeval smoke_timestamp;
 uint16_t distances[NB_PULSE_SENSORS] = {0};
 struct timeval distances_timestamp;
 
-uint8_t red = 0;
-uint8_t green = 0;
-uint8_t blue = 0;
-struct timeval led_timestamp;
 
 int handle_module_data(struct line_transceiver* slave)
 {
@@ -120,7 +118,8 @@ int handle_module_data(struct line_transceiver* slave)
 			{
 				uint16_t* tmp = (uint16_t*)(&(slave->rx_packet.data));
 				gettimeofday(&temp_timestamp, NULL);
-				temperature = (int16_t)ntohs(tmp[0]);
+				temperature0 = (int16_t)ntohs(tmp[0]);
+				temperature1 = (int16_t)ntohs(tmp[1]);
 			}
 			break;
 	
@@ -128,7 +127,8 @@ int handle_module_data(struct line_transceiver* slave)
 			{
 				uint16_t* tmp = (uint16_t*)(&(slave->rx_packet.data));
 				gettimeofday(&adc_timestamp, NULL);
-				adc = ntohs(tmp[0]);
+				adc0 = ntohs(tmp[0]);
+				adc1 = ntohs(tmp[1]);
 			}
 			break;
 
@@ -151,19 +151,6 @@ int handle_module_data(struct line_transceiver* slave)
 			}
 			break;
 
-		case PKT_TYPE_GET_GPIO:
-			break;
-	
-		case PKT_TYPE_GET_RGB_LED:
-			gettimeofday(&led_timestamp, NULL);
-			red = slave->rx_packet.data[1];
-			green = slave->rx_packet.data[2];
-			blue = slave->rx_packet.data[3];
-			break;
-	
-		case PKT_TYPE_SEND_ON_BUS:
-			break;
-	
 		default:
 			printf("Received packet type %d. Not handled.\n", head->type);
 			break;
@@ -185,16 +172,23 @@ int handle_udp_request(char* buf, int len, struct sockaddr* addr, socklen_t addr
 		/* GET command : Return the last updated value with the update timestamp */
 		switch (buf[1]) {
 			case 'T':
-				len = snprintf(obuf, REP_SIZE_MAX, "GT: %d at %ld.%03ld",
-							temperature, temp_timestamp.tv_sec, (temp_timestamp.tv_usec / 1000));
-				break;
-			case 'L':
-				len = snprintf(obuf, REP_SIZE_MAX, "GL: %d, %d, %d at %ld.%03ld",
-							red, green, blue, led_timestamp.tv_sec, (led_timestamp.tv_usec / 1000));
+				len = snprintf(obuf, REP_SIZE_MAX, "GT: %d, %d at %ld.%03ld",
+							temperature0, temperature1,
+							temp_timestamp.tv_sec, (temp_timestamp.tv_usec / 1000));
 				break;
 			case 'A':
-				len = snprintf(obuf, REP_SIZE_MAX, "GA: %d at %ld.%03ld",
-							adc, adc_timestamp.tv_sec, (adc_timestamp.tv_usec / 1000));
+				len = snprintf(obuf, REP_SIZE_MAX, "GA: %d, %d at %ld.%03ld",
+							adc0, adc1, adc_timestamp.tv_sec, (adc_timestamp.tv_usec / 1000));
+				break;
+			case 'S':
+				len = snprintf(obuf, REP_SIZE_MAX, "GS: %d at %ld.%03ld",
+							smoke, smoke_timestamp.tv_sec, (smoke_timestamp.tv_usec / 1000));
+				break;
+			case 'D':
+				len = snprintf(obuf, REP_SIZE_MAX, "GD: %d, %d, %d, %d, %d, %d at %ld.%03ld",
+							distances[0], distances[1], distances[2],
+							distances[3], distances[4], distances[5],
+							distances_timestamp.tv_sec, (distances_timestamp.tv_usec / 1000));
 				break;
 		}
 		sendto(sock, obuf, len, 0, addr, addr_len);
@@ -207,10 +201,6 @@ int handle_udp_request(char* buf, int len, struct sockaddr* addr, socklen_t addr
 				host_send_packet(slave, PKT_TYPE_START_TEMP_CONVERSION, 0, NULL, 0);
 				usleep(200 * 1000); /* Temp conversion at 11 bits resolution is about 160ms */
 				host_send_packet(slave, PKT_TYPE_GET_TEMPERATURE, 0, NULL, 1);
-				break;
-			case 'L':
-				num = (uint8_t)(strtoul(&buf[2], NULL, 10) & 0xFF);
-				host_send_packet(slave, PKT_TYPE_GET_RGB_LED, 1, &num, 1);
 				break;
 			case 'A':
 				num = (uint8_t)(strtoul(&buf[2], NULL, 10) & 0xFF);

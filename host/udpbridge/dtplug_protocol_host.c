@@ -152,27 +152,30 @@ int host_send_packet(struct line_transceiver* slave, uint8_t type, uint32_t size
 			cmd_info->seq_num |= PACKET_NEEDS_REPLY;
 		}
 		/* Setup data */
-		/* Only use quick data packet for short packet, not continued data */
-		if (size <= 2) {
-			cmd_info->seq_num |= QUICK_DATA_PACKET;
-			cmd_info->quick_data[0] = data[0];
-			cmd_info->quick_data[1] = data[1];
-		} else {
-			/* Copy data, compute checksum (also OK for a data_send_size of 0) */
-			for (i = 0; i < data_send_size; i++) {
-				cmd.data[i] = data[i];
-				sum += data[i]; /* Build checksum */
+		if (data != NULL) {
+			/* Only use quick data packet for short packet, not continued data */
+			if (size && (size <= 2)) {
+				cmd_info->seq_num |= QUICK_DATA_PACKET;
+				cmd_info->quick_data[0] = data[0];
+				cmd_info->quick_data[1] = data[1];
+			} else {
+				/* Copy data, compute checksum (also OK for a data_send_size of 0) */
+				for (i = 0; i < data_send_size; i++) {
+					cmd.data[i] = data[i];
+					sum += data[i]; /* Build checksum */
+				}
+				/* And update header information */
+				cmd_info->data.size = data_send_size;
+				/* Will this packet be continued in the following one ? */
+				if (data_send_size < (size - data_sent)) {
+					cmd_info->data.size |= BIG_DATA_PKT;
+				}
+				cmd_info->data.checksum = sum;
+				/* Update length of data to send on serial link */
+				len += data_send_size;
 			}
-			/* And update header information */
-			cmd_info->data.size = data_send_size;
-			/* Will this packet be continued in the following one ? */
-			if (data_send_size < (size - data_sent)) {
-				cmd_info->data.size |= BIG_DATA_PKT;
-			}
-			cmd_info->data.checksum = sum;
-			/* Update length of data to send on serial link */
-			len += data_send_size;
 		}
+
 		/* Compute header checksum */
 		sum = 0;
 		cmd_info->checksum = 0;
@@ -195,7 +198,7 @@ int host_send_packet(struct line_transceiver* slave, uint8_t type, uint32_t size
 		data_sent += data_send_size;
 
 		/* Need to send more ? */
-		if (data_sent <= size) {
+		if (data && (data_sent <= size)) {
 			/* Move data pointer */
 			data += data_send_size;
 			/* Update size to send. check against PACKET_DATA_SIZE is done at beginning of loop */
@@ -206,6 +209,9 @@ int host_send_packet(struct line_transceiver* slave, uint8_t type, uint32_t size
 			sum = 0;
 			len = sizeof(struct header);
 			sent = 0;
+		} else {
+			/* No data, everything got sent */
+			data_send_size = 0;
 		}
 	} while (data_send_size != 0);
 

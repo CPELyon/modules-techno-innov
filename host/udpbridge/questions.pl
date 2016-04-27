@@ -35,7 +35,7 @@ sub send_to {
 	my $socket = new IO::Socket::INET(Proto => 'udp');
 	my $servaddr = sockaddr_in($port, inet_aton($server));
 	$socket->send($request, 0, $servaddr);
-	unless ($type =~ /G/) {
+	unless ($request =~ /G/) {
 		print "Request sent.\n";
 		return;
 	}

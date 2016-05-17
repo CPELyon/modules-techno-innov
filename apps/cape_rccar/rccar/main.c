@@ -53,7 +53,7 @@
 #endif
 
 
-#define DEBUG 1
+#define DEBUG 0
 #define UART_DEBUG  UART0
 #define BUFF_LEN 60
 
@@ -194,11 +194,11 @@ void temp_config(int uart_num)
 {
 	int ret = 0;
 	ret = tmp101_sensor_config(&tmp101_sensor);
-#ifdef DEBUG
 	if (ret != 0) {
+#if (DEBUG == 1)
 		uprintf(uart_num, "Temp config error\n");
-	}
 #endif
+	}
 }
 
 
@@ -235,7 +235,7 @@ int servo_config(uint8_t uart_num)
 	timer_setup(LPC_TIMER_32B1, &timer_conf);
 	timer_start(LPC_TIMER_32B1);
 
-#ifdef DEBUG
+#if (DEBUG == 1)
 	uprintf(uart_num, "Servos configured, Period : %d, med_pos : %d\n",
 							servo_command_period, servo_med_pos_cmd);
 #endif
@@ -259,7 +259,7 @@ int set_servo(int uart_num, int servo_num, int angle)
 		pos -= ((90 - angle) * servo_one_deg_step);
 	}
 	timer_set_match(timer, channel, pos);
-#ifdef DEBUG
+#if (DEBUG == 1)
 	uprintf(uart_num, "Servo(%d - %d.%d): %d (%d)\n", servo_num, timer, channel, angle, pos);
 #endif
 	return pos;
@@ -392,7 +392,7 @@ int ultrasound_sensors_config(int uart_num)
     timer_on(LPC_TIMER_16B0, 0, ultrasound_sensors_trig_timer_int);
 	timer_setup(LPC_TIMER_16B0, &timer_conf);
 
-#ifdef DEBUG
+#if (DEBUG == 1)
 	uprintf(uart_num, "Ultrasound distance sensors configured.\n");
 #endif
 	return 0;
@@ -430,7 +430,7 @@ void rf_config(void)
 	cc1101_update_config(rf_specific_settings, sizeof(rf_specific_settings));
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
 
-#ifdef DEBUG
+#if (DEBUG == 1)
 	uprintf(UART_DEBUG, "CC1101 RF link init done.\n");
 #endif
 }
@@ -446,7 +446,7 @@ void handle_rf_rx_data(void)
 	/* Go back to RX mode */
 	cc1101_enter_rx_mode();
 
-#ifdef DEBUG
+#if (DEBUG == 1)
 	uprintf(UART_DEBUG, "RF: ret:%d, st: %d.\n", ret, status);
 #endif
 }
@@ -470,7 +470,7 @@ void send_on_rf(void)
     }
     ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
 
-#ifdef DEBUG
+#if (DEBUG == 1)
 	/* Give some feedback on UART 0 */
 	uprintf(UART_DEBUG, "Tx ret: %d\n", ret);
 #endif
@@ -634,21 +634,27 @@ int main(void)
 
 		/* Read the temperature */
 		if (tmp101_sensor_read(&tmp101_sensor, NULL, &board_temp) != 0) {
+#if (DEBUG == 1)
 			uprintf(UART_DEBUG, "Temp read error\n");
 		} else {
 			uprintf(UART_DEBUG, "Temp read: %d,%d.\n", (board_temp / 10), (board_temp % 10));
+#endif
 		}
 
 		/* Get and display the smoke detector voltage */
 		if (adc_get_value(&adc_smoke, ADC_SMOKE) >= 0) {
 			int milli_volts = ((adc_smoke * 32) / 5);
 			adc_smoke = (uint16_t)milli_volts;
+#if (DEBUG == 1)
 			uprintf(UART_DEBUG , "Vsmoke: %d\n", adc_smoke);
+#endif
 		}
 
+#if (DEBUG == 1)
 		uprintf(UART_DEBUG, "D: %d - %d - %d - %d - %d - %d\n",
 					byte_swap_16(distances[0]), byte_swap_16(distances[1]), byte_swap_16(distances[2]),
 					byte_swap_16(distances[3]), byte_swap_16(distances[4]), byte_swap_16(distances[5]));
+#endif
 
 		/* Handle commands */
 		pkt = dtplug_protocol_get_next_packet_ok(&uart_handle);

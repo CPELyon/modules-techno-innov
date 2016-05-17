@@ -613,6 +613,9 @@ int main(void)
 	/* Ultrasonic distance sensors */
 	ultrasound_sensors_config(UART_DEBUG);
 
+	/* Smoke sensor and ADCs */
+	adc_start_burst_conversion(LPC_ADC_CHANNEL(ADC_SMOKE) | LPC_ADC_CHANNEL(ADC_VBAT1) | LPC_ADC_CHANNEL(ADC_VBAT2));
+
 	/* Servo motors */
 	msleep(2000);
 	servo_config(UART_DEBUG);
@@ -626,8 +629,6 @@ int main(void)
 
 		/* Request a Temp conversion on I2C TMP101 temperature sensor */
 		tmp101_sensor_start_conversion(&tmp101_sensor); /* A conversion takes about 40ms */
-		/* Start ADC conversions to get voltages */
-		adc_start_convertion_once(ADC_SMOKE, 0);
 
 		/* Tell we are alive :) */
 		chenillard(250);

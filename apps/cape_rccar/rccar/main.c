@@ -449,6 +449,28 @@ void handle_rf_rx_data(void)
 #if (DEBUG == 1)
 	uprintf(UART_DEBUG, "RF: ret:%d, st: %d.\n", ret, status);
 #endif
+
+	if (ret <= 0) {
+		return;
+	}
+
+	switch (data[2]) {
+		case 'D':
+			if (data[3] > DIRECTION_CTRL_SERVO_MAX) {
+				data[3] = DIRECTION_CTRL_SERVO_MAX;
+			}
+			if (data[3] < DIRECTION_CTRL_SERVO_MIN) {
+				data[3] = DIRECTION_CTRL_SERVO_MIN;
+			}
+			set_servo(UART_DEBUG, DIRECTION_CTRL_SERVO, data[3]);
+			break;
+		case 'S':
+			set_servo(UART_DEBUG, SPEED_CTRL_SERVO, data[3]);
+			break;
+		default:
+			uprintf(UART_DEBUG, "Received unhandled command on RF\n");
+			break;
+	}
 }
 
 void send_on_rf(void)
@@ -631,7 +653,7 @@ int main(void)
 		tmp101_sensor_start_conversion(&tmp101_sensor); /* A conversion takes about 40ms */
 
 		/* Tell we are alive :) */
-		chenillard(250);
+		chenillard(10);
 
 		/* Read the temperature */
 		if (tmp101_sensor_read(&tmp101_sensor, NULL, &board_temp) != 0) {

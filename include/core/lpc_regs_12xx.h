@@ -77,9 +77,9 @@
 
 
 /***************************************************************************** */
-/*                     System Control                                          */
+/*                     System Configuration                                    */
 /***************************************************************************** */
-/* System Control (SYSCON) */
+/* System Configuration (SYSCON) */
 struct lpc_sys_start_logic_ctrl
 {
 	volatile uint32_t edge_ctrl;  /* 0x00 : edge control Register 0 (R/W) */
@@ -137,7 +137,7 @@ struct lpc_sys_config
 	volatile uint32_t int_nmi_cfg;   /* 0x174 : NMI interrupt source configuration control */
 	uint32_t reserved_10[34];
 
-	struct lpc_sys_start_logic_ctrl start_log_strl[2]; /* 0x200 to 0x20C and 0x210 to 0x21C :
+	struct lpc_sys_start_logic_ctrl start_log_ctrl[2]; /* 0x200 to 0x20C and 0x210 to 0x21C :
 												 Start logic 0 and Start logic 1/peripheral interrupts */
 	uint32_t reserved_11[4];
 

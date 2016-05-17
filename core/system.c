@@ -65,14 +65,14 @@ static struct lpc_desc_private lpc_private = {
 static void flash_accelerator_config(uint32_t freq_sel)
 {
 	struct lpc_flash_control* fcfg = LPC_FLASH_CONTROL;
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 
 	if (freq_sel & 0x01) {
 		/* 1 cycle read mode */
-		sys_ctrl->peripheral_reset_ctrl |= LPC_FLASH_OVERRIDE;
+		sys_config->peripheral_reset_ctrl |= LPC_FLASH_OVERRIDE;
 	} else {
 		/* multiple cycle flash read mode */
-		sys_ctrl->peripheral_reset_ctrl &= ~(LPC_FLASH_OVERRIDE);
+		sys_config->peripheral_reset_ctrl &= ~(LPC_FLASH_OVERRIDE);
 		fcfg->flash_cfg &= ~(LPC_FLASH_CFG_MASK);
 		fcfg->flash_cfg |= ((freq_sel & 0x06) >> 1);
 	}
@@ -81,16 +81,16 @@ static void flash_accelerator_config(uint32_t freq_sel)
 /* Configure the brown-out detection */
 void system_brown_out_detection_config(uint32_t level)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 
 	if (level == 0) {
 		/* Disable Brown-Out Detection, power it down */
-		sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_BOD;
+		sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_BOD;
 		lpc_private.brown_out_detection_enabled = 0;
 	} else {
 		/* Power on Brown-Out Detection.
 		 * (Needed for ADC, See Section 19.2 of UM10441 revision 2.1 or newer for more information) */
-		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_BOD);
+		sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_BOD);
 		lpc_private.brown_out_detection_enabled = 1;
 		/* Configure Brown-Out Detection */
 		/* FIXME */
@@ -105,9 +105,9 @@ void system_brown_out_detection_config(uint32_t level)
  */
 void system_set_default_power_state(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	/* Start with all memory powered on and nothing else */
-	sys_ctrl->sys_AHB_clk_ctrl = LPC_SYS_ABH_CLK_CTRL_MEM_ALL;
+	sys_config->sys_AHB_clk_ctrl = LPC_SYS_ABH_CLK_CTRL_MEM_ALL;
 }
 
 /* Enter deep sleep.
@@ -118,15 +118,15 @@ void system_set_default_power_state(void)
  */
 void enter_deep_sleep(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 
 	/* Ask for the same clock status when waking up */
-	sys_ctrl->powerdown_wake_cfg = sys_ctrl->powerdown_run_cfg;
+	sys_config->powerdown_wake_cfg = sys_config->powerdown_run_cfg;
 	/* Set deep_sleep config */
 	if (lpc_private.brown_out_detection_enabled) {
-		sys_ctrl->powerdown_sleep_cfg = LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_ON;
+		sys_config->powerdown_sleep_cfg = LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_ON;
 	} else {
-		sys_ctrl->powerdown_sleep_cfg = LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_OFF;
+		sys_config->powerdown_sleep_cfg = LPC_DEEP_SLEEP_CFG_NOWDTLOCK_BOD_OFF;
 	}
 	/* Enter deep sleep */
 	/* FIXME */
@@ -135,11 +135,11 @@ void enter_deep_sleep(void)
 /* Power on or off a subsystem */
 void subsystem_power(uint32_t power_bit, uint32_t on_off)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	if (on_off == 1) {
-		sys_ctrl->sys_AHB_clk_ctrl |= power_bit;
+		sys_config->sys_AHB_clk_ctrl |= power_bit;
 	} else {
-		sys_ctrl->sys_AHB_clk_ctrl &= ~(power_bit);
+		sys_config->sys_AHB_clk_ctrl &= ~(power_bit);
 	}
 }
 
@@ -163,28 +163,28 @@ static void propagate_main_clock(void);
  */
 void clock_config(uint32_t freq_sel)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 
 	lpc_disable_irq();
 	/* Turn on IRC */
-	sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC);
-	sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
+	sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC);
+	sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
 	/* Use IRC clock for main clock */
-	sys_ctrl->main_clk_sel = LPC_MAIN_CLK_SRC_IRC_OSC;
+	sys_config->main_clk_sel = LPC_MAIN_CLK_SRC_IRC_OSC;
 	lpc_private.need_IRC = 1;
 	/* Switch the main clock source */
-	sys_ctrl->main_clk_upd_en = 0;
-	sys_ctrl->main_clk_upd_en = 1;
+	sys_config->main_clk_upd_en = 0;
+	sys_config->main_clk_upd_en = 1;
 
 	/* Turn off / power off external crystal */
-	sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_SYS_OSC;
+	sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_SYS_OSC;
 	/* Set AHB clock divider : divide by one ... */
-	sys_ctrl->sys_AHB_clk_div = 1;
+	sys_config->sys_AHB_clk_div = 1;
 	/* Configure number of CPU clocks for flash access before setting the new clock */
 	flash_accelerator_config(freq_sel);
 
 	/* power off PLL */
-	sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_SYSPLL;
+	sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_SYSPLL;
 
 	/* If using only internal RC, we are done */
 	if (freq_sel == FREQ_SEL_IRC) {
@@ -205,20 +205,20 @@ void clock_config(uint32_t freq_sel)
 		}
 		lpc_private.main_clock = (((freq_sel >> 3) & 0xFF) * 12 * 1000 * 1000);
 		/* Setup PLL dividers */
-		sys_ctrl->sys_pll_ctrl = (((M - 1) & 0x1F) | (N << 5));
+		sys_config->sys_pll_ctrl = (((M - 1) & 0x1F) | (N << 5));
 		/* Set sys_pll_clk to internal RC */
-		sys_ctrl->sys_pll_clk_sel = LPC_PLL_CLK_SRC_IRC_OSC;
-		sys_ctrl->sys_pll_clk_upd_en = 0;  /* SYSPLLCLKUEN must go from LOW to HIGH */
-		sys_ctrl->sys_pll_clk_upd_en = 1;
+		sys_config->sys_pll_clk_sel = LPC_PLL_CLK_SRC_IRC_OSC;
+		sys_config->sys_pll_clk_upd_en = 0;  /* SYSPLLCLKUEN must go from LOW to HIGH */
+		sys_config->sys_pll_clk_upd_en = 1;
 		/* Power-up PLL */
-		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_SYSPLL);
+		sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_SYSPLL);
 		/* Wait Until PLL Locked */
-		while (!(sys_ctrl->sys_pll_status & 0x01));
+		while (!(sys_config->sys_pll_status & 0x01));
 		/* Use PLL as main clock */
-		sys_ctrl->main_clk_sel = LPC_MAIN_CLK_SRC_PLL_OUT;
+		sys_config->main_clk_sel = LPC_MAIN_CLK_SRC_PLL_OUT;
 		/* Switch the main clock source */
-		sys_ctrl->main_clk_upd_en = 0;
-		sys_ctrl->main_clk_upd_en = 1;
+		sys_config->main_clk_upd_en = 0;
+		sys_config->main_clk_upd_en = 1;
 	}
 
 	/* And call all clock updaters */
@@ -275,21 +275,21 @@ void io_config_clk_off(void)
 
 void clkout_on(uint32_t src, uint32_t div)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 
 	/* Select clk_out clock source */
-	sys_ctrl->clk_out_src_sel = (src & 0x03);
+	sys_config->clk_out_src_sel = (src & 0x03);
 	/* Activate clk_out */
-	sys_ctrl->clk_out_div = (div & 0xFF);
-	sys_ctrl->clk_out_upd_en = 0;
-	sys_ctrl->clk_out_upd_en = 1;
+	sys_config->clk_out_div = (div & 0xFF);
+	sys_config->clk_out_upd_en = 0;
+	sys_config->clk_out_upd_en = 1;
 }
 void clkout_off(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
-	sys_ctrl->clk_out_div = 0; /* Disable CLKOUT */
-	sys_ctrl->clk_out_upd_en = 0;
-	sys_ctrl->clk_out_upd_en = 1;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
+	sys_config->clk_out_div = 0; /* Disable CLKOUT */
+	sys_config->clk_out_upd_en = 0;
+	sys_config->clk_out_upd_en = 1;
 }
 
 

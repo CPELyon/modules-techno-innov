@@ -75,7 +75,7 @@ uint32_t rtc_get_count(void)
 /* In case someone wants the RTC to count something different from seconds */
 void rtc_clk_src_select(uint8_t source, uint8_t clk_div)
 {
-	struct lpc_sys_control* sysctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_pm_unit* pm_unit = LPC_PMU;
 	uint32_t tmp = 0;
 
@@ -86,9 +86,9 @@ void rtc_clk_src_select(uint8_t source, uint8_t clk_div)
 	pm_unit->system_config = (tmp | ((source & 0x0F) << LPC_RTC_CLK_SRC_SHIFT));
 	/* Change the RTC Clock divider if source is PCLK */
 	if (source == LPC_RTC_CLK_PCLK) {
-		sysctrl->rtc_clk_div = clk_div;
+		sys_config->rtc_clk_div = clk_div;
 	} else {
-		sysctrl->rtc_clk_div = 0;
+		sys_config->rtc_clk_div = 0;
 	}
 }
 

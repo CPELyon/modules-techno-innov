@@ -75,15 +75,15 @@ void watchdog_lock_clk_src(void)
  */
 void watchdog_lock_clk_src_power(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_watchdog* wdt = LPC_WDT;
 
 	if (wdt->clk_src_sel & LPC_WDT_CLK_WDOSC) {
-		sys_ctrl->powerdown_sleep_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
-		sys_ctrl->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
+		sys_config->powerdown_sleep_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
+		sys_config->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
 	} else {
-		sys_ctrl->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC);
-		sys_ctrl->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
+		sys_config->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC);
+		sys_config->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
 	}
 	wdt->mode |= LPC_WDT_CLK_POWER_LOCK;
 }
@@ -143,7 +143,7 @@ void watchdog_disable_power_down(void)
  */
 void watchdog_config(const struct wdt_config* wd_conf)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_watchdog* wdt = LPC_WDT;
 
 	NVIC_DisableIRQ(WDT_IRQ);
@@ -161,11 +161,11 @@ void watchdog_config(const struct wdt_config* wd_conf)
 	wdt->timer_const = ((wd_conf->nb_clk >> 2) & LPC_WDT_TIMER_MAX);
 	/* Watchdog clock select */
 	if (wd_conf->clk_sel == LPC_WDT_CLK_IRC) {
-		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC);
-		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
+		sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC);
+		sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
 		wdt->clk_src_sel = LPC_WDT_CLK_IRC;
 	} else {
-		sys_ctrl->powerdown_run_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
+		sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
 		wdt->clk_src_sel = LPC_WDT_CLK_WDOSC;
 	}
 	/* Use the windows functionnality ? */
@@ -186,11 +186,11 @@ void watchdog_config(const struct wdt_config* wd_conf)
 		if (wd_conf->locks & WDT_CLK_POWER_LOCK) {
 			mode |= LPC_WDT_CLK_POWER_LOCK;
 			if (wd_conf->clk_sel == LPC_WDT_CLK_WDOSC) {
-				sys_ctrl->powerdown_sleep_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
-				sys_ctrl->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
+				sys_config->powerdown_sleep_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
+				sys_config->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_WDT_OSC);
 			} else {
-				sys_ctrl->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC);
-				sys_ctrl->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
+				sys_config->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC);
+				sys_config->powerdown_wake_cfg &= ~(LPC_POWER_DOWN_IRC_OUT);
 			}
 		}
 		if (wd_conf->locks & WDT_CLK_SRC_LOCK) {
@@ -225,7 +225,7 @@ void watchdog_config(const struct wdt_config* wd_conf)
  */
 int stop_watchdog(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_watchdog* wdt = LPC_WDT;
 	int ret = -1;
 
@@ -244,7 +244,7 @@ int stop_watchdog(void)
 		if ((wdt->clk_src_sel == LPC_WDT_CLK_WDOSC) && (wdt->mode & LPC_WDT_CLK_POWER_LOCK)) {
 			wdt->clk_src_sel = LPC_WDT_CLK_IRC;
 		}
-		sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_WDT_OSC;
+		sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_WDT_OSC;
 		/* Power wadchdog block before changing it's configuration */
 		wdt->clk_src_sel = LPC_WDT_CLK_WDOSC;
 		ret = 0;
@@ -258,11 +258,11 @@ int stop_watchdog(void)
 		return 0;
 	}
 	/* If main clock and clkout not running from IRC (possibly through PLL), turn off IRC */
-	if ((sys_ctrl->main_clk_sel != LPC_MAIN_CLK_SRC_IRC_OSC) &&
-		((sys_ctrl->main_clk_sel & 0x01) && (sys_ctrl->sys_pll_clk_sel != LPC_PLL_CLK_SRC_IRC_OSC)) &&
-		(sys_ctrl->clk_out_src_sel != LPC_CLKOUT_SRC_IRC_OSC)) {
-		sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_IRC;
-		sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_IRC_OUT;
+	if ((sys_config->main_clk_sel != LPC_MAIN_CLK_SRC_IRC_OSC) &&
+		((sys_config->main_clk_sel & 0x01) && (sys_config->sys_pll_clk_sel != LPC_PLL_CLK_SRC_IRC_OSC)) &&
+		(sys_config->clk_out_src_sel != LPC_CLKOUT_SRC_IRC_OSC)) {
+		sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_IRC;
+		sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_IRC_OUT;
 	}
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_Watchdog, 0);
 	return 0;
@@ -276,7 +276,7 @@ int stop_watchdog(void)
  */
 void startup_watchdog_disable(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_watchdog* wdt = LPC_WDT;
 
 	/* Power wadchdog block before changing it's configuration */
@@ -286,7 +286,7 @@ void startup_watchdog_disable(void)
 	watchdog_feed();
 	/* And power it down */
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_Watchdog, 0);
-	sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_WDT_OSC;
+	sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_WDT_OSC;
 	NVIC_DisableIRQ(WDT_IRQ);
 }
 

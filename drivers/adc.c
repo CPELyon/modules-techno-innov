@@ -192,7 +192,7 @@ void adc_clk_update(void)
 
 void adc_on(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_adc* adc = LPC_ADC;
 
 	/* Disable ADC Interrupt */
@@ -200,10 +200,10 @@ void adc_on(void)
 
 	/* Brown-Out detection must be powered to operate the ADC.
 	 * See Section 19.2 of UM10441 revision 2.1 or newer for more information */
-	sys_ctrl->powerdown_run_cfg &= ~LPC_POWER_DOWN_BOD;
+	sys_config->powerdown_run_cfg &= ~LPC_POWER_DOWN_BOD;
 
 	/* Power-up ADC */
-	sys_ctrl->powerdown_run_cfg &= ~LPC_POWER_DOWN_ADC;
+	sys_config->powerdown_run_cfg &= ~LPC_POWER_DOWN_ADC;
 	/* Provide clock to ADC */
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_ADC, 1);
 	adc_clk_update();
@@ -220,12 +220,12 @@ void adc_on(void)
 
 void adc_off(void)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 
 	/* Disable ADC Interrupt */
 	NVIC_DisableIRQ(ADC_IRQ);
 	/* Power Down ADC */
-	sys_ctrl->powerdown_run_cfg |= LPC_POWER_DOWN_ADC;
+	sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_ADC;
 	/* Remove clock from ADC block */
 	subsystem_power(LPC_SYS_ABH_CLK_CTRL_ADC, 0);
 }

@@ -87,7 +87,7 @@ struct lpc_sys_start_logic_ctrl
 	volatile uint32_t reset;      /* 0x08 : reset Register 0  (-/W) */
 	volatile uint32_t status;     /* 0x0C : status Register 0 (R/-) */
 };
-struct lpc_sys_control
+struct lpc_sys_config
 {
 	volatile uint32_t sys_mem_remap;   /* 0x000 System memory remap (R/W) */
 	volatile uint32_t peripheral_reset_ctrl; /* 0x004 Peripheral reset control (R/W) */
@@ -148,7 +148,7 @@ struct lpc_sys_control
 	volatile const uint32_t device_id;  /* 0x3F4 : Device ID (R/ ) */
 };
 
-#define LPC_SYS_CONTROL ((struct lpc_sys_control *) LPC_SYSCON_BASE)
+#define LPC_SYS_CONFIG ((struct lpc_sys_config *) LPC_SYSCON_BASE)
 
 /* AHB control bits
  *   0 (System (cortexM0, syscon, PMU, ...)) is a read only bit (system cannot be disabled)

@@ -256,7 +256,7 @@ int spi_transfer_multiple_frames(uint8_t ssp_num, void* data_out, void* data_in,
 /***************************************************************************** */
 uint32_t ssp_clk_on(uint8_t ssp_num, uint32_t rate)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_ssp* ssp_regs = ssps[ssp_num].regs;
 	uint32_t prescale = 0, pclk_div = 0;
 	uint32_t pclk = 0, div = 0;
@@ -287,7 +287,7 @@ uint32_t ssp_clk_on(uint8_t ssp_num, uint32_t rate)
 	/* Activate the SSP clock (maybe divide main clock) */
 	switch (ssp_num) {
 		case 0 :
-			sys_ctrl->ssp0_clk_div = pclk_div;
+			sys_config->ssp0_clk_div = pclk_div;
 			break;
 	}
 

@@ -268,7 +268,7 @@ static struct uart_clk_cfg uart_clk_table[] = {
  */
 static void uart_clk_on(uint32_t uart_num, uint32_t baudrate)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	struct lpc_uart* uart = uarts[uart_num].regs; /* Get the right registers */
 	uint32_t div = 0, pclk = 0;
 	/* Save baudrate value */
@@ -276,7 +276,7 @@ static void uart_clk_on(uint32_t uart_num, uint32_t baudrate)
 	/* Configure UART clock */
 	pclk = get_main_clock(); /* See above note */
 	div = (pclk / (baudrate * 16));
-	sys_ctrl->uart_clk_div[uart_num] = 0x01;
+	sys_config->uart_clk_div[uart_num] = 0x01;
 	/* The easy one : divider is an integer, or baudrate is low enough for the aproximation */
 	if ((baudrate <= 115200) || ((div * baudrate * 16) == pclk)) {
 		uart->line_ctrl |= LPC_UART_ENABLE_DLAB;
@@ -306,10 +306,10 @@ static void uart_clk_on(uint32_t uart_num, uint32_t baudrate)
 }
 static void uart_clk_off(uint32_t uart_num)
 {
-	struct lpc_sys_control* sys_ctrl = LPC_SYS_CONTROL;
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
 	/* Erase saved baudrate */
 	uarts[uart_num].baudrate = 0;
-	sys_ctrl->uart_clk_div[uart_num] = 0;
+	sys_config->uart_clk_div[uart_num] = 0;
 }
 
 static uint32_t uart_setup(uint32_t uart_num)

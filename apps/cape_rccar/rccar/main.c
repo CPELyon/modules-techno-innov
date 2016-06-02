@@ -127,8 +127,14 @@ struct tmp101_sensor_config tmp101_sensor = {
 #define DIRECTION_CTRL_SERVO_MIN 60
 #define DIRECTION_CTRL_SERVO_MAX 120
 #define SPEED_CTRL_SERVO      1
-#define SPEED_CTRL_SERVO_MIN 30
-#define SPEED_CTRL_SERVO_MAX 160
+#define SPEED_CTRL_SERVO_MIN 60
+#define SPEED_CTRL_SERVO_MAX 110
+
+#define DIST_SLOW 400
+#define DIST_STOP 200
+#define SLOW_MOTION 98
+#define HALT 86
+uint8_t max_forward_speed = SPEED_CTRL_SERVO_MAX;
 
 /* Lights - WS2812B Leds strip */
 const struct pio leds = LPC_GPIO_0_3;
@@ -465,6 +471,9 @@ void handle_rf_rx_data(void)
 			set_servo(UART_DEBUG, DIRECTION_CTRL_SERVO, data[3]);
 			break;
 		case 'S':
+			if (data[3] > max_forward_speed) {
+				data[3] = max_forward_speed;
+			}
 			set_servo(UART_DEBUG, SPEED_CTRL_SERVO, data[3]);
 			break;
 		default:
@@ -584,6 +593,9 @@ void handle_commands(struct packet* command)
 			if (data[0] < SPEED_CTRL_SERVO_MIN) {
 				data[0] = SPEED_CTRL_SERVO_MIN;
 			}
+			if (data[0] > max_forward_speed) {
+				data[0] = max_forward_speed;
+			}
 			set_servo(UART_DEBUG, SPEED_CTRL_SERVO, data[0]);
 			uprintf(UART_DEBUG, "Set speed to %d.\n", data[0]);
 			break;
@@ -678,6 +690,13 @@ int main(void)
 					byte_swap_16(distances[0]), byte_swap_16(distances[1]), byte_swap_16(distances[2]),
 					byte_swap_16(distances[3]), byte_swap_16(distances[4]), byte_swap_16(distances[5]));
 #endif
+		if ((distances[3] < DIST_STOP) || (distances[4] < DIST_STOP) || (distances[5] < DIST_STOP)) {
+			max_forward_speed = HALT;
+		} else if ((distances[3] < DIST_SLOW) || (distances[4] < DIST_SLOW) || (distances[5] < DIST_SLOW)) {
+			max_forward_speed = SLOW_MOTION;
+		} else {
+			max_forward_speed = SPEED_CTRL_SERVO_MAX;
+		}
 
 		/* Handle commands */
 		pkt = dtplug_protocol_get_next_packet_ok(&uart_handle);

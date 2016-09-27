@@ -33,6 +33,26 @@
  *   of the micro-controller (for bootloaders, drivers, loadable RTOS tasks, ....)
  */
 
+#define START_APP_ADDRESS (0x5000)
+#define INITIAL_SP      (*(uint32_t *)(START_APP_ADDRESS))
+#define RESET_HANDLER   (*(uint32_t *)(START_APP_ADDRESS + 4))
+/* CRP Handling */
+#define CRP_ADDRESS    (0x000002FC)
+#define NO_ISP   (0x4E697370)
+#define CRP1     (0x12345678)
+#define CRP2     (0x87654321)
+#define CRP3     (0x43218765)
+#define IS_CRP_VALUE(v)  ((v==NO_ISP) || (v==CRP1) || (v==CRP2) || (v==CRP3))
+
+#define LPC12XX_SECTOR_SIZE  (0x1000)
+#define LPC1224_101_NB_SECTOR    (8)
+#define LPC1224_121_NB_SECTOR    (12)
+#define LPC1225_301_NB_SECTOR    (16)
+#define LPC1225_321_NB_SECTOR    (20)
+#define LPC1226_301_NB_SECTOR    (24)
+#define LPC1227_301_NB_SECTOR    (32)
+#define LPC12XX_END_FLASH(version)    (((version) ## _NB_SECTOR) * LPC12xx_SECTOR_SIZE)
+
 
 
 /* Return values */
@@ -111,6 +131,32 @@ int iap_copy_ram_to_flash(uint32_t dest, uint32_t src, uint32_t size);
 /* Return the part ID */
 uint32_t iap_read_part_id(void);
 
+/* Copy the whole unique id table (four 32bits words) in the memory pointed by uid_table.
+ * uid_table must have enougth room for the whole unique id table.
+ * Returns the IAP status.
+ */
+uint32_t iap_read_unique_id(uint32_t* uid_table);
+
+
+
+/*******************************************************************************/
+/* IAP Helpers */
+
+/* Relocate the vector table so that the first sector of the internal flash can be erased
+ * and written
+*/
+void relocate_vector_table(void);
+
+/* Erase one sector, given a flash address
+ * return 0 on success.
+ */
+int flash_hal_erase_sector(uint32_t addr);
+
+/* Flash a binary image chunk to flash.
+ * Flash must have been erased first.
+ * return 0 on success.
+ */
+int flash_hal_program_page (uint32_t addr, uint32_t sz, unsigned char *buf);
 
 #endif /* CORE_IAP_H */
 

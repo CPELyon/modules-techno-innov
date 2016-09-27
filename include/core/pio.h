@@ -58,6 +58,12 @@ void config_pio(const struct pio* pp, uint32_t mode);
 /* Configure a set (array) of pins in a single loop */
 void set_pins(const struct pio_config* pins);
 
+/* IO config clock */
+/* To change GPIO config the io config block must be powered on */
+void io_config_clk_on(void);
+void io_config_clk_off(void);
+
+
 /****************************************************************************/
 /*  GPIO Pins  */
 #define LPC_GPIO_0_0  {0,  0, 0}

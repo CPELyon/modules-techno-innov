@@ -42,8 +42,8 @@ struct uart_device
 	struct lpc_uart* regs;
 	uint32_t baudrate;
 	uint32_t config;
-	uint32_t capabilities;
-	uint32_t current_mode;
+	uint8_t capabilities;
+	uint8_t current_mode;
 
 	/* Output buffer */
 	volatile char out_buff[SERIAL_OUT_BUFF_SIZE];
@@ -169,9 +169,10 @@ int serial_send_quickbyte(uint32_t uart_num, uint8_t data)
 /*    Serial Write
  *
  * Try to send at most "length" characters from "buf" on the requested uart.
- * Returns -1 on error, or number of characters copied into output buffer, witch
- * may be less than requested "length"
- * Possible errors: requested uart does not exists or unable to acquire uart lock.
+ * Returns a negative value on error, or number of characters copied into output buffer,
+ * witch may be less than requested "length"
+ * Possible errors: requested uart does not exists (-EINVAL) or unable to acquire uart
+ * lock (-EBUSY).
  *
  * Warning for Real Time : This implementation will block if there's already a
  * transmission ongoing.
@@ -181,18 +182,19 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 	struct uart_device* uart = NULL;
 
 	if (uart_num >= NUM_UARTS)
-		return -1;
+		return -EINVAL;
 
 	uart = &uarts[uart_num];
 	/* Lock acquire */
 	if (sync_lock_test_and_set(&uart->out_lock, 1) == 1) {
-		return -1;
+		return -EBUSY;
 	}
 
 	/* If UART is sending wait for buffer empty */
 	/* FIXME : be smart for OS, call scheduler or return */
 	while (uart->sending != 0) {
-		if (get_priority_mask() == 0) {
+		/* If interrupt are masked, check for tx ourselves */
+		if (get_priority_mask() != 0) {
 			uart_check_tx(uart, uart->regs->func.intr_pending);
 		}
 	}
@@ -217,7 +219,7 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length)
 /*    Serial Flush
  *
  * Wait until all characters have been sent
- * Returns -1 on error, 0 on success.
+ * Returns -EINVAL on error, 0 on success.
  * Possible errors: requested uart does not exists or unable to acquire uart lock.
  *
  * Warning for Real Time : This implementation will block if there's already a
@@ -228,7 +230,7 @@ int serial_flush(uint32_t uart_num)
 	struct uart_device* uart = NULL;
 
 	if (uart_num >= NUM_UARTS)
-		return -1;
+		return -EINVAL;
 
 	uart = &uarts[uart_num];
 
@@ -332,7 +334,7 @@ static uint32_t uart_setup(uint32_t uart_num)
  * config is a mask of LPC_UART_xBIT (x = 5..8), LPC_UART_xSTOP (x = 1..2)
  *   and one of LPC_UART_NO_PAR, LPC_UART_ODD_PAR or LPC_UART_EVEN_PAR.
  */
-int uart_set_config(uint8_t uart_num, uint8_t config)
+int uart_set_config(uint8_t uart_num, uint32_t config)
 {
 	struct uart_device* uart = NULL;
 

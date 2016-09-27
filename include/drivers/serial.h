@@ -62,9 +62,10 @@
 /*    Serial Write
  *
  * Try to send at most "length" characters from "buf" on the requested uart.
- * Returns -1 on error, or number of characters copied into output buffer, witch
- * may be less than requested "length"
- * Possible errors: requested uart does not exists or unable to acquire uart lock.
+ * Returns a negative value on error, or number of characters copied into output buffer,
+ * witch may be less than requested "length"
+ * Possible errors: requested uart does not exists (-EINVAL) or unable to acquire uart
+ * lock (-EBUSY).
  *
  * Warning for Real Time : This implementation will block if there's already a
  * transmission ongoing.
@@ -75,7 +76,7 @@ int serial_write(uint32_t uart_num, const char *buf, uint32_t length);
 /*    Serial Flush
  *
  * Wait until all characters have been sent
- * Returns -1 on error, 0 on success.
+ * Returns -EINVAL on error, 0 on success.
  * Possible errors: requested uart does not exists or unable to acquire uart lock.
  *
  * Warning for Real Time : This implementation will block if there's already a
@@ -101,7 +102,7 @@ int serial_send_quickbyte(uint32_t uart_num, uint8_t data);
  * config is a mask of LPC_UART_xBIT (x = 5..8), LPC_UART_xSTOP (x = 1..2)
  *   and one of LPC_UART_NO_PAR, LPC_UART_ODD_PAR or LPC_UART_EVEN_PAR.
  */
-int uart_set_config(uint8_t uart_num, uint8_t config);
+int uart_set_config(uint8_t uart_num, uint32_t config);
 
 /* Change uart mode to RS485
  * return -ENODEV when the device does not support RS485 mode.

@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/eeprom/main.c
+ *   apps/base/eeprom/main.c
  *
  *
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/i2c.h"
 #include "extdrv/eeprom.h"
@@ -139,7 +136,7 @@ void module_desc_dump(uint8_t uart_num)
 	ret = eeprom_read(EEPROM_ADDR, 0, (char*)&desc, sizeof(struct module_desc));
 	if (ret != sizeof(struct module_desc)) {
 		mod_gpio_demo_eeprom_cs_release();
-		serial_write(uart_num, "EEPROM read error\n", 19);
+		uprintf(uart_num, "EEPROM read error\n");
 		return;
 	}
 	/* Get and send the module name */
@@ -187,10 +184,7 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
+	system_brown_out_detection_config(0); /* No ADC used */
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -209,20 +203,18 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, NULL);
+	uart_on(UART0, 115200, NULL);
 
-	i2c_on(I2C_CLK_100KHz);
+	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
 
 	/* Set or read Module identification header in EEPROM */
 #ifdef EEPROM_WRITE

@@ -33,6 +33,24 @@
  *   of the micro-controller (for bootloaders, drivers, loadable RTOS tasks, ....)
  */
 
+
+
+/* Return values */
+enum iap_status {
+	IAP_STATUS_CMD_SUCCESS = 0,
+	IAP_STATUS_INVALID_COMMAND,
+	IAP_STATUS_SRC_ADDR_ERROR,
+	IAP_STATUS_DST_ADDR_ERROR,
+	IAP_STATUS_SRC_ADDR_NOT_MAPPED,
+	IAP_STATUS_DST_ADDR_NOT_MAPPED,
+	IAP_STATUS_COUNT_ERROR,
+	IAP_STATUS_INVALID_SECTOR,
+	IAP_STATUS_SECTOR_NOT_BLANK,
+	IAP_STATUS_SECTOR_NOT_PREPARED_FOR_WRITE_OPERATION,
+	IAP_STATUS_COMPARE_ERROR,
+	IAP_STATUS_BUSY,
+};
+
 /*******************************************************************************/
 /* Direct access to IAP function */
 

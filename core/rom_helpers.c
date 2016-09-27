@@ -26,6 +26,7 @@
  */
 
 #include "core/system.h"
+#include "core/iap.h"
 
 /*******************************************************************************/
 /*            Integer division using ROM based division routines               */
@@ -83,21 +84,6 @@ void __aeabi_uidivmod(unsigned numerator, unsigned denominator)
 /*******************************************************************************/
 /*            In Application Programming ROM based routines                    */
 /*******************************************************************************/
-
-enum iap_status {
-	IAP_STATUS_CMD_SUCCESS = 0,
-	IAP_STATUS_INVALID_COMMAND,
-	IAP_STATUS_SRC_ADDR_ERROR,
-	IAP_STATUS_DST_ADDR_ERROR,
-	IAP_STATUS_SRC_ADDR_NOT_MAPPED,
-	IAP_STATUS_DST_ADDR_NOT_MAPPED,
-	IAP_STATUS_COUNT_ERROR,
-	IAP_STATUS_INVALID_SECTOR,
-	IAP_STATUS_SECTOR_NOT_BLANK,
-	IAP_STATUS_SECTOR_NOT_PREPARED_FOR_WRITE_OPERATION,
-	IAP_STATUS_COMPARE_ERROR,
-	IAP_STATUS_BUSY,
-};
 
 enum iap_commands {
 	IAP_CMD_PREPARE_SECTORS_FOR_WRITE = 50,

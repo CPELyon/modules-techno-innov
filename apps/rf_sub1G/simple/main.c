@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/dev_usb/main.c
+ *   apps/rf_sub1G/simple/main.c
  *
  * sub1G_module support code - USB version
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -84,8 +81,9 @@ const struct pio cc1101_miso_pin = LPC_SSP0_MISO_PIO_0_16;
 const struct pio cc1101_gdo0 = LPC_GPIO_0_6;
 const struct pio cc1101_gdo2 = LPC_GPIO_0_7;
 
-#define TMP101_ADDR  0x94
+#define TMP101_ADDR  0x94  /* Pin Addr0 (pin5 of tmp101) connected to VCC */
 struct tmp101_sensor_config tmp101_sensor = {
+	.bus_num = I2C0,
 	.addr = TMP101_ADDR,
 	.resolution = TMP_RES_ELEVEN_BITS,
 };
@@ -95,19 +93,15 @@ const struct pio status_led_green = LPC_GPIO_0_28;
 const struct pio status_led_red = LPC_GPIO_0_29;
 
 
-#define ADC_VBAT  LPC_ADC_NUM(0)
-#define ADC_EXT1  LPC_ADC_NUM(1)
-#define ADC_EXT2  LPC_ADC_NUM(2)
+#define ADC_VBAT  LPC_ADC(0)
+#define ADC_EXT1  LPC_ADC(1)
+#define ADC_EXT2  LPC_ADC(2)
 
 /***************************************************************************** */
 void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -125,10 +119,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -153,7 +144,7 @@ void temp_config()
 	/* Temp sensor */
 	ret = tmp101_sensor_config(&tmp101_sensor);
 	if (ret != 0) {
-		serial_write(0, "Temp config error\r\n", 19);
+		uprintf(UART0, "Temp config error: %d\n", ret);
 	}
 }
 
@@ -188,19 +179,12 @@ void rf_config(void)
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
 
 #ifdef DEBUG
-	if (1) {
-		char buff[BUFF_LEN];
-		int len = 0;
-		len = snprintf(buff, BUFF_LEN, "CC1101 RF link init done.\r\n");
-		serial_write(0, buff, len);
-	}
+	uprintf(UART0, "CC1101 RF link init done.\n");
 #endif
 }
 
 void handle_rf_rx_data(void)
 {
-	char buff[BUFF_LEN];
-	int len = 0;
 	uint8_t data[RF_BUFF_LEN];
 	int8_t ret = 0;
 	uint8_t status = 0;
@@ -211,10 +195,7 @@ void handle_rf_rx_data(void)
 	cc1101_enter_rx_mode();
 
 #ifdef DEBUG
-	if (1) {
-		len = snprintf(buff, BUFF_LEN, "RF: ret:%d, st: %d.\r\n", ret, status);
-		serial_write(0, buff, len);
-	}
+	uprintf(UART0, "RF: ret:%d, st: %d.\n", ret, status);
 #endif
 
 	switch (data[2]) {
@@ -224,11 +205,10 @@ void handle_rf_rx_data(void)
 				int deci_degrees = 0;
 				/* Read the temperature */
 				if (tmp101_sensor_read(&tmp101_sensor, &val, &deci_degrees) != 0) {
-					serial_write(0, "Temp read error\r\n", 19);
+					uprintf(UART0, "Temp read error: %d\n", ret);
 				} else {
-					len = snprintf(buff, 40, "Temp read: %d,%d - raw: 0x%04x.\r\n",
+					uprintf(UART0, "Temp read: %d,%d - raw: 0x%04x.\n",
 							(deci_degrees/10), (deci_degrees%10), val);
-					serial_write(0, buff, len);
 				}
 			}
 			break;
@@ -238,8 +218,7 @@ void handle_rf_rx_data(void)
 				/* Get and display the battery voltage */
 				if (adc_get_value(&val, ADC_VBAT) >= 0) {
 					int milli_volts = ((val * 32) / 10);
-					len = snprintf(buff, 40, "Vbat: %d (raw: 0x%04x)\r\n", (milli_volts * 2), val);
-					serial_write(0 , buff, len);
+					uprintf(UART0, "Vbat: %d (raw: 0x%04x)\n", (milli_volts * 2), val);
 				}
 			}
 			break;
@@ -286,24 +265,19 @@ void send_on_rf(void)
 	ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
 
 #ifdef DEBUG
-	{
-		/* Give some feedback on UART 0 */
-		char buff[BUFF_LEN];
-		int len = 0;
-		len = snprintf(buff, BUFF_LEN, "Tx ret: %d\r\n", ret);
-		serial_write(0, buff, len);
-	}
+	uprintf(UART0, "Tx ret: %d\n", ret);
 #endif
 }
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, handle_uart_cmd);
+	uart_on(UART0, 115200, handle_uart_cmd);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
-	i2c_on(I2C_CLK_100KHz);
-	adc_on();
+	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
+	adc_on(NULL);
 	status_led_config(&status_led_green, &status_led_red);
 
 	/* Radio */
@@ -317,7 +291,7 @@ int main(void) {
 		/* Request a Temp conversion on I2C TMP101 temperature sensor */
 		tmp101_sensor_start_conversion(&tmp101_sensor); /* A conversion takes about 40ms */
 		/* Start an ADC conversion to get battery voltage */
-		adc_start_convertion_once(ADC_VBAT, 0);
+		adc_start_convertion_once(ADC_VBAT, LPC_ADC_SEQ(0), 0);
 
 		/* Tell we are alive :) */
 		chenillard(250);

@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/lcd_char/main.c
+ *   apps/base/lcd_char/main.c
  *
  * LCD Character Display example
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -127,10 +124,7 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
+	system_brown_out_detection_config(0); /* No ADC used */
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -149,10 +143,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(1, name, len);
-	/* Wait for end of Tx */
-	serial_flush(1);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -188,30 +179,30 @@ int main(void)
 	int get_temp = 0;
 
 	system_init();
-	uart_on(0, 115200, recv_text);
+	uart_on(UART0, 115200, recv_text);
 	ssp_master_on(thermo.ssp_bus_num, LPC_SSP_FRAME_SPI, 8, 4*1000*1000);
 	set_gpio_callback(button_request, &button, EDGE_RISING);
 	status_led(none);
 
 	/* Thermocouple configuration */
 	max31855_sensor_config(&thermo);
-	uprintf(0, "Thermocouple config OK\n");
+	uprintf(UART0, "Thermocouple config OK\n");
 
 	/* LCD Character display configuration */
 	lcdc_config(&lcd_one);
 	lcdc_init(&lcd_one);
 	lcdc_config(&lcd_two);
 	lcdc_init(&lcd_two);
-	uprintf(0, "Displays Init OK\n");
+	uprintf(UART0, "Displays Init OK\n");
 
 	/* Turn displays on */
 	lcdc_on_off(&lcd_one, 1, 0, 0); /* ON, Cursor underline off, Cursor blink off */
 	lcdc_on_off(&lcd_two, 1, 0, 1); /* ON, Cursor underline off, Cursor blink on */
-	uprintf(0, "Displays ON\n");
+	uprintf(UART0, "Displays ON\n");
 
 	lcdc_move_cursor_home(&lcd_one);
 	lcdc_move_cursor_home(&lcd_two);
-	uprintf(0, "Cursors at home\n");
+	uprintf(UART0, "Cursors at home\n");
 
 	lcdc_send_data_line(&lcd_one, 0, (uint8_t*)"Techno-Innov", 12);
 	lcdc_send_data_line(&lcd_two, 1, (uint8_t*)"Techno-Innov", 12);

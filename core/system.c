@@ -137,6 +137,12 @@ void subsystem_power(uint32_t power_bit, uint32_t on_off)
 		sys_config->sys_AHB_clk_ctrl &= ~(power_bit);
 	}
 }
+/* Check whether a subsystem is powered or not */
+uint8_t subsystem_powered(uint32_t power_bit)
+{
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
+	return (sys_config->sys_AHB_clk_ctrl & power_bit);
+}
 
 /***************************************************************************** */
 /*                      System Clock                                           */

@@ -46,6 +46,8 @@ void enter_deep_sleep(void);
 
 /* Power on or off a subsystem */
 void subsystem_power(uint32_t power_bit, uint32_t on_off);
+/* Check whether a subsystem is powered or not */
+uint8_t subsystem_powered(uint32_t power_bit);
 
 /* Configure the brown-out detection.
  * Note: Brown-Out detection must be powered to operate the ADC (See Section 19.2

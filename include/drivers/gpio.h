@@ -68,6 +68,12 @@ struct lpc_gpio
 /***************************************************************************** */
 /*   Public access to GPIO setup   */
 
+enum gpio_ports {
+	GPIO_PORT0 = 0,
+	GPIO_PORT1,
+	GPIO_PORT2,
+};
+
 #define GPIO_DIR_IN 0
 #define GPIO_DIR_OUT 1
 

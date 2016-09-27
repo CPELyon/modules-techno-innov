@@ -65,7 +65,7 @@ void epaper_config(struct epaper_definition* ep_def)
 	config_gpio(&(epd->pin_spi_cs), LPC_IO_MODE_PULL_UP, GPIO_DIR_OUT, 1);
 
 	/* PWM Timer configuration */
-	timer_setup(epd->pwm_timer_num, &(epd->pwm_timer_conf));
+	timer_pwm_config(epd->pwm_timer_num, &(epd->pwm_timer_conf));
 }
 
 

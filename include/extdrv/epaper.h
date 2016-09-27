@@ -49,7 +49,7 @@ struct epaper_definition
 	uint16_t stage_time;
 	uint8_t spi_num;
 	uint8_t pwm_timer_num;
-	struct timer_config pwm_timer_conf;
+	struct lpc_timer_pwm_config pwm_timer_conf;
 	/* Input pin */
 	struct pio pin_busy;
 	/* Output pins */
@@ -71,7 +71,7 @@ enum epaper_stages {  /* mage pixel -> Display pixel */
 
 /*
  * Configure all gpio used for e-paper display handling
- * Also calls timer_setup()
+ * Also calls timer_pwm_config()
  * Keeps a pointer to the epaper_definition structure, which MUST stay available.
  */
 void epaper_config(struct epaper_definition* epd);

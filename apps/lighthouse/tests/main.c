@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/dev_usb/main.c
+ *   apps/lighthouse/tests/main.c
  *
  * sub1G_module support code - USB version
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -88,18 +85,15 @@ const struct pio status_led_green = LPC_GPIO_1_1;
 const struct pio status_led_red = LPC_GPIO_1_2;
 
 
-#define ADC_EXT1  LPC_ADC_NUM(1)
-#define ADC_EXT2  LPC_ADC_NUM(2)
+#define ADC_EXT1  LPC_ADC(1)
+#define ADC_EXT2  LPC_ADC(2)
 
 /***************************************************************************** */
 void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
+	system_brown_out_detection_config(0); /* No ADC used */
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -117,10 +111,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -160,7 +151,7 @@ void rf_config(void)
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
 
 #ifdef DEBUG
-	uprintf(0, "CC1101 RF link init done.\r\n");
+	uprintf(UART0, "CC1101 RF link init done.\n");
 #endif
 }
 
@@ -206,8 +197,8 @@ void handle_rf_rx_data(void)
 	data[3] = ((data[3] - '0') * 20);
 	data[4] = ((data[4] - '0') * 20);
 #ifdef DEBUG
-	uprintf(0, "RF: ret:%d, st: %d.\n", ret, status);
-	uprintf(0, "Color(%d) : %d,%d,%d.\n", led, data[2], data[3], data[4]);
+	uprintf(UART0, "RF: ret:%d, st: %d.\n", ret, status);
+	uprintf(UART0, "Color(%d) : %d,%d,%d.\n", led, data[2], data[3], data[4]);
 #endif
 
 	ws2812_set_pixel(led++, data[2], data[3], data[4]);
@@ -258,15 +249,16 @@ void send_uart_to_rf(void)
 	ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
 
 #ifdef DEBUG
-	uprintf(0, "Tx ret: %d\r\n", ret);
+	uprintf(UART0, "Tx ret: %d\n", ret);
 #endif
 }
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, handle_uart_cmd);
+	uart_on(UART0, 115200, handle_uart_cmd);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 	status_led_config(&status_led_green, &status_led_red);
 

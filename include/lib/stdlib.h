@@ -28,7 +28,7 @@
  * Does not check that the base is respected aside for the use of letters in
  *   number representation.
  */
-uint32_t strtoul(uint8_t* str, uint8_t base);
+uint32_t strtoul(const char* str, char** end, uint8_t base);
 
 #endif /* LIB_STDLIB_H */
 

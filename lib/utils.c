@@ -31,12 +31,15 @@
  * instructions.
  */
 
+
+
 /* Count leading zeroes
- * The following function is an effitient way to implement __builtin_clz().
+ * The following function is an efficient way to implement __builtin_clz(),
+ * or at least a good compromize between memory usage and speed.
  */
 uint8_t clz(uint32_t x)
 {
-	static const uint8_t bval[] = {0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4};
+	static const uint8_t bval_clz[] = {0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4};
 	unsigned int r = 32;
 	if (x >= 0x10000) { /* Quicker than (x & 0xFFFF0000) on a 32bit arm arch */
 		r -= 16;
@@ -50,15 +53,16 @@ uint8_t clz(uint32_t x)
 		r -= 4;
 		x >>= 4;
 	}
-	return r - bval[x];
+	return r - bval_clz[x];
 }
 
 /* Count traling zeroes
- * The following function is an effitient way to implement __builtin_ctz().
+ * The following function is an efficient way to implement __builtin_ctz(),
+ * or at least a good compromize between memory usage and speed.
  */
 uint8_t ctz(uint32_t x)
 {
-	static const uint8_t bval[] = {4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0};
+	static const uint8_t bval_ctz[] = {4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0};
 	unsigned int r = 0;
 	if (x & 0x1) {
 		/* special case for odd value (assumed to happen half of the time) */
@@ -76,5 +80,26 @@ uint8_t ctz(uint32_t x)
 		r += 4;
 		x >>= 4;
 	}
-	return r + bval[(x & 0x0F)];
+	return r + bval_ctz[(x & 0x0F)];
+}
+
+
+
+/*
+ * Count bits set
+ */
+uint8_t bits_set(uint32_t x)
+{
+	static const uint8_t bval_bsets[] = {0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4};
+	uint8_t r = 0; /* Accumulator for the total bits set in x */
+
+	r = bval_bsets[x & 0xFF];
+	x >>= 8;
+	r += bval_bsets[x & 0xFF];
+	x >>= 8;
+	r += bval_bsets[x & 0xFF];
+	x >>= 8;
+	r += bval_bsets[x & 0xFF];
+
+	return r;
 }

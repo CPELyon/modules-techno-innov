@@ -48,5 +48,11 @@ uint8_t clz(uint32_t x);
  */
 uint8_t ctz(uint32_t x);
 
+/*
+ * Count bits set
+ */
+uint8_t bits_set(uint32_t x);
+
+
 #endif /* LIB_UTILS_H */
 

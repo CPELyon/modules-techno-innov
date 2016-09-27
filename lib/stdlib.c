@@ -26,7 +26,7 @@
  * Does not check that the base is respected aside for the use of letters in
  *   number representation.
  */
-uint32_t strtoul(uint8_t* str, uint8_t base)
+uint32_t strtoul(const char* str, char** end, uint8_t base)
 {
 	uint32_t val = 0;
 	while (*str != '\0') {
@@ -46,6 +46,9 @@ uint32_t strtoul(uint8_t* str, uint8_t base)
 			continue;
 		}
 		break;
+	}
+	if (end != NULL) {
+		*end = (char*)str;
 	}
 	return val;
 }

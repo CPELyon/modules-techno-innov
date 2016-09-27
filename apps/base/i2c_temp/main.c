@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/i2c_temp/main.c
+ *   apps/base/i2c_temp/main.c
  *
  * TMP101 I2C temperature sensor example
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/i2c.h"
 #include "drivers/serial.h"
@@ -58,8 +55,9 @@ const struct pio_config common_pins[] = {
 	ARRAY_LAST_PIO,
 };
 
-#define TMP101_ADDR  0x94
+#define TMP101_ADDR  0x94  /* Pin Addr0 (pin5 of tmp101) connected to VCC */
 struct tmp101_sensor_config tmp101_sensor = {
+	.bus_num = I2C0,
 	.addr = TMP101_ADDR,
 	.resolution = TMP_RES_ELEVEN_BITS,
 };
@@ -77,7 +75,7 @@ void WAKEUP_Handler(void)
 {
 }
 
-void temp_config(uint8_t addr, int uart_num)
+void temp_config(int uart_num)
 {
 	int ret = 0;
 
@@ -88,21 +86,21 @@ void temp_config(uint8_t addr, int uart_num)
 	/* Temp sensor */
 	ret = tmp101_sensor_config(&tmp101_sensor);
 	if (ret != 0) {
-		serial_write(uart_num, "Temp config error\r\n", 19);
+		uprintf(uart_num, "Temp config error: %d\n", ret);
 	}
 }
 
-void temp_display(uint8_t addr, int uart_num)
+void temp_display(int uart_num)
 {
 	uint16_t raw = 0;
 	int deci_degrees = 0;
-	int len = 0;
+	int ret = 0;
 
 	tmp101_sensor_start_conversion(&tmp101_sensor);
 	msleep(250); /* Wait for the end of the conversion : 40ms */
-	len = tmp101_sensor_read(&tmp101_sensor, &raw, &deci_degrees);
-	if (len != 0) {
-		serial_write(uart_num, "Temp read error\r\n", 19);
+	ret = tmp101_sensor_read(&tmp101_sensor, &raw, &deci_degrees);
+	if (ret != 0) {
+		uprintf(uart_num, "Temp read error: %d\n", ret);
 	} else {
 		uprintf(uart_num, "Temp read: %d,%d - raw: 0x%04x.\r\n",
 				(deci_degrees/10), (deci_degrees%10), raw);
@@ -115,10 +113,7 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
+	system_brown_out_detection_config(0); /* No ADC used */
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -134,31 +129,32 @@ void system_init()
  * will be used when it's not overridden here.
  * Note : The default one does a simple infinite loop. If the watchdog is deactivated
  * the system will hang.
+ * An alternative would be to perform soft reset of the micro-controller.
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(1, name, len);
-	/* Wait for end of Tx */
-	serial_flush(1);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, NULL);
+	uart_on(UART0, 115200, NULL);
 
-	i2c_on(I2C_CLK_100KHz);
+	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
+
+	uprintf(UART0, "Ici\n");
 
 	/* Configure onboard temp sensor */
-	temp_config(TMP101_ADDR, 0);
+	temp_config(UART0);
 
 	while (1) {
 		chenillard(250);
-		temp_display(TMP101_ADDR, 0);
+		temp_display(UART0);
 	}
 	return 0;
 }

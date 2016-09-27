@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/dev_usb/main.c
+ *   apps/rf_sub1G/temp_sensor/main.c
  *
  * sub1G_module support code - USB version
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
 #include "drivers/ssp.h"
@@ -97,19 +94,15 @@ const struct pio status_led_red = LPC_GPIO_0_29;
 static struct dtplug_protocol_handle uart_handle;
 
 
-#define ADC_VBAT  LPC_ADC_NUM(0)
-#define ADC_EXT1  LPC_ADC_NUM(1)
-#define ADC_EXT2  LPC_ADC_NUM(2)
+#define ADC_VBAT  LPC_ADC(0)
+#define ADC_EXT1  LPC_ADC(1)
+#define ADC_EXT2  LPC_ADC(2)
 
 /***************************************************************************** */
 void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -127,10 +120,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -139,12 +129,14 @@ void fault_info(const char* name, uint32_t len)
 void rgb_config(void)
 {
 	/* Timer configuration */
-	struct timer_config timer_conf = {
-		.mode = LPC_TIMER_MODE_PWM,
-		.config = { (LPC_PWM_CHANNEL_ENABLE(0) | LPC_PWM_CHANNEL_ENABLE(1) | LPC_PWM_CHANNEL_ENABLE(2)), 3, 0, 0 },
-		.match = { 20, 125, 180, 180 },
+	struct lpc_timer_pwm_config timer_conf = {
+		.nb_channels = 3,
+		.period_chan = 3,
+		.period = 180,
+		.outputs = { 0, 1, 2, },
+		.match_values = { 20, 125, 180, },
 	};
-	timer_setup(LPC_TIMER_32B1, &timer_conf);
+	timer_pwm_config(LPC_TIMER_32B1, &timer_conf);
 
 	/* Start the timer */
 	timer_start(LPC_TIMER_32B1);
@@ -158,13 +150,15 @@ void WAKEUP_Handler(void)
 {
 }
 
-#define TMP101_ADDR_00  0x90
-#define TMP101_ADDR_01  0x94
+#define TMP101_ADDR_00  0x90 /* Pin Addr0 (pin5 of tmp101) connected to GND */
+#define TMP101_ADDR_01  0x94 /* Pin Addr0 connected to VCC */
 struct tmp101_sensor_config tmp101_sensor_0 = {
+	.bus_num = I2C0,
 	.addr = TMP101_ADDR_00,
 	.resolution = TMP_RES_ELEVEN_BITS,
 };
 struct tmp101_sensor_config tmp101_sensor_1 = {
+	.bus_num = I2C0,
 	.addr = TMP101_ADDR_01,
 	.resolution = TMP_RES_ELEVEN_BITS,
 };
@@ -179,11 +173,11 @@ void temp_config()
 	/* Temp sensor */
 	ret = tmp101_sensor_config(&tmp101_sensor_0);
 	if (ret != 0) {
-		uprintf(0, "Temp config error on sensor 0 (%d)\n", tmp101_sensor_0.addr);
+		uprintf(UART0, "Temp config error on sensor 0 (%d)\n", tmp101_sensor_0.addr);
 	}
 	ret = tmp101_sensor_config(&tmp101_sensor_1);
 	if (ret != 0) {
-		uprintf(0, "Temp config error on sensor 1 (%d)\n", tmp101_sensor_1.addr);
+		uprintf(UART0, "Temp config error on sensor 1 (%d)\n", tmp101_sensor_1.addr);
 	}
 }
 
@@ -226,7 +220,7 @@ void handle_uart_commands(struct packet* command)
 		case PKT_TYPE_START_ADC_CONVERSION:
 			if (channel <= ADC_EXT2) {
 				/* Start an ADC conversion on selected ADC channel */
-				adc_start_convertion_once(channel, 0);
+				adc_start_convertion_once(channel, LPC_ADC_SEQ(0), 0);
 			} else {
 				dtplug_protocol_send_reply(&uart_handle, command, ERROR_IN_DATA_VALUES, 0, NULL);
 			}
@@ -239,7 +233,7 @@ void handle_uart_commands(struct packet* command)
 			}
 			break;
 		default:
-			uprintf(0, "Unknown packet type : packet not handled\n");
+			uprintf(UART0, "Unknown packet type : packet not handled\n");
 			dtplug_protocol_send_reply(&uart_handle, command, ERROR_PKT_NOT_HANDLED, 0, NULL);
 			break;
 	}
@@ -248,10 +242,11 @@ void handle_uart_commands(struct packet* command)
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	i2c_on(I2C_CLK_100KHz);
-	adc_on();
+	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
+	adc_on(NULL);
 	status_led_config(&status_led_green, &status_led_red);
 	timer_on(LPC_TIMER_32B1, 0, NULL);
 	dtplug_protocol_set_dtplug_comm_uart(0, &uart_handle);

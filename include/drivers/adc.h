@@ -33,53 +33,58 @@
  * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
-enum adc_events {
-	/* CT32B0 */
-	ADC_CONV_ON_CT32B0_CAP0_RISING,
-	ADC_CONV_ON_CT32B0_CAP0_FALLING,
-	ADC_CONV_ON_CT32B0_MAT0_RISING,
-	ADC_CONV_ON_CT32B0_MAT0_FALLING,
-	ADC_CONV_ON_CT32B0_MAT1_RISING,
-	ADC_CONV_ON_CT32B0_MAT1_FALLING,
-	/* CT16B0 */
-	ADC_CONV_ON_CT16B0_CAP0_RISING,
-	ADC_CONV_ON_CT16B0_CAP0_FALLING,
-	ADC_CONV_ON_CT16B0_MAT0_RISING,
-	ADC_CONV_ON_CT16B0_MAT0_FALLING,
-	ADC_CONV_ON_CT16B0_MAT1_RISING,
-	ADC_CONV_ON_CT16B0_MAT1_FALLING,
-};
+#define NB_ADC_CHANNELS  8
+#define NB_ADC_SEQUENCES 1
+
+#define LPC_ADC_SEQ(x)  0
 
 
-/* Read the conversion from the given channel (0 to 7)
+/* Read the conversion from the given channel
  * This function reads the conversion value directly in the data register and
  * always returns a value.
- * Return 1 if the value is a new one, else return 0.
- * Return -1 if channel does not exist
+ * Return 0 if the value is a new one and no overrun occured.
+ * Return -EINVAL if channel does not exist
+ * Retuen 1 if the value is an old one
+ * Return 2 if an overrun occured
  */
-int adc_get_value(uint16_t * val, int channel);
+int adc_get_value(uint16_t * val, uint8_t channel);
 
 /* Start a conversion on the given channel (0 to 7)
  * Unsupported yet : Set use_int to 1 to have your interrupt callback called upon conversion done.
  */
-void adc_start_convertion_once(unsigned int channel, int use_int);
+void adc_start_convertion_once(uint8_t channel, uint8_t seq_num, uint8_t use_int);
 
 /* Start burst conversions.
  * channels is a bit mask of requested channels.
- * Use LPC_ADC_CHANNEL(x) (x = 0 .. 7) for channels selection.
+ * Use ADC_MCH(x) (x = 0 .. 7) for channels selection.
  */
-void adc_start_burst_conversion(uint8_t channels);
+void adc_start_burst_conversion(uint16_t channels, uint8_t seq_num);
+void adc_stop_burst_conversion(uint8_t seq_num);
 
+
+enum lpc_adc_start_conv_events {
+	LPC_ADC_START_CONV_EDGE_CT16B0_CAP0 = 2,
+	LPC_ADC_START_CONV_EDGE_CT32B0_CAP0,
+	LPC_ADC_START_CONV_EDGE_CT32B0_MAT0,
+	LPC_ADC_START_CONV_EDGE_CT32B0_MAT1,
+	LPC_ADC_START_CONV_EDGE_CT16B0_MAT0,
+	LPC_ADC_START_CONV_EDGE_CT16B0_MAT1,
+};
 /* This should be used to configure conversion start on falling or rising edges of
  * some signals, or on timer for burst conversions.
  */
-void adc_prepare_conversion_on_event(uint8_t channels, uint8_t event, int use_int);
+void adc_prepare_conversion_on_event(uint16_t channels, uint8_t seq_num, uint8_t event,
+										uint8_t use_int, uint32_t mode);
+
+/* Software trigger of the given configured sequence.
+ * Note : If the sequence was configured for triggering on an external event, it won't be anymore.
+ */
+void adc_trigger_sequence_conversion(uint8_t seq_num);
 
 
 /***************************************************************************** */
 /*   ADC Setup : private part : Clocks, Pins, Power and Mode   */
-void adc_clk_update(void);
-void adc_on(void);
+void adc_on(void (*adc_callback)(uint32_t));
 void adc_off(void);
 
 

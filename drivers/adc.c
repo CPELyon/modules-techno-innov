@@ -1,7 +1,7 @@
 /****************************************************************************
  *  drivers/adc.c
  *
- * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
+ * Copyright 2012-2016 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,37 +33,38 @@
 #include "drivers/adc.h"
 
 /* Should be as near to 9MHz as possible */
-#define adc_clk_Val  9000000
+#define adc_clk_Val  (9 * 1000 * 1000)
 
 
 
 /***************************************************************************** */
 /* Generic ADC handler */
+void (*adc_int_callback)(uint32_t) = NULL;
 void ADC_Handler(void)
 {
-/*
-	volatile struct lpc_adc* adc = LPC_ADC;
+	volatile struct lpc_adc* adc = LPC_ADC_REGS;
 	uint32_t status = adc->status;
-*/
-	/* .... What to do ... is specific to your application */
-	/* FIXME : Add an handler callback. */
+
+	if (adc_int_callback != NULL) {
+		adc_int_callback(status);
+	}
 }
 
 /* Read the conversion from the given channel (0 to 7) 
  * This function reads the conversion value directly in the data register and
  * always returns a value.
  * Return 0 if the value is a new one and no overrun occured.
- * Return -1 if channel does not exist
+ * Return -EINVAL if channel does not exist
  * Retuen 1 if the value is an old one
  * Return 2 if an overrun occured
  */
-int adc_get_value(uint16_t * val, int channel)
+int adc_get_value(uint16_t * val, uint8_t channel)
 {
-	struct lpc_adc* adc = LPC_ADC;
+	struct lpc_adc* adc = LPC_ADC_REGS;
 	uint32_t save_reg = 0;
 
-	if (channel > 7)
-		return -1;
+	if (channel >= NB_ADC_CHANNELS)
+		return -EINVAL;
 
 	/* Save the whole register as some bits are cleared when register is read */
 	save_reg = adc->data[channel];
@@ -79,24 +80,24 @@ int adc_get_value(uint16_t * val, int channel)
 }
 
 /* Start a conversion on the given channel (0 to 7) */
-void adc_start_convertion_once(unsigned int channel, int use_int)
+void adc_start_convertion_once(uint8_t channel, uint8_t seq_num, uint8_t use_int)
 {
-	struct lpc_adc* adc = LPC_ADC;
+	struct lpc_adc* adc = LPC_ADC_REGS;
 	uint32_t reg_val = 0;
 
-	if (channel > 7)
+	if (channel >= NB_ADC_CHANNELS)
 		return;
 
 	/* Get a clean control register */
-	reg_val = adc->ctrl & ~(LPC_ADC_CHANNEL_MASK | LPC_ADC_START_CONV_MASK | LPC_ADC_BURST);
+	reg_val = adc->ctrl & ~(ADC_MCH_MASK | LPC_ADC_START_CONV_MASK | LPC_ADC_BURST);
 
 	/* Set conversion channel bit */
-	reg_val |= LPC_ADC_CHANNEL(channel);
+	reg_val |= ADC_MCH(channel);
 
 	/*  Use of interrupts for the specified channel ? */
 	if (use_int) {
 		/* Set interrupt Bit */
-		adc->int_en = LPC_ADC_CHANNEL(channel);
+		adc->int_en = ADC_MCH(channel);
 	} else {
 		adc->int_en = 0;
 	}
@@ -109,15 +110,15 @@ void adc_start_convertion_once(unsigned int channel, int use_int)
 
 /* Start burst conversions.
  * channels is a bit mask of requested channels.
- * Use LPC_ADC_CHANNEL(x) (x = 0 .. 7) for channels selection.
+ * Use ADC_MCH(x) (x = 0 .. 7) for channels selection.
  */
-void adc_start_burst_conversion(uint8_t channels)
+void adc_start_burst_conversion(uint16_t channels, uint8_t seq_num)
 {
-	struct lpc_adc* adc = LPC_ADC;
+	struct lpc_adc* adc = LPC_ADC_REGS;
 	uint32_t reg_val = 0;
 
 	/* Get a clean control register */
-	reg_val = adc->ctrl & ~(LPC_ADC_CHANNEL_MASK | LPC_ADC_START_CONV_MASK | LPC_ADC_BURST);
+	reg_val = adc->ctrl & ~(ADC_MCH_MASK | LPC_ADC_START_CONV_MASK | LPC_ADC_BURST);
 
 	/* Set conversion channel bits and burst mode */
 	reg_val |= channels;
@@ -132,31 +133,28 @@ void adc_start_burst_conversion(uint8_t channels)
 	adc->ctrl = (reg_val & LPC_ADC_CTRL_MASK);
 }
 
+void adc_stop_burst_conversion(uint8_t seq_num)
+{
+}
+
 
 /* This should be used to configure conversion start on falling or rising edges of
  * some signals, or on timer for burst conversions.
  */
-void adc_prepare_conversion_on_event(uint8_t channels, uint8_t event, int use_int)
+void adc_prepare_conversion_on_event(uint16_t channels, uint8_t seq_num, uint8_t event,
+										uint8_t use_int, uint32_t mode)
 {
-	struct lpc_adc* adc = LPC_ADC;
+	struct lpc_adc* adc = LPC_ADC_REGS;
 	uint32_t reg_val = 0;
 
 	/* Get a clean control register */
-	reg_val = adc->ctrl & ~(LPC_ADC_CHANNEL_MASK | LPC_ADC_START_CONV_MASK | LPC_ADC_BURST);
+	reg_val = adc->ctrl & ~(ADC_MCH_MASK | LPC_ADC_START_CONV_MASK | LPC_ADC_BURST);
 	/* Set conversion channel bits and burst mode */
-	reg_val |= channels;
+	reg_val |= (channels & ADC_MCH_MASK);
 	/* Set conversion condition bits */
-	switch (event) {
-		case ADC_CONV_ON_CT32B0_MAT0_RISING :
-			reg_val |= LPC_ADC_START_CONV_EVENT(LPC_ADC_START_CONV_EDGE_CT32B0_MAT0);
-			reg_val |= LPC_ADC_START_EDGE_RISING;
-			break;
-		case ADC_CONV_ON_CT16B0_MAT0_RISING :
-			reg_val |= LPC_ADC_START_CONV_EVENT(LPC_ADC_START_CONV_EDGE_CT16B0_MAT0);
-			reg_val |= LPC_ADC_START_EDGE_RISING;
-			break;
-		default:
-			break;
+	reg_val |= LPC_ADC_START_CONV_EVENT(event);
+	if (mode != 0) {
+		reg_val |= (mode & LPC_ADC_ADDITIONAL_MODE_MASK);
 	}
 
 	/*  Use of interrupts for the specified channel ? */
@@ -171,13 +169,22 @@ void adc_prepare_conversion_on_event(uint8_t channels, uint8_t event, int use_in
 }
 
 
+/* Software trigger of the given configured sequence */
+void adc_trigger_sequence_conversion(uint8_t seq_num)
+{
+	struct lpc_adc* adc = LPC_ADC_REGS;
+
+	adc->ctrl &= ~(LPC_ADC_START_CONV_MASK);
+	adc->ctrl |= LPC_ADC_START_CONV_NOW;
+}
+
 
 /***************************************************************************** */
 /*   ADC Setup : private part : Clocks, Power and Mode   */
 
 void adc_clk_update(void)
 {
-	struct lpc_adc* adc = LPC_ADC;
+	struct lpc_adc* adc = LPC_ADC_REGS;
 	uint32_t main_clock = get_main_clock();
 	uint32_t clkdiv = 0;
 
@@ -187,10 +194,10 @@ void adc_clk_update(void)
 }
 
 
-void adc_on(void)
+void adc_on(void (*adc_callback)(uint32_t))
 {
 	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
-	struct lpc_adc* adc = LPC_ADC;
+	struct lpc_adc* adc = LPC_ADC_REGS;
 
 	/* Disable ADC Interrupt */
 	NVIC_DisableIRQ(ADC_IRQ);
@@ -210,6 +217,8 @@ void adc_on(void)
 
 	/* Remove the default global interrupt enabled setting */
 	adc->int_en = 0;
+	/* Register a possible calback */
+	adc_int_callback = adc_callback;
 
 	/* Enable ADC Interrupt */
 	NVIC_EnableIRQ(ADC_IRQ);
@@ -221,6 +230,8 @@ void adc_off(void)
 
 	/* Disable ADC Interrupt */
 	NVIC_DisableIRQ(ADC_IRQ);
+	/* Remove callback */
+	adc_int_callback = NULL;
 	/* Power Down ADC */
 	sys_config->powerdown_run_cfg |= LPC_POWER_DOWN_ADC;
 	/* Remove clock from ADC block */

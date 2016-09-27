@@ -24,9 +24,18 @@
 /*                Timers                                                       */
 /***************************************************************************** */
 
-/* Timers driver for the integrated timers of the LPC1224.
- * The LPC1224 Has two 16bits timers and 2 32bits timers.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* Driver for the different kinds of timers available in the LPC122x
+ *
+ * This inludes :
+ * - 32 bits Timers driver
+ *   The LPC122x has two 32 bits Timer.
+ * - 16 bits Timers driver
+ *   The LPC122x has two 16 bits Timer.
+ *
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
+ *
+ * All common functions are available using a common interface. Only specific
+ * functions have a specific interface, described in separate headers files.
  */
 
 
@@ -36,232 +45,171 @@
 
 
 /* These are local to our file */
-struct timer_device
-{
- 	struct lpc_timer* regs;
-	uint32_t power_bit;
-	uint32_t irq;
-	void (*callback)(uint32_t); /* Possible RX callback */
-};
-static struct timer_device timer_devices[NUM_TIMERS] = {
-	{ LPC_TMR16B0, LPC_SYS_ABH_CLK_CTRL_CT16B0, TIMER0_IRQ }, 
-	{ LPC_TMR16B1, LPC_SYS_ABH_CLK_CTRL_CT16B1, TIMER1_IRQ },
-	{ LPC_TMR32B0, LPC_SYS_ABH_CLK_CTRL_CT32B0, TIMER2_IRQ },
-	{ LPC_TMR32B1, LPC_SYS_ABH_CLK_CTRL_CT32B1, TIMER3_IRQ },
+struct timer_device {
+	uint8_t num;
+	struct common_operations* ops;
+	struct config_operations* cfg_ops;
+	struct init_operations* init_ops;
 };
 
 
+/* 32 bits and 16 bits Counter Timers */
+extern struct common_operations countertimer_ops;
+extern struct config_operations countertimer_cfg_ops;
+extern struct init_operations countertimer_init_ops;
 
-/* Handlers */
-void TIMER_Handler(struct timer_device* timer)
-{
-	uint32_t intr_flags = timer->regs->int_reg; /* Backup the flags */
 
-	/* Clear the interrupt */
-	timer->regs->int_reg = intr_flags;
-	/* And call the user routine if one has been registered */
-	if (timer->callback != NULL) {
-		timer->callback(intr_flags);
+struct timer_device timers[NUM_TIMERS] = {
+	{
+		.num = LPC_TIMER_16B0,
+		.ops = &countertimer_ops,
+		.cfg_ops = &countertimer_cfg_ops,
+		.init_ops = &countertimer_init_ops,
+	},
+	{
+		.num = LPC_TIMER_16B1,
+		.ops = &countertimer_ops,
+		.cfg_ops = &countertimer_cfg_ops,
+		.init_ops = &countertimer_init_ops,
+	},
+	{
+		.num = LPC_TIMER_32B0,
+		.ops = &countertimer_ops,
+		.cfg_ops = &countertimer_cfg_ops,
+		.init_ops = &countertimer_init_ops,
+	},
+	{
+		.num = LPC_TIMER_32B1,
+		.ops = &countertimer_ops,
+		.cfg_ops = &countertimer_cfg_ops,
+		.init_ops = &countertimer_init_ops,
+	},
+};
+
+
+/*******************************************************************************/
+/* Wrappers to common functions */
+
+#define GENERIC_TIMER_OPS(name) \
+	void timer_ ## name(uint8_t timer_num) \
+	{ \
+		if (timer_num >= NUM_TIMERS) \
+			return; \
+		if (timers[timer_num].ops && timers[timer_num].ops->name) { \
+			timers[timer_num].ops->name(timer_num); \
+		} \
 	}
-}
-void TIMER_0_Handler(void)
-{
-	TIMER_Handler(&timer_devices[0]);
-}
-void TIMER_1_Handler(void)
-{
-	TIMER_Handler(&timer_devices[1]);
-}
-void TIMER_2_Handler(void)
-{
-	TIMER_Handler(&timer_devices[2]);
-}
-void TIMER_3_Handler(void)
-{
-	TIMER_Handler(&timer_devices[3]);
-}
+
+/* Start a timer */
+GENERIC_TIMER_OPS(start);
+/* Pause timer operation */
+GENERIC_TIMER_OPS(pause);
+/* Continue timer operation when the timer got paused */
+GENERIC_TIMER_OPS(cont);
+/* Reset the timer and let it count again imediately */
+GENERIC_TIMER_OPS(restart);
+/* Stop timer counting and reset timer counter to reload value / initial state */
+GENERIC_TIMER_OPS(stop);
+/* Same as stop */
+GENERIC_TIMER_OPS(halt);
 
 
-
-/* Start the timer :
- * Remove the reset flag if present and set timer enable flag.
- * Timer must be turned on and configured (no checks done here).
+/* Get the current counter value
+ * Return 0 if the value is valid.
  */
-void timer_start(uint32_t timer_num)
+int timer_get_counter_val(uint8_t timer_num, uint32_t* val)
 {
 	if (timer_num >= NUM_TIMERS)
-		return;
-	/* Remove reset flag and set timer enable flag */
-	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_ENABLE;
-}
-void timer_continue(uint32_t timer_num) __attribute__ ((alias ("timer_start")));
-/* Pause the timer counter, does not reset */
-void timer_pause(uint32_t timer_num)
-{
-	if (timer_num >= NUM_TIMERS)
-		return;
-	/* Remove timer enable flag */
-	timer_devices[timer_num].regs->timer_ctrl = 0;
-}
-/* Stops and resets the timer counter */
-void timer_stop(uint32_t timer_num)
-{
-	if (timer_num >= NUM_TIMERS)
-		return;
-	/* Remove timer enable flag and request reset */
-	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_RESET;
-	/* Remove reset flag */
-	timer_devices[timer_num].regs->timer_ctrl = 0;
-}
-/* Resets the timer and lets it count again imediately */
-void timer_restart(uint32_t timer_num)
-{
-	if (timer_num >= NUM_TIMERS)
-		return;
-	/* Set timer reset flag */
-	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_RESET;
-	/* Remove reset flag and start counter */
-	timer_devices[timer_num].regs->timer_ctrl = LPC_TIMER_COUNTER_ENABLE;
+		return -EINVAL;
+	if (timers[timer_num].ops && timers[timer_num].ops->get_counter) {
+		return timers[timer_num].ops->get_counter(timer_num, val);
+	}
+	return -ENODEV;
 }
 
-uint32_t timer_get_capture_val(uint32_t timer_num, uint32_t channel)
+
+/* Get the value of the timer when the capture event last triggered
+ * Return 0 if the value is valid.
+ */
+int timer_get_capture_val(uint8_t timer_num, uint8_t channel, uint32_t* val)
 {
 	if (timer_num >= NUM_TIMERS)
-		return 0;
-	/* FIXME */
-	return 0;
+		return -EINVAL;
+	if (timers[timer_num].ops && timers[timer_num].ops->get_capture) {
+		return timers[timer_num].ops->get_capture(timer_num, channel, val);
+	}
+	return -ENODEV;
 }
-uint32_t timer_get_counter_val(uint32_t timer_num)
-{
-	if (timer_num >= NUM_TIMERS)
-		return 0;
-	return timer_devices[timer_num].regs->timer_counter;
-}
+
 
 /* Change the match value of a single timer channel */
-void timer_set_match(uint32_t timer_num, uint32_t channel, uint32_t val)
+int timer_set_match(uint8_t timer_num, uint8_t channel, uint32_t val)
 {
 	if (timer_num >= NUM_TIMERS)
-		return;
-	if (channel > 3)
-		return;
-
-	timer_devices[timer_num].regs->match_reg[channel] = val;
+		return -EINVAL;
+	if (timers[timer_num].ops && timers[timer_num].ops->set_match) {
+		return timers[timer_num].ops->set_match(timer_num, channel, val);
+	}
+	return -ENODEV;
 }
 
 
-/***************************************************************************** */
-/*   Timer Setup */
-/* Returns 0 on success
- * Takes a timer number and a timer config structure as arguments.
- * Refer to timer config structure for details.
+/*******************************************************************************/
+/* Configuration */
+
+/* Configure the timer as PWM. Call to timer-specific function */
+int timer_pwm_config(uint8_t timer_num, const struct lpc_timer_pwm_config* conf)
+{
+	if (timer_num >= NUM_TIMERS)
+		return -EINVAL;
+	if (timers[timer_num].cfg_ops && timers[timer_num].cfg_ops->pwm_config) {
+		return timers[timer_num].cfg_ops->pwm_config(timer_num, conf);
+	}
+	return -ENODEV;
+}
+
+
+/* Timer Setup in timer or counter mode, with optionnal capture and match configuration
+ * Takes a timer number and a timer counter config structure as arguments.
+ * Returns 0 on success
  */
-int timer_setup(uint32_t timer_num, const struct timer_config* conf)
+int timer_counter_config(uint8_t timer_num, const struct lpc_tc_config* conf)
 {
-	struct timer_device* timer = NULL;
-	int i = 0;
 	if (timer_num >= NUM_TIMERS)
-		return -ENODEV;
-	timer = &(timer_devices[timer_num]);
-
-	/* Configure the reset on capture functionality */
-	if (conf->reset_on_capture != 0x00) {
-		timer->regs->count_ctrl = LPC_COUNTER_CLEAR_ON_EVENT_EN;
-		timer->regs->count_ctrl |= ((conf->reset_on_capture & 0x07) << LPC_COUNTER_CLEAR_ON_EVENT_SHIFT);
+		return -EINVAL;
+	if (timers[timer_num].cfg_ops && timers[timer_num].cfg_ops->tc_config) {
+		return timers[timer_num].cfg_ops->tc_config(timer_num, conf);
 	}
-
-	switch (conf->mode) {
-		case LPC_TIMER_MODE_TIMER:
-			timer->regs->capture_ctrl = 0; /* Timer mode ! */
-			timer->regs->count_ctrl = LPC_COUNTER_IS_TIMER;
-			break;
-		case LPC_TIMER_MODE_COUNTER:
-			if ((conf->config[0] & 0x03) == 0x00) {
-				return -EINVAL;
-			}
-			/* Must set capture chanel N config to 0b000 in capture control register,
-			 * (see remarks in user manual UM10441 page 268 section 14.7.11)
-			 * Use the LPC_COUNTER_INC_INPUT(x) set by the user to do so automatically
-			 */
-			timer->regs->capture_ctrl &= ~LPC_TIMER_CAPTURE_ERASE(((conf->config[0] >> LPC_COUNTER_INC_INPUT_SHIFT) & 0x03) * 3);
-			/* Configure the counter */
-			timer->regs->count_ctrl |= (conf->config[0] & 0x0F);
-			break;
-		case LPC_TIMER_MODE_CAPTURE:
-			timer->regs->capture_ctrl = 0;
-			for (i = 0; i < NUM_CHANS; i++) {
-				timer->regs->capture_ctrl |= ((conf->config[i] & 0x07) << LPC_TIMER_CAPTURE_SHIFT(i));
-			}
-			break;
-		case LPC_TIMER_MODE_MATCH:
-			timer->regs->match_ctrl = 0;
-			timer->regs->external_match = 0;
-			for (i = 0; i < NUM_CHANS; i++) {
-				timer->regs->match_ctrl |= ((conf->config[i] & 0x07) << LPC_TIMER_MATCH_SHIFT(i));
-				timer->regs->match_reg[i] = conf->match[i];
-				timer->regs->external_match |= ((conf->ext_match_config[i] & 0x03) << (LPC_TIMER_EXT_MATCH0_SHIFT + i*2));
-			}
-			break;
-		case LPC_TIMER_MODE_PWM:
-			/* Make sure we have a PWM cycle length */
-			if (conf->match[ conf->config[1] ] == 0) {
-				return -EINVAL;
-			}
-			/* Activate selected PWM channels 0 to 3 */
-			timer->regs->pwm_ctrl = (conf->config[0] & 0x0F);
-			timer->regs->match_ctrl &= ~(LPC_TIMER_MATCH_ERASE(conf->config[1]));
-			timer->regs->match_ctrl |= (LPC_TIMER_RESET_ON_MATCH << LPC_TIMER_MATCH_SHIFT(conf->config[1]));
-			for (i = 0; i < NUM_CHANS; i++) {
-				timer->regs->match_reg[i] = conf->match[i];
-			}
-			break;
-		case LPC_TIMER_MODE_PWD:
-			break;
-	}
-	return 0; /* Config OK */
+	return -ENODEV;
 }
 
+/*******************************************************************************/
+/* Init operations */
 
 /* Power up a timer.
- * Note that clkrate should be a divider of the main clock frequency chosed
- *   for your application as it will be used to divide the main clock to get
- *   the prescaler value.
- * Set clkrate to 0 to disable the prescaler.
+ * clkrate is the desired timer clock rate. It will be used to divide the main clock
+ *   to get the timer prescaler value.
+ *   Set clkrate to 0 to disable the prescaler.
+ * callback is the interrupt callback for this timer.
  */
-void timer_on(uint32_t timer_num, uint32_t clkrate, void (*callback)(uint32_t))
+int timer_on(uint8_t timer_num, uint32_t clkrate, void (*callback)(uint32_t))
 {
-	struct timer_device* timer = NULL;
-	uint32_t prescale; /* The clock divider for the counter */
-
 	if (timer_num >= NUM_TIMERS)
-		return;
-	timer = &(timer_devices[timer_num]);
-
-	NVIC_DisableIRQ( timer->irq );
-	/* Power up the timer */
-	subsystem_power(timer->power_bit, 1);
-	/* Reset counter on next PCLK positive edge, and disable counter */
-	timer->regs->timer_ctrl = LPC_TIMER_COUNTER_RESET;
-
-	/* Store the callback, OK even if none given */
-	timer->callback = callback;
-
-	/* Set the prescaler value */
-	if (clkrate == 0) {
-		prescale = 0;
-	} else {
-		prescale = (get_main_clock() / clkrate) - 1;
+		return -EINVAL;
+	if (timers[timer_num].init_ops && timers[timer_num].init_ops->timer_on) {
+		timers[timer_num].init_ops->timer_on(timer_num, clkrate, callback);
 	}
-	timer->regs->prescale = prescale;
-
-	NVIC_EnableIRQ(timer_devices[timer_num].irq);
+	return -ENODEV;
 }
 
 /* Removes the main clock from the selected timer block */
-void timer_off(uint32_t timer_num)
+int timer_off(uint8_t timer_num)
 {
 	if (timer_num >= NUM_TIMERS)
-		return;
-	NVIC_DisableIRQ( timer_devices[timer_num].irq );
-	subsystem_power(timer_devices[timer_num].power_bit, 0);
+		return -EINVAL;
+	if (timers[timer_num].init_ops && timers[timer_num].init_ops->timer_off) {
+		return timers[timer_num].init_ops->timer_off(timer_num);
+	}
+	return -ENODEV;
 }
+

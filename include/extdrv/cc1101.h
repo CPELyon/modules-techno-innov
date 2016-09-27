@@ -267,6 +267,11 @@ void cc1101_set_address(uint8_t address);
  */
 void cc1101_set_channel(uint8_t chan);
 
+/* Enter power down mode
+ * Power down mode is exited by setting the chip select pin low (any access to the CC1101 will do so)
+ */
+void cc1101_power_down(void);
+
 /* Change a configuration byte.
  * This function places the CC1101 chip in idle state.
  */

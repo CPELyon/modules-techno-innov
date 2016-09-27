@@ -389,6 +389,18 @@ void cc1101_set_channel(uint8_t chan)
 	cc1101_write_reg(CC1101_REGS(channel_number), chan);
 }
 
+/* Enter power down mode
+ * Power down mode is exited by setting the chip select pin low (any access to the CC1101 will do so)
+ */
+void cc1101_power_down(void)
+{
+	cc1101_send_cmd(CC1101_CMD(state_idle));
+	msleep(1);
+	cc1101_send_cmd(CC1101_CMD(crystal_off));
+	msleep(1);
+	cc1101_send_cmd(CC1101_CMD(state_power_down));
+}
+
 /* Change a configuration byte.
  * This function places the CC1101 chip in idle state.
  */

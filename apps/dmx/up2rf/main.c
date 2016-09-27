@@ -29,12 +29,9 @@
  * The DMX module uses an ADM2482 isolated RS485 bridge from analog devices.
  */
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -88,10 +85,6 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -111,10 +104,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -161,11 +151,11 @@ void dmx_send_frame(uint8_t start_code, uint8_t* slots, uint16_t nb_slots)
 
 
 	/* Send start code */
-	serial_send_quickbyte(0, start_code);
+	serial_send_quickbyte(UART0, start_code);
 
 	/* And send slots data */
 	while (sent < nb_slots) {
-		int tmp = serial_write(0, (char*)(slots + sent), (nb_slots - sent));
+		int tmp = serial_write(UART0, (char*)(slots + sent), (nb_slots - sent));
 		if (tmp == -1) {
 			break;
 		}
@@ -188,10 +178,10 @@ int main(void)
 
 	system_init();
 	uart_set_config(0, (LPC_UART_8BIT | LPC_UART_NO_PAR | LPC_UART_2STOP));
-	uart_on(0, 250000, rs485_rx); /* FIXME : configure for 250 kbits/s and 8N2 */
-	uart_on(1, 115200, cmd_rx);
+	uart_on(UART0, 250000, rs485_rx); /* FIXME : configure for 250 kbits/s and 8N2 */
+	uart_on(UART1, 115200, cmd_rx);
 	ssp_master_on(thermo.ssp_bus_num, LPC_SSP_FRAME_SPI, 8, 4*1000*1000);
-	adc_on();
+	adc_on(NULL);
 
 	/* RS485 config */
 	if (1) {
@@ -203,26 +193,26 @@ int main(void)
 
 	/* Thermocouple configuration */
 	max31855_sensor_config(&thermo);
-	uprintf(1, "Thermocouple config OK\n");
+	uprintf(UART1, "Thermocouple config OK\n");
 
 	/* Start ADC sampling */
-	adc_start_burst_conversion(LPC_ADC_CHANNEL(1) | LPC_ADC_CHANNEL(2));
+	adc_start_burst_conversion(ADC_MCH(1) | ADC_MCH(2), LPC_ADC_SEQ(0));
 
 	while (1) {
 		uint16_t dmx_val = 0;
 		uint16_t isnail_val = 0;
 
 		/* Send DMX frame */
-		adc_get_value(&dmx_val, LPC_ADC_NUM(2));
+		adc_get_value(&dmx_val, LPC_ADC(2));
 		slots[0] = dmx_val / 4;
 		if (slots[0] > 255) {
 			slots[0] = 255;
 		}
 		dmx_send_frame(0x00, slots, 1);
-		uprintf(1, "DMX: %d\n", slots[0]);
+		uprintf(UART1, "DMX: %d\n", slots[0]);
 		msleep(100);
 
-		adc_get_value(&isnail_val, LPC_ADC_NUM(1));
+		adc_get_value(&isnail_val, LPC_ADC(1));
 		/* Convert to mA value */
 		isnail_val = ((isnail_val * 32) * 2); /* 3.2mV / digit, 50mV -> 1A */
 		/* Store value */
@@ -239,7 +229,7 @@ int main(void)
 			}
 			moyenne = moyenne / NB_VAL;
 			/* Display */
-			uprintf(1, "I: %d,%04d\n", (moyenne / 1000), (moyenne % 1000));
+			uprintf(UART1, "I: %d,%04d\n", (moyenne / 1000), (moyenne % 1000));
 		}
 
 		/* Get thermocouple value */
@@ -247,13 +237,13 @@ int main(void)
 			int centi_degrees = 0, ret = 0;
 			ret = max31855_sensor_read(&thermo, NULL, &centi_degrees);
 			if (ret != 0) {
-				uprintf(1, "Temp read error : %d\n", ret);
+				uprintf(UART1, "Temp read error : %d\n", ret);
 			} else {
 				int abs_centi = centi_degrees;
 				if (centi_degrees < 0) {
 					abs_centi = -centi_degrees;
 				}
-				uprintf(1, "Temp : % 4d.%02d\n", (centi_degrees / 100), (abs_centi % 100));
+				uprintf(UART1, "Temp : % 4d.%02d\n", (centi_degrees / 100), (abs_centi % 100));
 			}
 		}
 	}

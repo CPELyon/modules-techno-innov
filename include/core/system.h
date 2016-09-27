@@ -70,7 +70,7 @@ void system_brown_out_detection_config(uint32_t level);
 #define FREQ_SEL_IRC  FREQ_SEL_12MHz
 
 /* Main clock config
- * We use external crystal and PLL0
+ * We use internal RC and PLL0
  * Note that during PLL lock wait we are running on internal RC
  */
 void clock_config(uint32_t freq_sel);

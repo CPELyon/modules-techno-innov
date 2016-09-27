@@ -12,8 +12,6 @@
  * @author TI CC1101 library developed by Athanassios Mavrogeorgiadis (tmav Electronics)
  *    as template based on TI C8051 SOURCE CODE swrc021f
  *
- * @section LICENSE
- *
  * Copyright (c) 2010 ARM Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,10 +31,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *
- * @section DESCRIPTION
- *
- * CC1101 Low-Power Sub-1 GHz RF Transceiver CC1101.
  *
  * Datasheet:
  *

@@ -88,12 +88,6 @@ int tmp101_convert_to_deci_degrees(uint16_t raw)
  * Return value(s):
  *   Upon successfull completion, returns 0 and the temperature read is placed in the
  *   provided integers. On error, returns a negative integer equivalent to errors from glibc.
- *   -EBADFD : I2C not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EINVAL : Invalid argument (buf)
- *   -ENODEV : No such device
- *   -EREMOTEIO : Device did not acknowledge : Any device present ?
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CMD_BUF_SIZE 3
 int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* deci_degrees)
@@ -137,12 +131,6 @@ int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* de
  * Return value :
  *   Upon successfull completion, returns 0. On error, returns a negative integer
  *   equivalent to errors from glibc.
- *   -EBADFD : I2C not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EINVAL : Invalid argument (buf)
- *   -ENODEV : No such device
- *   -EREMOTEIO : Device did not acknowledge : Any device present ?
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CONF_BUF_SIZE 4
 int tmp101_sensor_config(struct tmp101_sensor_config* conf)

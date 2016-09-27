@@ -64,6 +64,8 @@ struct lpc_gpio
 #define LPC_GPIO_REGS(x)  ((struct lpc_gpio *) (LPC_AHB_BASE + (0x10000 * (x))))
 
 
+
+/***************************************************************************** */
 /*   Public access to GPIO setup   */
 
 #define GPIO_DIR_IN 0
@@ -77,26 +79,11 @@ enum gpio_interrupt_senses {
 	LEVEL_LOW,
 };
 
-/* GPIO Interrupts */
-/* Add a callback on a GPIO interrupt.
- * This call will configure the GPIO (call to config_pio()), set it as input and
- * activate the interrupt on the given 'sense' event. use the gpio_interrupt_senses
- * enum for 'sense' values.
- * The callback will receive the pin number as argument (but not the port number).
- * Note :
- *   The interrupt hanlers are not efficient if the pin is not a low numbered one (require
- *   32 shifts + test for pin number 31).
- *   Use them if you place the signals generating interrupts on low numbered pins.
- *   When possible, get in touch with the people doing the electronic design, or change
- *   the handlers in drivers/gpio.c
- */
-int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8_t sense);
-void remove_gpio_callback(const struct pio* gpio);
-
 
 
 /* GPIO Activation */
 void gpio_on(void);
+
 void gpio_off(void);
 
 #define gpio_dir_in(gpio) \
@@ -144,6 +131,26 @@ static inline uint32_t gpio_read(const struct pio gpio)
  * value "ini_val".
  */
 void config_gpio(const struct pio* gpio, uint32_t mode, uint8_t dir, uint8_t ini_val);
+
+
+/* GPIO Interrupts */
+/* Add a callback on a GPIO interrupt.
+ * This call will configure the GPIO (call to config_pio()), set it as input and
+ * activate the interrupt on the given 'sense' event. use the gpio_interrupt_senses
+ * enum for 'sense' values.
+ * The callback will receive the pin number as argument (but not the port number).
+ * Note :
+ *   The interrupt hanlers are not efficient if the pin is not a low numbered one (require
+ *   32 shifts + test for pin number 31).
+ *   Use them if you place the signals generating interrupts on low numbered pins.
+ *   When possible, get in touch with the people doing the electronic design, or change
+ *   the handlers in drivers/gpio.c
+ */
+int set_gpio_callback(void (*callback) (uint32_t), const struct pio* gpio, uint8_t sense);
+
+void remove_gpio_callback(const struct pio* gpio);
+
+
 
 
 #endif /* DRIVERS_GPIO_H */

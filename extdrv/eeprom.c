@@ -28,6 +28,10 @@
 #include "drivers/i2c.h"
 #include "extdrv/eeprom.h"
 
+/* FIXME : All of this will have to be re-written with an eeprom definition structure
+ * This will have the address, bus number, and eeprom type, in order to remove the static
+ *   variables and hardcoded bus number from this code.
+ */
 
 /***************************************************************************** */
 /*          Read and Write for eeprom                                          */
@@ -108,13 +112,6 @@ int get_eeprom_type(uint8_t eeprom_addr)
  * RETURN VALUE
  *   Upon successfull completion, returns the number of bytes read. On error, returns a negative
  *   integer equivalent to errors from glibc.
- *   -EFAULT : address above eeprom size
- *   -EBADFD : Device not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EAGAIN : Device already in use
- *   -EINVAL : Invalid argument (buf)
- *   -EREMOTEIO : Device did not acknowledge
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CMD_BUF_SIZE 4
 int eeprom_read(uint8_t eeprom_addr, uint32_t offset, void *buf, size_t count)
@@ -156,13 +153,6 @@ int eeprom_read(uint8_t eeprom_addr, uint32_t offset, void *buf, size_t count)
  * RETURN VALUE
  *   Upon successfull completion, returns the number of bytes written. On error, returns a negative
  *   integer equivalent to errors from glibc.
- *   -EFAULT : address above eeprom size
- *   -EBADFD : Device not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EAGAIN : Device already in use
- *   -EINVAL : Invalid argument (buf)
- *   -EREMOTEIO : Device did not acknowledge
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 #define CMD_SIZE_SMALL 2
 #define CMD_SIZE_BIG 3

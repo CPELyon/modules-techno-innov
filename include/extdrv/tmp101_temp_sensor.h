@@ -1,5 +1,5 @@
 /****************************************************************************
- *   extdrv/temp.h
+ *   extdrv/tmp101_temp_sensor.h
  *
  *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
@@ -66,7 +66,6 @@ struct tmp101_sensor_config {
 
 /* Check the sensor presence, return 1 if found
  * This is a basic check, it could be anything with the same address ...
- * addr: the sensor address on most significant bits.
  */
 int tmp101_probe_sensor(struct tmp101_sensor_config* conf);
 
@@ -87,12 +86,6 @@ int tmp101_convert_to_deci_degrees(uint16_t raw);
  *   Upon successfull completion, returns 0 and the temperature read is placed in the
  *   provided integer(s). On error, returns a negative integer equivalent to errors from
  *   glibc.
- *   -EBADFD : I2C not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EINVAL : Invalid argument (buf)
- *   -ENODEV : No such device
- *   -EREMOTEIO : Device did not acknowledge : Any device present ?
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* deci_degrees);
 
@@ -106,12 +99,6 @@ int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* de
  * Return value:
  *   Upon successfull completion, returns 0. On error, returns a negative integer
  *   equivalent to errors from glibc.
- *   -EBADFD : I2C not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EINVAL : Invalid argument (buf)
- *   -ENODEV : No such device
- *   -EREMOTEIO : Device did not acknowledge : Any device present ?
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 int tmp101_sensor_config(struct tmp101_sensor_config* conf);
 

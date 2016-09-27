@@ -26,6 +26,8 @@
 #include "lib/stdint.h"
 
 
+/* FIXME : All of this will have to be re-written with an eeprom definition structure */
+
 /***************************************************************************** */
 /*          Read and Write for system eeprom                                   */
 /***************************************************************************** */
@@ -36,13 +38,6 @@
  * RETURN VALUE
  *   Upon successfull completion, returns the number of bytes read. On error, returns a negative
  *   integer equivalent to errors from glibc.
- *   -EFAULT : address above eeprom size
- *   -EBADFD : Device not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EAGAIN : Device already in use
- *   -EINVAL : Invalid argument (buf)
- *   -EREMOTEIO : Device did not acknowledge
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 int eeprom_read(uint8_t eeprom_addr, uint32_t offset, void *buf, size_t count);
 
@@ -53,13 +48,6 @@ int eeprom_read(uint8_t eeprom_addr, uint32_t offset, void *buf, size_t count);
  * RETURN VALUE
  *   Upon successfull completion, returns the number of bytes written. On error, returns a negative
  *   integer equivalent to errors from glibc.
- *   -EFAULT : address above eeprom size
- *   -EBADFD : Device not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EAGAIN : Device already in use
- *   -EINVAL : Invalid argument (buf)
- *   -EREMOTEIO : Device did not acknowledge
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 int eeprom_write(uint8_t eeprom_addr, uint32_t offset, const void *buf, size_t count);
 

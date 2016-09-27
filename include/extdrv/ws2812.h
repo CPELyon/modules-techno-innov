@@ -88,13 +88,7 @@ int ws2812_send_frame(uint16_t nb_leds);
  */
 int ws2812_set_pixel(uint16_t pixel_num, uint8_t red, uint8_t green, uint8_t blue);
 
-/* Read the value of a pixel (led) color from the data buffer (frame)
- * The returned value is the last value set using ws2812_set_pixel(), but not
- *   necessarily the actual color of the led if ws2812_send_frame() has not been
- *   called with a big enough value. It is the value that would be set when using
- *   ws2812_send_frame() with 0 or with a value equal to or above the pixel number
- *   in the ws2812_get_pixel() call.
- */
+/* Get a pixel (led) color from the data buffer */
 int ws2812_get_pixel(uint16_t pixel_num, uint8_t* red, uint8_t* green, uint8_t* blue);
 
 /* Clear the internal data buffer. */

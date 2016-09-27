@@ -282,12 +282,6 @@ void I2C_0_Handler(void)
  * RETURN VALUE
  *   Upon successfull completion, returns the number of bytes read. On error, returns a negative
  *   integer equivalent to errors from glibc.
- *   -EBADFD : Device not initialized (-77)
- *   -EBUSY : Device or ressource Busy or Arbitration lost (-16)
- *   -EAGAIN : Device already in use (-11)
- *   -EINVAL : Invalid argument (no cmd_buf, or no inbuff when count > 0) (-22)
- *   -EREMOTEIO : Device did not acknowledge (-121)
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine (-5)
  */
 int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* inbuff, size_t count)
 {
@@ -369,12 +363,6 @@ int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* i
  * RETURN VALUE
  *   Upon successfull completion, returns the number of bytes written. On error, returns a negative
  *   integer equivalent to errors from glibc.
- *   -EBADFD : Device not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
- *   -EAGAIN : Device already in use
- *   -EINVAL : Invalid argument (buf)
- *   -EREMOTEIO : Device did not acknowledge
- *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 int i2c_write(const void *buf, size_t count, const void* ctrl_buf)
 {

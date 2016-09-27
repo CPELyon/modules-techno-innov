@@ -96,6 +96,7 @@ static void uart_check_rx(struct uart_device* uart, uint32_t intr)
 			uart->regs->func.buffer = data;
 		}
 	}
+	/* FIXME : handle RX erors */
 }
 
 static void uart_check_tx(struct uart_device* uart, uint32_t intr)

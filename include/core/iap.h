@@ -33,9 +33,11 @@
  *   of the micro-controller (for bootloaders, drivers, loadable RTOS tasks, ....)
  */
 
+/*******************************************************************************/
+/* Direct access to IAP function */
 
 /* Erase some pages from the user information block.
- * Page numbers may be 0, 1 or 2 for the LPC1224.
+ * Page numbers may be 0, 1 or 2 for the LPC122x.
  * Provide the same page number as start and end to erase a single page.
  * Of course, end page number MUST be higher than (or equal to) start page number.
  * There is no way to erase only parts of a page.

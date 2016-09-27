@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/epaper/main.c
+ *   apps/base/epaper/main.c
  *
  * e-paper example
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -89,10 +86,11 @@ struct epaper_definition epaper_def = {
 	/* PWM */
 	.pwm_timer_num = LPC_TIMER_32B0,
 	.pwm_timer_conf = {
-		.mode = LPC_TIMER_MODE_PWM,
-		/* pin PIO0_19 is channel 1 - PWM cycle control on channel 3 */
-		.config = { LPC_PWM_CHANNEL_ENABLE(1), 3, 0, 0 },
-		.match = { 0, 60, 0, 120 }, /* 50% duty cycle on channel 1, approx 200 KHz whith 48MHz clock */
+		.nb_channels = 1,
+		.period_chan = 3,
+		.period = 120,
+		.outputs = { 1, },
+		.match_values = { 60, },
 	},
 	.pixels_per_line = LINE_SIZE,
 	.bytes_per_line = (LINE_SIZE / 8),
@@ -110,10 +108,7 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
+	system_brown_out_detection_config(0); /* No ADC used */
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -132,10 +127,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(1, name, len);
-	/* Wait for end of Tx */
-	serial_flush(1);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART1, name);
 	while (1);
 }
 
@@ -203,10 +195,11 @@ void fix_font(uint64_t* font_64, uint8_t size)
 
 /***************************************************************************** */
 #define BUFF_LEN 60
-int main(void) {
+int main(void)
+{
 
 	system_init();
-	uart_on(0, 115200, recv_text);
+	uart_on(UART0, 115200, recv_text);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 8*1000*1000); /* bus_num, frame_type, data_width, rate */
 	set_gpio_callback(button_request, &button, EDGE_RISING);
 	status_led(none);

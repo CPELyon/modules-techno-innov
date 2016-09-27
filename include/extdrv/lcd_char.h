@@ -34,7 +34,7 @@
 #ifndef EXTDRV_LCD_CHAR_H
 #define EXTDRV_LCD_CHAR_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "core/pio.h"
 
 /* IMPORTANT NOTE :

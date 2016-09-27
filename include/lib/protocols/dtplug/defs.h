@@ -23,7 +23,7 @@
 #define LIB_PROTOCOLS_DTPLUG_DEFS_H
 
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 /******************************************************************************/
 /* These structures define the packets used to transfer data over the serial link

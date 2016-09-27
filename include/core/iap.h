@@ -21,7 +21,7 @@
 #ifndef CORE_IAP_H
 #define CORE_IAP_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 /*******************************************************************************/

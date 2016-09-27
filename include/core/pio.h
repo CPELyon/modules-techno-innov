@@ -26,7 +26,7 @@
  * It has nothing related to GPIO function of the pins.
  */
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 struct pio {
     uint8_t port;  /* 0xFF indicates the end of a pin array */

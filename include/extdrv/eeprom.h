@@ -23,7 +23,7 @@
 #ifndef EXTDRV_EEPROM_H
 #define EXTDRV_EEPROM_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 /***************************************************************************** */

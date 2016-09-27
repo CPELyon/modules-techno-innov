@@ -26,7 +26,7 @@
  * Refer to LPC12xx documentation (UM10441.pdf) for more information
  */
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 /* Return the number of RTC ticks from system power on.

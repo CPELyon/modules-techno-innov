@@ -20,7 +20,6 @@
  *
  ****************************************************************************/
 
-#include <stdint.h>
 #include "core/system.h"
 #include "core/iap.h"
 #include "core/user_information_block.h"

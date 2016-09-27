@@ -22,6 +22,14 @@
 #ifndef LIB_STDDEF_H
 #define LIB_STDDEF_H
 
+
+#undef __SIZE_TYPE__
+#define __SIZE_TYPE__ long unsigned int
+typedef __SIZE_TYPE__ size_t;
+
+#define NULL ((void *)0)
+
+
 /**
  * offsetof - return the offset of a member in the containing structure.
  */

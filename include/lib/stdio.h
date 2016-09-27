@@ -22,7 +22,7 @@
 #define LIB_STDIO_H
 
 #include <stdarg.h>
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "lib/string.h"
 
 

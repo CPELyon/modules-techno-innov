@@ -23,7 +23,7 @@
  * http://opengameart.org/content/8x8-ascii-bitmap-font-with-c-source
  */
 
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "lib/font.h"
 
 /*

@@ -21,8 +21,6 @@
 #ifndef DRIVERS_TIMERS_H
 #define DRIVERS_TIMERS_H
 
-#include <stdint.h>
-
 /***************************************************************************** */
 /*                Timers                                                       */
 /***************************************************************************** */
@@ -31,6 +29,8 @@
  * All timers have 4 channels though 32 bits timers have all 4 channels available
  *   on capture /match pins while 16bits ones have only two (channels 0 and 1).
  * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+
+#include "lib/stdint.h"
  */
 #define NUM_TIMERS 4
 #define NUM_CHANS 4

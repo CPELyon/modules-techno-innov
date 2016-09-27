@@ -30,7 +30,7 @@
 #define DRIVERS_GPIO_H
 
 
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "core/pio.h"
 
 

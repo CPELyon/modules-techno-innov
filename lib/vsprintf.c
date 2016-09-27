@@ -21,7 +21,7 @@
  *************************************************************************** */
 
 #include <stdarg.h>
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "lib/string.h"
 
 #define ZEROPAD   (1 <<  0)  /* pad with zero */

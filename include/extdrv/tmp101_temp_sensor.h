@@ -23,7 +23,7 @@
 #ifndef EXTDRV_TEMP_H
 #define EXTDRV_TEMP_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 /***************************************************************************** */

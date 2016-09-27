@@ -15,13 +15,8 @@
  *    reentrant and should be faster). Use only strsep() in new code, please.
  */
 
-/* Get size_t, and NULL from <stddef.h>.  */
-#undef __need_malloc_and_calloc
-#define __need_size_t
-#define __need_NULL
-#include <stddef.h>
-
-#include <stdint.h>
+#include "lib/stddef.h"
+#include "lib/stdint.h"
 
 /**
  * memcpy - Copy one area of memory to another

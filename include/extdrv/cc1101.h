@@ -46,6 +46,7 @@
 #ifndef EXTDRV_CC1101_H
 #define EXTDRV_CC1101_H
 
+#include "lib/stdint.h"
 #include "lib/stddef.h"
 
 /******************************************************************************/

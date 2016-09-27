@@ -25,30 +25,12 @@
 #ifndef CORE_SYSTEM_H
 #define CORE_SYSTEM_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/watchdog.h"
 
-
-/* Error Values, from glibc errno.h and errno-base.h */
-#define EIO          5 /* Bad one: Input or Output error. */
-#define E2BIG        7 /* Argument list too long or Data size beyond buffer size */
-#define EAGAIN      11 /* Device already in use */
-#define EFAULT      14 /* Address error */
-#define EBUSY       16 /* Device or ressource Busy */
-#define ENODEV      19 /* No such device */
-#define EINVAL      22 /* Invalid argument */
-#define EBADFD      77 /* Device not initialized */
-#define EREMOTEIO  121 /* Device did not acknowledge */
-
-/* Note on error values for I2C :
- *  EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
- *  EFAULT : address above eeprom size
- *  EBUSY : Device or ressource Busy or Arbitration lost
- *  EREMOTEIO : Device did not acknowledge
- */
 
 /***************************************************************************** */
 /*                       Power up defaults                                     */

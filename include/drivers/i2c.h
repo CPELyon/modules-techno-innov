@@ -31,7 +31,7 @@
 #ifndef DRIVERS_I2C_H
 #define DRIVERS_I2C_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 #define I2C_CLK_100KHz  (100*1000)

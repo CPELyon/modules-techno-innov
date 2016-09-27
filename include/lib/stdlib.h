@@ -21,10 +21,10 @@
 #ifndef LIB_STDLIB_H
 #define LIB_STDLIB_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
-/* Simple atoi implementation.
- * Returns the value convertes from the given string.
+/* Simple strtoul implementation.
+ * Returns the value converted from the given string.
  * Does not check that the base is respected aside for the use of letters in
  *   number representation.
  */

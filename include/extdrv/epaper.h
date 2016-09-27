@@ -30,7 +30,7 @@
 #ifndef EXTDRV_EPAPER_H
 #define EXTDRV_EPAPER_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "core/pio.h"
 #include "drivers/timers.h"
 

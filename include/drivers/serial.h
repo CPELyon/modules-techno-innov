@@ -31,7 +31,7 @@
 #define DRIVERS_SERIAL_H
 
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 #define UART0  0

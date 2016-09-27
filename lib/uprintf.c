@@ -21,7 +21,7 @@
  *************************************************************************** */
 
 #include <stdarg.h>
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "drivers/serial.h"
 #include "lib/string.h"
 #include "lib/stdio.h"

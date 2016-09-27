@@ -29,7 +29,7 @@
 #ifndef CORE_WATCHDOG_H
 #define CORE_WATCHDOG_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 #define WDT_CLK_POWER_LOCK  (0x01 << 0)
 #define WDT_CLK_SRC_LOCK    (0x01 << 1)

@@ -23,7 +23,7 @@
 #define LIB_PROTOCOLS_DTPLUG_SLAVE_H
 
 
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "lib/protocols/dtplug/defs.h"
 
 

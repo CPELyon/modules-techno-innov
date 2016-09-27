@@ -41,7 +41,7 @@
  *
  */
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 /***************************************************************************** */
 /* DHT11 Humidity and temp sensor configuration : Set up the GPIO used for

@@ -42,7 +42,7 @@
  *   the liker script (lpc_link_lpc1224.ld).
 */
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 extern unsigned int _start_info;

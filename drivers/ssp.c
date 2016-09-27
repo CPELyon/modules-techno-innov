@@ -28,11 +28,11 @@
  * Refer to LPC1224 documentation (UM10441.pdf) for more information.
  */
 
-#include <stdint.h>
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "core/pio.h"
+#include "lib/errno.h"
 #include "lib/string.h"
 #include "drivers/ssp.h"
 

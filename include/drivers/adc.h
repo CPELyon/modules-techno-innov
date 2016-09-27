@@ -22,7 +22,7 @@
 #define DRIVERS_ADC_H
 
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 /***************************************************************************** */
 /*                Analog to Digital Converter (ADC)                            */

@@ -44,7 +44,7 @@
 #ifndef USER_INFORMATION_BLOCK_H
 #define USER_INFORMATION_BLOCK_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 struct user_info {
 	char name[48];

@@ -26,7 +26,6 @@
  * Refer to LPC12xx documentation (UM10441.pdf) for more information
  */
 
-#include <stdint.h>
 #include "core/lpc_regs_12xx.h"
 #include "core/lpc_core_cm0.h"
 #include "core/system.h"

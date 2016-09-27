@@ -30,7 +30,7 @@
  * Refer to LPC1224 documentation (UM10441.pdf) for more information.
  */
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 
 /* Set this to 1 for use of this driver in a multitasking OS, it will activate the SPI Mutex */

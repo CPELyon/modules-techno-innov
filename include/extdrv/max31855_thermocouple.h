@@ -23,7 +23,7 @@
 #ifndef EXTDRV_MAX31855_H
 #define EXTDRV_MAX31855_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 #include "core/pio.h"
 
 /* Support for thermocouple temperature sensors using Maxim's MAX31855 themocouple

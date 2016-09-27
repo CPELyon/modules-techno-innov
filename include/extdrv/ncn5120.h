@@ -26,7 +26,7 @@
 #ifndef EXTDRV_NCN5120_H
 #define EXTDRV_NCN5120_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 struct ncn5120_status {
 	uint8_t operation_mode;

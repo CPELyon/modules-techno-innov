@@ -24,7 +24,7 @@
 #ifndef CORE_SYSTICK_H
 #define CORE_SYSTICK_H
 
-#include <stdint.h>
+#include "lib/stdint.h"
 
 /***************************************************************************** */
 /*               System Tick Timer                                             */

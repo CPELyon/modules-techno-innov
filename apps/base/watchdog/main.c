@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -89,10 +86,10 @@ const struct wdt_config wdconf = {
 
 /***************************************************************************** */
 /* This will display the integer value read on the ADC, between 0 and 1024.
- * ADC must be initialised prior to calls to adc_display() (it means that adc_on()
+ * ADC must be initialised prior to calls to adc_display() (it means that adc_on(NULL)
  *    must be called before using this function.
  * adc_num is an ADC channel number (integer between 0 and 7)
- *    use LPC_ADC_NUM(x) for channel selection.
+ *    use LPC_ADC(x) for channel selection.
  * returns ADC convertion value or negative value on error.
  */
 int adc_display(int adc_num, int uart_num)
@@ -100,7 +97,7 @@ int adc_display(int adc_num, int uart_num)
 	uint16_t val = 0;
 	int ret = 0;
 
-	adc_start_convertion_once(adc_num, 0);
+	adc_start_convertion_once(adc_num, LPC_ADC_SEQ(0), 0);
 	msleep(10);
 	ret = adc_get_value(&val, adc_num);
 	if (ret < 0) {
@@ -117,10 +114,6 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -139,37 +132,35 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, NULL);
-	uart_on(1, 115200, NULL);
-	adc_on();
+	uart_on(UART0, 115200, NULL);
+	uart_on(UART1, 115200, NULL);
+	adc_on(NULL);
 
-	uprintf(1, "System started\n");
-	uprintf(0, "System started\n");
+	uprintf(UART1, "System started\n");
+	uprintf(UART0, "System started\n");
 	msleep(5);
 	watchdog_config(&wdconf);
-	uprintf(0, "Watchdog started\n");
-	uprintf(1, "Watchdog started\n");
+	uprintf(UART0, "Watchdog started\n");
+	uprintf(UART1, "Watchdog started\n");
 
 	while (1) {
 		watchdog_feed();
 		chenillard(50);
 		/* ADC Test */
-		adc_display(LPC_ADC_NUM(0), 0);
-		adc_display(LPC_ADC_NUM(0), 1);
+		adc_display(LPC_ADC(0), 0);
+		adc_display(LPC_ADC(0), 1);
 		if (got_wdt_int != 0) {
-			uprintf(1, "Watchdog intr !\n");
+			uprintf(UART1, "Watchdog intr !\n");
 			watchdog_feed();
 			got_wdt_int = 0;
 		}

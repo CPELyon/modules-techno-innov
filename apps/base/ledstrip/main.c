@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/ledstrip/main.c
+ *   apps/dev/ledstrip/main.c
  *
  * WS2812 Chainable leds example using Adafruit les strip
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -81,10 +78,6 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -103,10 +96,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(1, name, len);
-	/* Wait for end of Tx */
-	serial_flush(1);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -141,9 +131,9 @@ void mode_adc_colors(void)
 	uint16_t red = 0, green = 0, blue = 0;
 
 	/* Get ADC values */
-	adc_get_value(&red, LPC_ADC_NUM(0));
-	adc_get_value(&green, LPC_ADC_NUM(1));
-	adc_get_value(&blue, LPC_ADC_NUM(2));
+	adc_get_value(&red, LPC_ADC(0));
+	adc_get_value(&green, LPC_ADC(1));
+	adc_get_value(&blue, LPC_ADC(2));
 	/* Set one pixel */
 	ws2812_set_pixel(pixel++, ((red >> 2) & 0xFF), ((green >> 2) & 0xFF), ((blue >> 2) & 0xFF));
 	/* Give some time for the ADC value to change (potentiometers should be connected to ADC inputs) */
@@ -169,8 +159,8 @@ void mode_noise(void)
 	uint16_t zoom = 0;
 	uint8_t red = 0, green = 0, blue = 0;
 	/* Get ADC value for noise */
-	adc_get_value(&zoom, LPC_ADC_NUM(0));
-	adc_get_value(&loudness, LPC_ADC_NUM(3));
+	adc_get_value(&zoom, LPC_ADC(0));
+	adc_get_value(&loudness, LPC_ADC(3));
 	/* Noise is usually in the 120 - 550 range, offset and zoom on this range */
 	if (loudness < 100) {
 		loudness = 0;
@@ -193,7 +183,7 @@ void mode_noise(void)
 	} else {
 		red = 255;
 	}
-	uprintf(0, "Loudness: %d - 0x%02x, r: %d, g:%d, b:%d, z:%d\n", loudness, loudness, red, green, blue, zoom);
+	uprintf(UART0, "Loudness: %d - 0x%02x, r: %d, g:%d, b:%d, z:%d\n", loudness, loudness, red, green, blue, zoom);
 	for (i = 0; i < NB_LEDS; i++) {
 		ws2812_set_pixel(i, red, green, blue);
 	}
@@ -208,15 +198,14 @@ void strip_control(uint8_t c)
 /***************************************************************************** */
 int main(void)
 {
-
 	system_init();
-	uart_on(0, 115200, strip_control);
+	uart_on(UART0, 115200, strip_control);
 	set_gpio_callback(button_request, &button, EDGE_RISING);
 	status_led(none);
 
 	/* ADC for potentiometer color settings */
-	adc_on();
-	adc_start_burst_conversion(LPC_ADC_CHANNEL(0) | LPC_ADC_CHANNEL(1) | LPC_ADC_CHANNEL(2) | LPC_ADC_CHANNEL(3));
+	adc_on(NULL);
+	adc_start_burst_conversion(ADC_MCH(0) | ADC_MCH(1) | ADC_MCH(2) | ADC_MCH(3), LPC_ADC_SEQ(0));
 
 	/* Led strip configuration */
 	ws2812_config(&ws2812_data_out_pin);

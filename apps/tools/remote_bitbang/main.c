@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/cyp/remote_bitbang/main.c
+ *   apps/tools/remote_bitbang/main.c
  *
  *  Support for remote bitbang SWD access using openOCD
  *
@@ -29,11 +29,8 @@
  * Refer to README file for usage informations.
  */
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -73,10 +70,7 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
+	system_brown_out_detection_config(0); /* No ADC used */
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -91,10 +85,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(1);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -122,7 +113,7 @@ static void uart_cb(uint8_t data)
 			break;
 		case 'R':
 			in = '0' + !!(gpio_io->in & SWD_IO);
-			serial_write(0, &in, 1);
+			serial_send_quickbyte(UART0, in);
 			gpio_green->out ^= LED_GREEN;
 			break;
 		default:
@@ -131,11 +122,12 @@ static void uart_cb(uint8_t data)
 }
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
 	config_gpio(&swd_io,  LPC_IO_MODE_PULL_UP, GPIO_DIR_OUT, 1);
 	config_gpio(&swd_clk, LPC_IO_MODE_PULL_UP, GPIO_DIR_OUT, 1);
-	uart_on(0, 115200, uart_cb);
+	uart_on(UART0, 115200, uart_cb);
 	status_led(red_on);
 	while(1);
 	return 0;

@@ -61,7 +61,7 @@ uint32_t rtc_get_count(void)
 			return 0;
 		}
 		rtc_start_ok = 1;
-		return 0;
+		return rtc->data;
 	}
 }
 

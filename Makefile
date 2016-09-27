@@ -1,18 +1,28 @@
-# Makefile for GPIO Demo Module
+# Makefile for LPC122x micro-controller based boards
 
 TARGET_DIR = apps/$(MODULE)/$(NAME)
 
+# If you use another of the LPC122x micro-controllers, copy the lpc_link_lpc1224.ld file
+# to match you LPC micro-controller model and modify the memory sizes definitions at the
+# beginning of your new file.
+# Note that the LPC1224 has the smallest memory of the LPC122x branch, and thus using the
+# lpc1224 linker script will work for all LPC122x, but not all memory will be available.
 LPC = lpc1224
 CPU = cortex-m0
 ARCH = armv6-m
 
 CROSS_COMPILE ?= arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
+#DEBUG = -g
+LD_DEBUG = $(DEBUG)
+#LD_DEBUG = $(DEBUG) -Wl,--print-memory-usage
+#LD_DEBUG = $(DEBUG) -Wl,--print-gc-sections -Wl,--print-output-format \
+		   -Wl,--print-memory-usage
 FOPTS = -fno-builtin -ffunction-sections -fdata-sections -ffreestanding
-CFLAGS = -Wall -g -O2 -mthumb -mcpu=$(CPU) $(FOPTS)
-LINKOPTS = -static -g -nostartfiles -nostdlib \
-		   -Wl,--gc-sections -Wl,--build-id=none \
-		   -Wl,-Map=$(TARGET_DIR)/lpc_map_$(LPC).map -Tlpc_link_$(LPC).ld
+CFLAGS = -Wall -O2 $(DEBUG) -mthumb -mcpu=$(CPU) $(FOPTS)
+LDFLAGS = -static $(LD_DEBUG) -nostartfiles -nostdlib -Tlpc_link_$(LPC).ld \
+		  -Wl,--gc-sections -Wl,--sort-section=alignment -Wl,--build-id=none \
+		  -Wl,-Map=$(TARGET_DIR)/lpc_map_$(LPC).map
 
 
 APPS = $(subst apps/,,$(wildcard apps/*/*))
@@ -40,7 +50,7 @@ NAME_DEPS = ${NAME_OBJS:%.o=$(OBJDIR)/%.d}
 .PRECIOUS: %.elf
 %.elf: $(OBJS) $(NAME_OBJS)
 	@echo "Linking $(MODULE)/$(NAME) ..."
-	@$(CC) $(LINKOPTS) $(OBJS) $(NAME_OBJS) -o $@
+	@$(CC) $(LDFLAGS) $(OBJS) $(NAME_OBJS) -o $@
 
 %.bin: %.elf
 	@echo "Creating image : [32m$@[39m"

@@ -9,13 +9,10 @@ MEMORY
 	info  (rx) : ORIGIN = 0x00040200, LENGTH = 1536
 }
 
-_sram_size = 4k;
-_sram_base = 0x10000000;
+_sram_size = LENGTH(sram);
+_sram_base = ORIGIN(sram);
 /* Leave 32 bytes for IAP functions, see UM10441 Chapter 20, section 20.8 */
 _end_stack = (_sram_base + _sram_size - 32);
-
-_start_info = 0x00040200;
-_end_info = (_start_info + 1536);
 
 
 ENTRY(Reset_Handler)
@@ -27,12 +24,14 @@ SECTIONS {
 	{
 		FILL(0xFF);
 		KEEP(*(.vectors))
-		*(.text.Reset_Handler .text.SystemInit)
+		*(.text.Reset_Handler .text.system_init)
 		. = 0x000002FC;
 		KEEP(*(.crp))
+		. = 0x00000300;
 		*(.text*)
 		*(.rodata*)
 		*(.got*)
+		. = ALIGN(4);
 		_end_text = .;
 	} >flash
 
@@ -54,6 +53,9 @@ SECTIONS {
 		*(COMMON)
 		_end_bss = .;
 	} >sram
+
+	. = ALIGN(4);
+
 }
 
 _end = .;

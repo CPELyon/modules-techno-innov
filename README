@@ -1,7 +1,7 @@
-This repository provides example code for the development modules made by
-Techno-Innov.
+This repository provides support for the LPC122x microcontroller from NXP and
+example code for the development modules made by Techno-Innov.
 
-It has support for the LPC1224 as used on the development modules, and
+It has support for the LPC122x as used on the development modules, and
 for the peripherals found on the development modules (user led, eeprom,
 temperature sensor, CC1101 RF transceiver, ...).
 Support for various other cool stuff is added when we play with it.
@@ -51,9 +51,9 @@ information.
 ********************
 SUPPORTED FEATURES and INTERFACES
 
-- LPC1224 micro-controller definitions
+- LPC122x micro-controller definitions
    - Cortex-M0 specific definitions
-   - Cortex-M0 and LPC1224 Registers
+   - Cortex-M0 and LPC122x Registers
    - Interrupts
    - ROM based division routines
    - Utility functions to replace ctz and clz instructions (not present in Cortex M0)
@@ -86,11 +86,11 @@ SUPPORTED FEATURES and INTERFACES
    - SPI (SSP)
    - PWM
    - RTC (partial)
+   - Watchdog
 
 - External Device drivers
    - I²C EEPROM
    - TMP101 I²C temperature sensor
-   - DHT11 temperatur and Humidity sensor
    - CC1101 Sub 1GHz RF Transceiver
    - Status led
    - Epaper display
@@ -112,10 +112,10 @@ TODO :
 - Add support for SDCard over SPI
 - Complete RTC Support
 - Comparator support
-- Watchdog support
 - CRC engine support
 - Test UART IrDA mode
 - DTPlug communication protocol tests + continue development of other functionalities.
 - Continue tests for NCN5120 support
 - More external drivers !
+- Fix DHT11 temperatur and Humidity sensor support
 

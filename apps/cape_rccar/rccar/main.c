@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -116,8 +113,9 @@ const struct pio cc1101_gdo0 = LPC_GPIO_0_7;
 const struct pio lsm9d_cs_pin = LPC_GPIO_0_5;
 
 /* On-board I2C temperature sensor */
-#define TMP101_ADDR  0x94
+#define TMP101_ADDR  0x94  /* Pin Addr0 (pin5 of tmp101) connected to VCC */
 struct tmp101_sensor_config tmp101_sensor = {
+	.bus_num = I2C0,
 	.addr = TMP101_ADDR,
 	.resolution = TMP_RES_ELEVEN_BITS,
 };
@@ -154,19 +152,16 @@ const struct pio status_led_green = LPC_GPIO_1_4;
 const struct pio status_led_red = LPC_GPIO_1_5;
 
 
-#define ADC_SMOKE  LPC_ADC_NUM(0)
-#define ADC_VBAT1  LPC_ADC_NUM(1)
-#define ADC_VBAT2  LPC_ADC_NUM(2)
+#define ADC_SMOKE  LPC_ADC(0)
+#define ADC_VBAT1  LPC_ADC(1)
+#define ADC_VBAT2  LPC_ADC(2)
+#define ALL_BOARD_ADC   (ADC_MCH(ADC_SMOKE) | ADC_MCH(ADC_VBAT1) | ADC_MCH(ADC_VBAT2))
 
 /***************************************************************************** */
 void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -184,10 +179,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(UART1, name, len);
-	/* Wait for end of Tx */
-	serial_flush(UART1);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART1, name);
 	while (1);
 }
 
@@ -215,9 +207,10 @@ static uint32_t servo_one_deg_step = 0;
 int servo_config(uint8_t uart_num)
 {
 	uint32_t servo_command_period = 0;
-	struct timer_config timer_conf = {
-		.mode = LPC_TIMER_MODE_PWM,
-		.config = { 0, 3, 0, 0 }, /* Use channel 3 for control */
+	struct lpc_timer_pwm_config timer_conf = {
+		.nb_channels = 3,
+		.period_chan = 3,
+		.outputs = { 0, 1, 2, },
 	};
 
 	/* compute the period and median position for the servo command */
@@ -227,18 +220,17 @@ int servo_config(uint8_t uart_num)
 	servo_med_pos_cmd = ((servo_command_period / 40) * 3);
 	servo_one_deg_step = ((servo_command_period / 41) / 48);
 
-	timer_conf.match[0] = servo_med_pos_cmd;
-	timer_conf.match[1] = servo_med_pos_cmd;
-	timer_conf.match[2] = servo_med_pos_cmd;
-	timer_conf.match[3] = servo_command_period;
-	timer_conf.config[0] = (LPC_PWM_CHANNEL_ENABLE(0) | LPC_PWM_CHANNEL_ENABLE(1) | LPC_PWM_CHANNEL_ENABLE(2));
+	timer_conf.match_values[0] = servo_med_pos_cmd;
+	timer_conf.match_values[1] = servo_med_pos_cmd;
+	timer_conf.match_values[2] = servo_med_pos_cmd;
+	timer_conf.period = servo_command_period;
 
     timer_on(LPC_TIMER_32B0, 0, NULL);
-	timer_setup(LPC_TIMER_32B0, &timer_conf);
+	timer_pwm_config(LPC_TIMER_32B0, &timer_conf);
 	timer_start(LPC_TIMER_32B0);
 
     timer_on(LPC_TIMER_32B1, 0, NULL);
-	timer_setup(LPC_TIMER_32B1, &timer_conf);
+	timer_pwm_config(LPC_TIMER_32B1, &timer_conf);
 	timer_start(LPC_TIMER_32B1);
 
 #if (DEBUG == 1)
@@ -380,13 +372,11 @@ void ultrasound_sensors_update(uint32_t tick)
 
 int ultrasound_sensors_config(int uart_num)
 {
-	struct timer_config timer_conf = {
-		.mode = LPC_TIMER_MODE_MATCH,
-		.config = { LPC_TIMER_INT_RESET_AND_STOP_ON_MATCH, 0, 0, 0, },
-		.ext_match_config = { 0, 0, 0, 0, },
-		.match = { 0, 0, 0, 0, },
+	struct lpc_tc_config timer_conf = {
+		.mode = (LPC_TIMER_MODE_TIMER | LPC_TIMER_MODE_MATCH),
+		.match_control = { LPC_TIMER_INT_RESET_AND_STOP_ON_MATCH, 0, 0, 0, },
 	};
-	uint32_t match = get_main_clock() / (50 * 1000); /* 10 us */
+	uint32_t match = get_main_clock() / (50 * 1000); /* 5 us */
 
 	/* Set divisor only once : main clock must not be changed. */
 	div = (get_main_clock() / (1000*1000));
@@ -396,7 +386,7 @@ int ultrasound_sensors_config(int uart_num)
 
 	timer_conf.match[0] = match;
     timer_on(LPC_TIMER_16B0, 0, ultrasound_sensors_trig_timer_int);
-	timer_setup(LPC_TIMER_16B0, &timer_conf);
+	timer_counter_config(LPC_TIMER_16B0, &timer_conf);
 
 #if (DEBUG == 1)
 	uprintf(uart_num, "Ultrasound distance sensors configured.\n");
@@ -505,6 +495,9 @@ void send_on_rf(void)
 	/* Give some feedback on UART 0 */
 	uprintf(UART_DEBUG, "Tx ret: %d\n", ret);
 #endif
+	if (ret <= 0) {
+		return;
+	}
 }
 
 
@@ -634,8 +627,8 @@ int main(void)
 	uart_on(UART1, 115200, NULL);
 
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
-	i2c_on(I2C_CLK_100KHz);
-	adc_on();
+	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
+	adc_on(NULL);
 	status_led_config(&status_led_green, &status_led_red);
 
 	/* Radio */
@@ -648,7 +641,7 @@ int main(void)
 	ultrasound_sensors_config(UART_DEBUG);
 
 	/* Smoke sensor and ADCs */
-	adc_start_burst_conversion(LPC_ADC_CHANNEL(ADC_SMOKE) | LPC_ADC_CHANNEL(ADC_VBAT1) | LPC_ADC_CHANNEL(ADC_VBAT2));
+	adc_start_burst_conversion(ALL_BOARD_ADC, LPC_ADC_SEQ(0));
 
 	/* Servo motors */
 	msleep(2000);

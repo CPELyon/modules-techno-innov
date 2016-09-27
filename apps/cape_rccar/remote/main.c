@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -84,9 +81,9 @@ const struct pio status_led_green = LPC_GPIO_0_28;
 const struct pio status_led_red = LPC_GPIO_0_29;
 
 
-#define ADC_VBAT  LPC_ADC_NUM(0)
-#define ADC_EXT1  LPC_ADC_NUM(1)
-#define ADC_EXT2  LPC_ADC_NUM(2)
+#define ADC_VBAT  LPC_ADC(0)
+#define ADC_EXT1  LPC_ADC(1)
+#define ADC_EXT2  LPC_ADC(2)
 
 const struct wdt_config wdconf = {
     .clk_sel = WDT_CLK_IRC,
@@ -104,10 +101,6 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -125,10 +118,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
@@ -168,12 +158,7 @@ void rf_config(void)
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
 
 #ifdef DEBUG
-	if (1) {
-		char buff[BUFF_LEN];
-		int len = 0;
-		len = snprintf(buff, BUFF_LEN, "CC1101 RF link init done.\r\n");
-		serial_write(0, buff, len);
-	}
+	uprintf(UART0, "CC1101 RF link init done.\n");
 #endif
 }
 
@@ -192,8 +177,6 @@ void send_on_RF(uint8_t addr, uint8_t type, uint8_t val)
 
 void handle_rf_rx_data(void)
 {
-	char buff[BUFF_LEN];
-	int len = 0;
 	uint8_t data[RF_BUFF_LEN];
 	int8_t ret = 0;
 	uint8_t status = 0;
@@ -204,28 +187,26 @@ void handle_rf_rx_data(void)
 	cc1101_enter_rx_mode();
 
 #ifdef DEBUG
-	if (1) {
-		len = snprintf(buff, BUFF_LEN, "RF: ret:%d, st: %d.\r\n", ret, status);
-		serial_write(0, buff, len);
-	}
+	uprintf(UART0, "RF: ret:%d, st: %d.\n", ret, status);
 #endif
 
 }
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, NULL);
+	uart_on(UART0, 115200, NULL);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
-	adc_on();
+	adc_on(NULL);
 	status_led_config(&status_led_green, &status_led_red);
 
 	/* Radio */
 	rf_config();
 
 	/*	ADC */
-	adc_start_burst_conversion(LPC_ADC_CHANNEL(ADC_EXT1) | LPC_ADC_CHANNEL(ADC_EXT2));
+	adc_start_burst_conversion(ADC_MCH(ADC_EXT1) | ADC_MCH(ADC_EXT2), LPC_ADC_SEQ(0));
 
 	/* Config done, start watchdog */
 	watchdog_config(&wdconf);

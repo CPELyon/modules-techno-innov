@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/base/servo/main.c
+ *   apps/base/servomotor/main.c
  *
  * Servo-motor example
  *
@@ -22,12 +22,9 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
+#include "core/pio.h"
 #include "lib/stdio.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
@@ -91,9 +88,9 @@ static uint8_t channel = 0;
 int servo_config(uint8_t timer_num, uint8_t pwm_chan, uint8_t uart_num)
 {
 	uint32_t servo_command_period = 0;
-	struct timer_config timer_conf = {
-		.mode = LPC_TIMER_MODE_PWM,
-		.config = { 0, 3, 0, 0 }, /* Use channel 3 for control */
+	struct lpc_timer_pwm_config timer_conf = {
+		.nb_channels = 1,
+		.period_chan = 3,
 	};
 
 	if (timer_num > LPC_TIMER_32B1) {
@@ -106,6 +103,7 @@ int servo_config(uint8_t timer_num, uint8_t pwm_chan, uint8_t uart_num)
 	}
 	timer = timer_num;
 	channel = pwm_chan;
+	timer_conf.outputs[0] = pwm_chan;
 
 	/* compute the period and median position for the servo command */
 	/* We want 20ms (50Hz), timer counts at main clock frequency */
@@ -113,12 +111,11 @@ int servo_config(uint8_t timer_num, uint8_t pwm_chan, uint8_t uart_num)
 	/* servo_command_period is 20ms, we need 1.5ms, which is 3/40. */
 	servo_med_pos_cmd = ((servo_command_period / 40) * SERVO_MED_POS_DUTY_CYCLE);
 	servo_one_deg_step = ((servo_command_period / 41) / 48);
-	timer_conf.match[pwm_chan] = servo_med_pos_cmd;
-	timer_conf.match[3] = servo_command_period;
-	timer_conf.config[0] = (LPC_PWM_CHANNEL_ENABLE(pwm_chan));
+	timer_conf.match_values[0] = servo_med_pos_cmd;
+	timer_conf.period = servo_command_period;
 
 	timer_on(timer, 0, NULL);
-	timer_setup(timer, &timer_conf);
+	timer_pwm_config(timer, &timer_conf);
 	timer_start(timer);
 
 	uprintf(uart_num, "Servos configured (T%d : C%d), Period : %d, med_pos : %d\n",
@@ -132,7 +129,7 @@ int set_servo(int adc_num, int uart_num)
 	uint16_t val = 0, angle = 0;
 	uint32_t pos = servo_med_pos_cmd;
 
-	adc_start_convertion_once(adc_num, 0);
+	adc_start_convertion_once(adc_num, LPC_ADC_SEQ(0), 0);
 	msleep(10);
 	adc_get_value(&val, adc_num);
 	uprintf(uart_num, "ADC(%d): %d (raw: 0x%04x)\n", adc_num, val, val);
@@ -159,10 +156,6 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -182,26 +175,24 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(0, name, len);
-	/* Wait for end of Tx */
-	serial_flush(0);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART0, name);
 	while (1);
 }
 
 
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, NULL);
-	adc_on();
+	uart_on(UART0, 115200, NULL);
+	adc_on(NULL);
 	servo_config(LPC_TIMER_32B0, 1, 0);
 
 	while (1) {
 		chenillard(500);
 		/* ADC Test */
-		set_servo(LPC_ADC_NUM(0), 0);
+		set_servo(LPC_ADC(0), 0);
 	}
 	return 0;
 }

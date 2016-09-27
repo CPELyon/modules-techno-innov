@@ -46,13 +46,10 @@
 #include "core/lpc_regs.h"
 
 
-extern unsigned int _start_info;
-extern unsigned int _end_info;
-
 /* Get a pointer to the user information */
 void* get_user_info(void)
 {
-	return (void*)&_start_info;
+	return (void*)LPC_START_INFO_PAGES;
 }
 
 

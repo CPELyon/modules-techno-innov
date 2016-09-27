@@ -54,6 +54,10 @@ struct pio green_led = LPC_GPIO_1_4;
 void status_led_config(const struct pio* green, const struct pio* red)
 {
 	uint32_t mode = LPC_IO_MODE_PULL_UP | LPC_IO_DRIVE_HIGHCURENT;
+
+	/* We must have GPIO on for status led. Calling it many times in only a waste
+	 *  of time, no other side effects */
+	gpio_on();
 	/* Copy status led info */
 	pio_copy(&red_led, red);
 	pio_copy(&green_led, green);

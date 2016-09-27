@@ -136,7 +136,7 @@ extern void rom_helpers_init(void);
  */
 void Reset_Handler(void) {
 	unsigned int *src, *dst;
-	
+
 	/* Copy data section from flash to RAM */
 	src = &_end_text;
 	dst = &_start_data;

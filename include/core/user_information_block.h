@@ -34,7 +34,7 @@
  *   be a full page.
  */
 
-/* The user information block of the LPC1224 has three 512 bytes pages. */
+/* The user information block of the LPC122x has three 512 bytes pages. */
 
 /* Actually, the only purpose of this code is to return the address of the begining
  *   of the user information block in flash, set by the linker from information in

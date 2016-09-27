@@ -23,7 +23,6 @@
 /***************************************************************************** */
 
 
-#include "core/lpc_regs_12xx.h"
 #include "core/system.h"
 #include "core/pio.h"
 #include "drivers/gpio.h"

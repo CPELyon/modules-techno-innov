@@ -23,13 +23,14 @@
 
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 
 /***************************************************************************** */
 /*                Analog to Digital Converter (ADC)                            */
 /***************************************************************************** */
 
-/* ADC driver for the integrated ADC module of the LPC1224.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* ADC driver for the integrated ADC module of the LPC122x.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
 enum adc_events {
@@ -80,6 +81,47 @@ void adc_prepare_conversion_on_event(uint8_t channels, uint8_t event, int use_in
 void adc_clk_update(void);
 void adc_on(void);
 void adc_off(void);
+
+
+/***************************************************************************** */
+/*                     Analog-to-Digital Converter                             */
+/***************************************************************************** */
+/* Analog-to-Digital Converter (ADC) */
+struct lpc_adc
+{
+	volatile uint32_t ctrl;         /* 0x000 : A/D Control Register (R/W) */
+	volatile uint32_t global_data;  /* 0x004 : A/D Global Data Register (R/W) */
+	uint32_t reserved_0;
+	volatile uint32_t int_en;  /* 0x00C : A/D Interrupt Enable Register (R/W) */
+	volatile uint32_t data[8]; /* Offset: 0x010-0x02C A/D Channel 0..7 Data Register (R/W) */
+	volatile const uint32_t status; /* 0x030 : A/D Status Register (R/ ) */
+	volatile uint32_t trim;    /* 0x034 : A/D Trim Register (R/W) */
+};
+#define LPC_ADC_REGS      ((struct lpc_adc *) LPC_ADC_BASE)
+
+/* ADC Control register bits */
+#define LPC_ADC_CTRL_MASK  0x0F01FFFF
+/* ADC_MCH_* are also used for interrupt register */
+#define ADC_MCH_MASK    (0xFF << 0)
+#define ADC_MCH(x)      (0x01 << ((x) & 0x07))
+#define LPC_ADC_BURST   (0x01 << 16)
+
+#define LPC_ADC_START_CONV_MASK (0x07 << 24)
+#define LPC_ADC_START_CONV_NOW  (0x01 << 24)
+#define LPC_ADC_START_CONV_EVENT(x) (((x) & 0x7) << 24)
+#define LPC_ADC_START_EDGE_FALLING  (0x1 << 27)
+#define LPC_ADC_START_EDGE_RISING   (0x0 << 27)
+#define LPC_ADC_ADDITIONAL_MODE_MASK (0x1 << 27)
+
+/* ADC Data register bits */
+#define LPC_ADC_RESULT_SHIFT  6
+#define LPC_ADC_RESULT_MASK   0x3FF
+#define LPC_ADC_OVERRUN    (0x01 << 30)
+#define LPC_ADC_CONV_DONE  (0x01 << 31)
+
+/* For more readability when selecting a channel number */
+#define LPC_ADC(x)    (x)
+
 
 #endif /* DRIVERS_ADC_H */
 

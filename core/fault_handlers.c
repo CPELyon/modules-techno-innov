@@ -28,7 +28,6 @@
  */
 
 #include "lib/stdint.h"
-#include "core/lpc_regs_12xx.h"
 
 void fault_info(const char* name, uint32_t len) __attribute__ ((weak, alias ("Dummy_Fault_Handler")));
 

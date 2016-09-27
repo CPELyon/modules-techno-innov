@@ -22,12 +22,10 @@
 /*                RTC and RTC Interrupts                                    */
 /***************************************************************************** */
 
-/* The RTC is an integrated module of the LPC1224.
+/* The RTC is an integrated module of the LPC122x.
  * Refer to LPC12xx documentation (UM10441.pdf) for more information
  */
 
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "core/systick.h"
 #include "core/pio.h"

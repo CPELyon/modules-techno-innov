@@ -25,12 +25,10 @@
 /*                      I2C                                                   */
 /**************************************************************************** */
 
-/* I2C driver for the I2C bus integrated module of the LPC1224.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* I2C driver for the I2C bus integrated module of the LPC122x.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "lib/string.h"
 #include "lib/errno.h"

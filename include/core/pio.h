@@ -23,10 +23,11 @@
 
 /* The "PIO" module gives access to the configuration of all the pins of the
  * micro-controller, whatever the function of the pin.
- * It has nothing related to GPIO function of the pins.
+ * It has nothing related to the GPIO function of the pins.
  */
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 
 struct pio {
     uint8_t port;  /* 0xFF indicates the end of a pin array */
@@ -273,6 +274,106 @@ void set_pins(const struct pio_config* pins);
 #define LPC_TIMER_32B1_C3_PIO_0_26 {0, 26, 3}
 #define LPC_TIMER_32B1_C3_PIO_2_11 {2, 11, 2}
 
+
+
+/***************************************************************************** */
+/*                     IO Control                                              */
+/***************************************************************************** */
+/* Pin Connect Block (IOCON) */
+struct lpc_io_control
+{
+	uint32_t reserved_0[2];
+	volatile uint32_t pio0_19;   /* 0x008 : I/O configuration for pin pio0_19 (R/W) */
+	volatile uint32_t pio0_20;   /* 0x00C : I/O configuration for pin pio0_20 (R/W) */
+	volatile uint32_t pio0_21;   /* 0x010 : I/O configuration for pin pio0_21 (R/W) */
+	volatile uint32_t pio0_22;   /* 0x014 : I/O configuration for pin pio0_22 (R/W) */
+	volatile uint32_t pio0_23;   /* 0x018 : I/O configuration for pin pio0_23 (R/W) */
+	volatile uint32_t pio0_24;   /* 0x01C : I/O configuration for pin pio0_24 (R/W) */
+	volatile uint32_t pio0_25;   /* 0x020 : I/O configuration for pin pio0_25 (R/W) */
+	volatile uint32_t pio0_26;   /* 0x024 : I/O configuration for pin pio0_26 (R/W) */
+	volatile uint32_t pio0_27;   /* 0x028 : I/O configuration for pin pio0_27 (R/W) */
+
+	volatile uint32_t pio2_12;   /* 0x02C : I/O configuration for pin pio2_12 (R/W) */
+	volatile uint32_t pio2_13;   /* 0x030 : I/O configuration for pin pio2_13 (R/W) */
+	volatile uint32_t pio2_14;   /* 0x034 : I/O configuration for pin pio2_14 (R/W) */
+	volatile uint32_t pio2_15;   /* 0x038 : I/O configuration for pin pio2_15 (R/W) */
+
+	volatile uint32_t pio0_28;   /* 0x03C : I/O configuration for pin pio0_28 (R/W) */
+	volatile uint32_t pio0_29;   /* 0x040 : I/O configuration for pin pio0_29 (R/W) */
+
+	volatile uint32_t pio0_0;    /* 0x044 : I/O configuration for pin pio0_0 (R/W) */
+	volatile uint32_t pio0_1;    /* 0x048 : I/O configuration for pin pio0_1 (R/W) */
+	volatile uint32_t pio0_2;    /* 0x04C : I/O configuration for pin pio0_2 (R/W) */
+	uint32_t reserved_1[1];
+	volatile uint32_t pio0_3;    /* 0x054 : I/O configuration for pin pio0_3 (R/W) */
+	volatile uint32_t pio0_4;    /* 0x058 : I/O configuration for pin pio0_4 (R/W) */
+	volatile uint32_t pio0_5;    /* 0x05C : I/O configuration for pin pio0_5 (R/W) */
+	volatile uint32_t pio0_6;    /* 0x060 : I/O configuration for pin pio0_6 (R/W) */
+	volatile uint32_t pio0_7;    /* 0x064 : I/O configuration for pin pio0_7 (R/W) */
+	volatile uint32_t pio0_8;    /* 0x068 : I/O configuration for pin pio0_8 (R/W) */
+	volatile uint32_t pio0_9;    /* 0x06C : I/O configuration for pin pio0_9 (R/W) */
+
+	volatile uint32_t pio2_0;    /* 0x070 : I/O configuration for pin pio2_0 (R/W) */
+	volatile uint32_t pio2_1;    /* 0x074 : I/O configuration for pin TDI2_1 (R/W) */
+	volatile uint32_t pio2_2;    /* 0x078 : I/O configuration for pin TMS2_2 (R/W) */
+	volatile uint32_t pio2_3;    /* 0x07C : I/O configuration for pin TDO2_3 (R/W) */
+	volatile uint32_t pio2_4;    /* 0x080 : I/O configuration for pin nTR2_4 (R/W) */
+	volatile uint32_t pio2_5;    /* 0x084 : I/O configuration for pin pio2_5 (R/W) */
+	volatile uint32_t pio2_6;    /* 0x088 : I/O configuration for pin pio2_6 (R/W) */
+	volatile uint32_t pio2_7;    /* 0x08C : I/O configuration for pin pio2_7 (R/W) */
+
+	volatile uint32_t pio0_10;   /* 0x090 : I/O configuration for pin SWD0_10 (R/W) */
+	volatile uint32_t pio0_11;   /* 0x094 : I/O configuration for pin pio0_11 (R/W) */
+	volatile uint32_t pio0_12;   /* 0x098 : I/O configuration for pin pio0_12 (R/W) */
+	volatile uint32_t pio0_13;   /* 0x09C : I/O configuration for pin pio0_13 (R/W) */
+	volatile uint32_t pio0_14;   /* 0x0A0 : I/O configuration for pin pio0_14 (R/W) */
+	volatile uint32_t pio0_15;   /* 0x0A4 : I/O configuration for pin pio0_15 (R/W) */
+	volatile uint32_t pio0_16;   /* 0x0A8 : I/O configuration for pin pio0_16 (R/W) */
+	volatile uint32_t pio0_17;   /* 0x0AC : I/O configuration for pin pio0_17 (R/W) */
+	volatile uint32_t pio0_18;   /* 0x0B0 : I/O configuration for pin pio0_18 (R/W) */
+
+	volatile uint32_t pio0_30;   /* 0x0B4 : I/O configuration for pin pio0_30 (R/W) */
+	volatile uint32_t pio0_31;   /* 0x0B8 : I/O configuration for pin pio0_31 (R/W) */
+
+	volatile uint32_t pio1_0;    /* 0x0BC : I/O configuration for pin pio1_0 (R/W) */
+	volatile uint32_t pio1_1;    /* 0x0C0 : I/O configuration for pin pio1_1 (R/W) */
+	volatile uint32_t pio1_2;    /* 0x0C4 : I/O configuration for pin pio1_2 (R/W) */
+	volatile uint32_t pio1_3;    /* 0x0C8 : I/O configuration for pin pio1_3 (R/W) */
+	volatile uint32_t pio1_4;    /* 0x0CC : I/O configuration for pin pio1_4 (R/W) */
+	volatile uint32_t pio1_5;    /* 0x0D0 : I/O configuration for pin pio1_5 (R/W) */
+	volatile uint32_t pio1_6;    /* 0x0D4 : I/O configuration for pin pio1_6 (R/W) */
+	uint32_t reserved_2[2];
+
+	volatile uint32_t pio2_8;    /* 0x0E0 : I/O configuration for pin pio2_8 (R/W) */
+	volatile uint32_t pio2_9;    /* 0x0E4 : I/O configuration for pin pio2_9 (R/W) */
+	volatile uint32_t pio2_10;   /* 0x0E8 : I/O configuration for pin pio2_10 (R/W) */
+	volatile uint32_t pio2_11;   /* 0x0EC : I/O configuration for pin pio2_11 (R/W) */
+
+};
+#define LPC_IO_CONTROL  ((struct lpc_io_control *) LPC_IOCON_BASE)
+
+/* FIXME : to be completed */
+#define LPC_IO_FUNC_ALT(x) ((x & 0x07) << 0)
+
+#define LPC_IO_MODE_INACTIVE  (0x00 << 4)
+#define LPC_IO_MODE_PULL_UP   (0x01 << 4)
+
+#define LPC_IO_INVERTED  (0x01 << 6)
+
+#define LPC_IO_ANALOG    (0x00 << 7)
+#define LPC_IO_DIGITAL   (0x01 << 7)
+
+#define LPC_IO_DRIVE_LOWCURENT  (0x00 << 9)
+#define LPC_IO_DRIVE_HIGHCURENT (0x01 << 9)
+
+#define LPC_IO_OPEN_DRAIN_ENABLE (0x01 << 10)
+
+#define LPC_IO_SAMPLE_MODE_BYP    (0x00 << 11)
+#define LPC_FILTER_ONE_CLK    1
+#define LPC_FILTER_TWO_CLK    2
+#define LPC_FILTER_THREE_CLK  3
+#define LPC_IO_SAMPLE_MODE(x)     ((x & 0x03) << 11)
+#define LPC_IO_SAMPLE_CLK_DIV(x)  ((x & 0x07) << 13)
 
 
 #endif /* CORE_PIO_H */

@@ -24,12 +24,10 @@
 /*                Analog to Digital Converter (ADC)                            */
 /***************************************************************************** */
 
-/* ADC driver for the integrated ADC module of the LPC1224.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* ADC driver for the integrated ADC module of the LPC122x.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "lib/errno.h"
 #include "drivers/adc.h"

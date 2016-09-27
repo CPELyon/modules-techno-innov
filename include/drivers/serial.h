@@ -21,8 +21,8 @@
 /***************************************************************************** */
 /*                UARTs                                                        */
 /***************************************************************************** */
-/* UART driver for the integrated UARTs of the LPC1224.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* UART driver for the integrated UARTs of the LPC122x.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
 /* Both UARTs are available, UART numbers are in the range 0 - 1 */
@@ -32,12 +32,14 @@
 
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 
 
 #define UART0  0
 #define UART1  1
 #define UART2  2
 #define UART3  3
+
 
 #define SERIAL_CAP_UART   (1 << 0)
 #define SERIAL_CAP_RS485  (1 << 1)
@@ -120,5 +122,86 @@ int uart_on(uint32_t uart_num, uint32_t baudrate, void (*rx_callback)(uint8_t));
 void uart_off(uint32_t uart_num);
 
 
+
+/***************************************************************************** */
+/*                     Universal Asynchronous Receiver Transmitter             */
+/***************************************************************************** */
+/* Universal Asynchronous Receiver Transmitter (UART) */
+struct lpc_uart_func {
+	volatile uint32_t buffer; /* 0x000 : Transmit / Receiver Buffer Register (R/W) */
+	volatile uint32_t intr_enable; /* 0x004 : Interrupt Enable Register (R/W) */
+	volatile uint32_t intr_pending; /* 0x008 : Interrupt ID Register (R/-) */
+};
+struct lpc_uart_ctrl {
+	volatile uint32_t divisor_latch_lsb;  /* 0x000 : Divisor Latch LSB (R/W) */
+	volatile uint32_t divisor_latch_msb;  /* 0x004 : Divisor Latch MSB (R/W) */
+	volatile uint32_t fifo_ctrl;  /* 0x008 : Fifo Control Register (-/W) */
+};
+struct lpc_uart
+{
+	union {
+		struct lpc_uart_func func;
+		struct lpc_uart_ctrl ctrl;
+	};
+	volatile uint32_t line_ctrl;   /* 0x00C : Line Control Register (R/W) */
+	volatile uint32_t modem_ctrl;  /* 0x010 : Modem control Register (R/W) */
+	volatile const uint32_t line_status;   /* 0x014 : Line Status Register (R/ ) */
+	volatile const uint32_t modem_status;  /* 0x018 : Modem status Register (R/ ) */
+	volatile uint32_t scratch_pad;  /* 0x01C : Scratch Pad Register (R/W) */
+	volatile uint32_t auto_baud_ctrl;  /* 0x020 : Auto-baud Control Register (R/W) */
+	volatile uint32_t irda_ctrl;       /* 0x024 : UART IrDA Control Register (R/W) */
+	volatile uint32_t fractional_div;  /* 0x028 : Fractional Divider Register (R/W) */
+	uint32_t reserved_1;
+	volatile uint32_t transmit_enable;  /* 0x030 : Transmit Enable Register (R/W) */
+	uint32_t reserved_2[6];
+	volatile uint32_t RS485_ctrl;       /* 0x04C : RS-485/EIA-485 Control Register (R/W) */
+	volatile uint32_t RS485_addr_match; /* 0x050 : RS-485/EIA-485 address match Register (R/W) */
+	volatile uint32_t RS485_dir_ctrl_delay;  /* 0x054 : RS-485/EIA-485 direction control delay Register (R/W) */
+	volatile uint32_t fifo_level;  /* 0x058 : Fifo Level Register (R/-) */
+};
+#define LPC_UART_0        ((struct lpc_uart *) LPC_UART0_BASE)
+#define LPC_UART_1        ((struct lpc_uart *) LPC_UART1_BASE)
+
+/* Line Control Register */
+#define LPC_UART_5BIT          (0x00 << 0)
+#define LPC_UART_6BIT          (0x01 << 0)
+#define LPC_UART_7BIT          (0x02 << 0)
+#define LPC_UART_8BIT          (0x03 << 0)
+#define LPC_UART_1STOP         (0x00 << 2)
+#define LPC_UART_2STOP         (0x01 << 2)
+#define LPC_UART_NO_PAR        (0x00 << 3)
+#define LPC_UART_ODD_PAR      ((0x01 << 3) | (0x00 << 4))
+#define LPC_UART_EVEN_PAR      ((0x01 << 3) | (0x01 << 4))
+#define LPC_UART_ENABLE_DLAB   (0x01 << 7)
+/* FIFO Control Register */
+#define LPC_UART_FIFO_EN       (0x01 << 0)
+#define LPC_UART_RX_CLR        (0x01 << 1)
+#define LPC_UART_TX_CLR        (0x01 << 2)
+#define LPC_UART_DMA_MODE_EN   (0x01 << 3)
+#define LPC_UART_FIFO_TRIG(x)  ((x & 0x03) << 6) /* 1 / 4 / 8 / 14 chars */
+/* Interrupt Enable Register */
+#define LPC_UART_RX_INT_EN     (0x01 << 0)
+#define LPC_UART_TX_INT_EN     (0x01 << 1)
+#define LPC_UART_RX_STATUS_INT_EN   (0x01 << 2)
+/* Interrupt status */
+#define LPC_UART_INT_MASK      (0x7 << 1)
+#define LPC_UART_INT_MODEM     (0x0 << 1)
+#define LPC_UART_INT_TX        (0x1 << 1)
+#define LPC_UART_INT_RX        (0x2 << 1)
+#define LPC_UART_INT_RX_STATUS (0x3 << 1)
+#define LPC_UART_INT_TIMEOUT   (0x6 << 1)
+/* RS485 Control */
+#define LPC_RS485_ENABLE       (0x1 << 0)
+#define LPC_RS485_RX_DIS       (0x1 << 1)
+#define LPC_RS485_AUTO_ADDR_EN (0x1 << 2)
+#define LPC_RS485_DIR_PIN_RTS  (0x0 << 3)
+#define LPC_RS485_DIR_PIN_DTR  (0x1 << 3)
+#define LPC_RS485_AUTO_DIR_EN  (0x1 << 4)
+#define LPC_RS485_DIR_CTRL_INV (0x1 << 5)
+/* RS485 */
+#define LPC_RS485_ADDR(x)  ((x) & 0xFF)
+#define LPC_RS485_DIR_DELAY(x)  ((x) & 0xFF)
+/* IrDA */
+#define LPC_IRDA_PULSEDIV(x)  (((x) & 0x07) << 3)
 
 #endif /* DRIVERS_SERIAL_H */

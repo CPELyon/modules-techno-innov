@@ -25,13 +25,14 @@
 #define CORE_SYSTICK_H
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 
 /***************************************************************************** */
 /*               System Tick Timer                                             */
 /***************************************************************************** */
 
-/* Driver for the internal systick timer of the LPC1224.
- * Refer to the LPC1224 documentation (UM10441.pdf) for more information
+/* Driver for the internal systick timer of the LPC122x.
+ * Refer to the LPC122x documentation (UM10441.pdf) for more information
  */
 
 
@@ -105,6 +106,38 @@ int remove_systick_callback(void (*callback) (uint32_t));
  * you need to sleep less than 1000us (1ms)
  */
 void usleep_short(uint32_t us);
+
+
+
+/***************************************************************************** */
+/*                    Cortex-M0 System Timer                                   */
+/***************************************************************************** */
+/* Cortex-M0 System Timer Registers */
+struct lpc_system_tick {
+    volatile uint32_t control;     /* 0x000 : SysTick Control and Status Register (R/W) */
+    volatile uint32_t reload_val;  /* 0x004 : SysTick Reload Value Register (R/W) */
+    volatile uint32_t value;       /* 0x008 : SysTick Current Value Register (R/W) */
+    volatile const uint32_t calibration;  /* 0x00C : SysTick Calibration Register (R/ ) */
+};
+#define LPC_SYSTICK  ((struct lpc_system_tick*) LPC_SYSTICK_BASE) /* SysTick configuration struct */
+
+/* SysTick Control / Status Register Definitions */
+#define LPC_SYSTICK_CTRL_COUNTFLAG  (1UL << 16)   /* SysTick CTRL: COUNTFLAG Mask */
+#define LPC_SYSTICK_CTRL_CLKSOURCE  (1UL << 2)    /* SysTick CTRL: CLKSOURCE Mask */
+#define LPC_SYSTICK_CTRL_TICKINT    (1UL << 1)    /* SysTick CTRL: TICKINT Mask */
+#define LPC_SYSTICK_CTRL_ENABLE     (1UL << 0)    /* SysTick CTRL: ENABLE Mask */
+
+/* SysTick Reload Register Definitions */
+#define LPC_SYSTICK_LOAD_RELOAD     (0xFFFFFFUL)  /* SysTick LOAD: RELOAD Mask */
+
+/* SysTick Current Register Definitions */
+#define LPC_SYSTICK_VAL_CURRENT     (0xFFFFFFUL)  /* SysTick VAL: CURRENT Mask */
+
+/* SysTick Calibration Register Definitions */
+#define LPC_SYSTICK_CALIB_NOREF     (1UL << 31)   /* SysTick CALIB: NOREF Mask */
+#define LPC_SYSTICK_CALIB_SKEW      (1UL << 30)   /* SysTick CALIB: SKEW Mask */
+#define LPC_SYSTICK_CALIB_TENMS     (0xFFFFFFUL)  /* SysTick CALIB: TENMS Mask */
+
 
 
 #endif /* CORE_SYSTICK_H */

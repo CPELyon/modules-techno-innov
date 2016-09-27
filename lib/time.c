@@ -20,7 +20,6 @@
  *
  ****************************************************************************/
 
-#include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "core/systick.h"
 #include "lib/time.h"

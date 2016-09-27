@@ -18,15 +18,19 @@
  *
  *************************************************************************** */
 
+#ifndef DRIVERS_RTC_H
+#define DRIVERS_RTC_H
+
 /***************************************************************************** */
 /*                RTC and RTC Interrupts                                    */
 /***************************************************************************** */
 
-/* The RTC is an integrated module of the LPC1224.
+/* The RTC is an integrated module of the LPC122x.
  * Refer to LPC12xx documentation (UM10441.pdf) for more information
  */
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 
 
 /* Return the number of RTC ticks from system power on.
@@ -83,4 +87,40 @@ int set_rtc_callback(void (*callback) (uint32_t), uint32_t when, uint32_t period
 void remove_rtc_callback();
 
 
+
+/***************************************************************************** */
+/*                    Cortex-M0 RTC (Real-Time Clock)                          */
+/***************************************************************************** */
+/* Cortex-M0 RTC Registers */
+struct lpc_rtc {
+    volatile uint32_t data;     /* 0x000 : Data register (R/-) */
+    volatile uint32_t match;    /* 0x004 : Match register (R/W) */
+    volatile uint32_t load;     /* 0x008 : Load register (R/W) */
+    volatile uint32_t control;  /* 0x00C : Control register (R/W) */
+    volatile uint32_t intr_control;        /* 0x010 : Interrupt control set/clear register (R/W) */
+    volatile uint32_t raw_intr_status;     /* 0x014 : Raw interrupt status register (R/-) */
+    volatile uint32_t masked_intr_status;  /* 0x018 : Masked interrupt status register (R/-) */
+    volatile uint32_t intr_clear;          /* 0x01C : Interrupt clear register (-/W) */
+};
+#define LPC_RTC  ((struct lpc_rtc*) LPC_RTC_BASE) /* SysTick configuration struct */
+
+/* RTC Clock source selection */
+#define LPC_RTC_CLK_1HZ          (0)
+#define LPC_RTC_CLK_1HZ_DELAYED  (0x01)
+#define LPC_RTC_CLK_1KHZ         (0x0A)
+#define LPC_RTC_CLK_PCLK         (0x04)  /* Main clock divided by RTC clock divider value */
+
+/* RTC control register */
+#define LPC_RTC_START  (1UL << 0)
+#define LPC_RTC_DISABLE  (0)
+
+/* RTC interrupt control register */
+#define LPC_RTC_INT_ENABLE  (1UL << 0)
+#define LPC_RTC_INT_DISABLE  (0)
+
+/* RTC interrupt clear register */
+#define LPC_RTC_CLEAR_INTR  (1UL << 0)
+
+
+#endif  /* DRIVERS_RTC_H */
 

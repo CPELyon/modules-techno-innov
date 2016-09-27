@@ -24,14 +24,15 @@
 /*                      I2C                                                   */
 /**************************************************************************** */
 
-/* I2C driver for the I2C bus integrated module of the LPC1224.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* I2C driver for the I2C bus integrated module of the LPC122x.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
 #ifndef DRIVERS_I2C_H
 #define DRIVERS_I2C_H
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 
 
 #define I2C_CLK_100KHz  (100*1000)
@@ -138,6 +139,36 @@ void i2c_on(uint32_t i2c_clk_freq);
 void i2c_off(void);
 /* Allow system to propagate main clock */
 void i2c_clock_update(void);
+
+
+
+/***************************************************************************** */
+/*                     Inter-Integrated Circuit                                */
+/***************************************************************************** */
+/* Inter-Integrated Circuit (I2C) */
+struct lpc_i2c
+{
+	volatile uint32_t ctrl_set;      /* 0x000 : I2C Control Set Register (R/W) */
+	volatile const uint32_t status;  /* 0x004 : I2C Status Register (R/-) */
+	volatile uint32_t data;          /* 0x008 : I2C Data Register (R/W) */
+	volatile uint32_t slave_addr_0;  /* 0x00C : I2C Slave Address Register 0 (R/W) */
+	volatile uint32_t clk_duty_high; /* 0x010 : SCL Duty Cycle Register High Half Word (R/W) */
+	volatile uint32_t clk_duty_low;  /* 0x014 : SCL Duty Cycle Register Low Half Word (R/W) */
+	volatile  uint32_t ctrl_clear;   /* 0x018 : I2C Control Clear Register (-/W) */
+	volatile uint32_t monitor_mode_ctrl;  /* 0x01C : Monitor mode control register (R/W) */
+	volatile uint32_t slave_addr_1;  /* 0x020 : I2C Slave Address Register 1 (R/W) */
+	volatile uint32_t slave_addr_2;  /* 0x024 : I2C Slave Address Register 2 (R/W) */
+	volatile uint32_t slave_addr_3;  /* 0x028 : I2C Slave Address Register 3 (R/W) */
+	volatile const uint32_t data_buffer;  /* 0x02C : Data buffer register (-/W) */
+	volatile uint32_t slave_addr_mask[4]; /* 0x030 to 0x03C : I2C Slave address mask register 0 to 3 (R/W) */
+};
+#define LPC_I2C0         ((struct lpc_i2c *) LPC_I2C0_BASE)
+
+#define I2C_ASSERT_ACK   (0x01 << 2)
+#define I2C_INTR_FLAG    (0x01 << 3)
+#define I2C_STOP_FLAG    (0x01 << 4)
+#define I2C_START_FLAG   (0x01 << 5)
+#define I2C_ENABLE_FLAG  (0x01 << 6)
 
 
 

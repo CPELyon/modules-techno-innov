@@ -124,4 +124,43 @@ int stop_watchdog(void);
 void startup_watchdog_disable(void);
 
 
+/***************************************************************************** */
+/*                     Watchdog Timer                                          */
+/***************************************************************************** */
+/* Watchdog Timer (WDT) */
+struct lpc_watchdog
+{
+	volatile uint32_t mode;          /* 0x000 : Watchdog mode register (R/W) */
+	volatile uint32_t timer_const;   /* 0x004 : Watchdog timer constant register (R/W) */
+	volatile uint32_t feed_seqence;  /* 0x008 : Watchdog feed sequence register ( /W) */
+	volatile const uint32_t timer_value;  /* 0x00C : Watchdog timer value register (R/ ) */
+	volatile uint32_t clk_src_sel;   /* 0x010 : Wathdog Clock Source Selection Register (R/W) */
+	volatile uint32_t warning_int_compare; /* 0x014 : Watchdog Warning Interrupt compare value. */
+	volatile uint32_t window_compare;      /* 0x018 : Watchdog Window compare value. */
+};
+#define LPC_WDT         ((struct lpc_watchdog *) LPC_WDT_BASE)
+
+#define LPC_WDT_TIMER_MAX  0xFFFFFF
+
+/* Mode register */
+#define LPC_WDT_EN                  (0x01 << 0)
+#define LPC_WDT_RESET_ON_TIMEOUT    (0x01 << 1)
+#define LPC_WDT_TIMEOUT_FLAG        (0x01 << 2)
+#define LPC_WDT_INTR_FLAG           (0x01 << 3)
+#define LPC_WDT_TIMER_VAL_PROTECT   (0x01 << 4) /* WDPROTECT */
+#define LPC_WDT_CLK_POWER_LOCK      (0x01 << 5) /* WDLOCKCLK */
+#define LPC_WDT_POWER_DOWN_DISABLE  (0x01 << 6) /* WDLOCKDP */
+#define LPC_WDT_EN_LOCK             (0x01 << 7) /* WDLOCKDP */
+
+/* Clk source */
+#define LPC_WDT_CLK_IRC       (0x00 <<  0)
+#define LPC_WDT_CLK_WDOSC     (0x01 <<  0)
+#define LPC_WDT_CLK_SRC_LOCK  (0x01 << 31)
+
+/* Warning Interupt */
+#define LPC_WDT_WARNINT_CMPVAL(x)  ((x) & 0x3FF)
+#define LPC_WDT_WARNINT_MAXVAL     0x3FF
+
+
+
 #endif /* CORE_WATCHDOG_H */

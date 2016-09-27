@@ -21,8 +21,6 @@
  *************************************************************************** */
 
 
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "lib/errno.h"
 #include "drivers/i2c.h"

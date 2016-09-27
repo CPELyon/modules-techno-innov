@@ -26,11 +26,12 @@
 /*                SSP                                                          */
 /***************************************************************************** */
 
-/* SSP/SPI driver for the SSP bus integrated module of the LPC1224.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* SSP/SPI driver for the SSP bus integrated module of the LPC122x.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 
 
 /* Set this to 1 for use of this driver in a multitasking OS, it will activate the SPI Mutex */
@@ -112,6 +113,61 @@ int ssp_slave_on(uint8_t ssp_num, uint8_t frame_type, uint8_t data_width, uint8_
 /* Turn off given SSP block */
 void ssp_off(uint8_t ssp_num);
 
+
+
+
+/***************************************************************************** */
+/*                     Synchronous Serial Communication                        */
+/***************************************************************************** */
+/* Synchronous Serial Communication (SSP) */
+struct lpc_ssp
+{
+	volatile uint32_t ctrl_0;        /* 0x000 : Control Register 0 (R/W) */
+	volatile uint32_t ctrl_1;        /* 0x004 : Control Register 1 (R/W) */
+	volatile uint32_t data;          /* 0x008 : Data Register (R/W) */
+	volatile const uint32_t status;  /* 0x00C : Status Registe (R/-) */
+	volatile uint32_t clk_prescale;  /* 0x010 : Clock Prescale Register (R/W) */
+	volatile uint32_t int_mask;      /* 0x014 : Interrupt Mask Set and Clear Register (R/W) */
+	volatile uint32_t raw_int_status;     /* 0x018 : Raw Interrupt Status Register (R/-) */
+	volatile uint32_t masked_int_status;  /* 0x01C : Masked Interrupt Status Register (R/-) */
+	volatile uint32_t int_clear;     /* 0x020 : SSPICR Interrupt Clear Register (-/W) */
+	volatile uint32_t dma_ctrl;      /* 0x024 : DMA Control Register (R/W) */
+};
+#define LPC_SSP0        ((struct lpc_ssp *) LPC_SSP0_BASE)
+
+/* SSP Control 0 register */
+#define LPC_SSP_DATA_WIDTH(x)    (((x) - 1) & 0x0F) /* Use 4 for 4 bits, 5 for 5 bits, .... */
+#define LPC_SSP_FRAME_SPI        (0x00 << 4)
+#define LPC_SSP_FRAME_TI         (0x01 << 4)
+#define LPC_SSP_FRAME_MICROWIRE  (0x02 << 4)
+#define LPC_SSP_SPI_CLK_LOW      (0x00 << 6)
+#define LPC_SSP_SPI_CLK_HIGH     (0x01 << 6)
+#define LPC_SSP_SPI_CLK_FIRST    (0x00 << 7)
+#define LPC_SSP_SPI_CLK_LAST     (0x01 << 7)
+#define LPC_SSP_SPI_CLK_RATE_DIV(x) (((x) & 0xFF) << 8)
+/* SSP Control 1 register */
+#define LPC_SSP_LOOPBACK_MODE      (0x01 << 0)
+#define LPC_SSP_ENABLE             (0x01 << 1)
+#define LPC_SSP_MASTER_MODE        (0x00 << 2)
+#define LPC_SSP_SLAVE_MODE         (0x01 << 2)
+#define LPC_SSP_SLAVE_OUT_DISABLE  (0x01 << 3)
+
+/* SSP Status register */
+#define LPC_SSP_ST_TX_EMPTY      (0x01 << 0)
+#define LPC_SSP_ST_TX_NOT_FULL   (0x01 << 1)
+#define LPC_SSP_ST_RX_NOT_EMPTY  (0x01 << 2)
+#define LPC_SSP_ST_RX_FULL       (0x01 << 3)
+#define LPC_SSP_ST_BUSY          (0x01 << 4)
+
+/* SSP Interrupt Mask, Raw, Status, Clear */
+#define LPC_SSP_INTR_RX_OVERRUN      (0x01 << 0)
+#define LPC_SSP_INTR_RX_TIMEOUT      (0x01 << 1)
+#define LPC_SSP_INTR_RX_HALF_FULL    (0x01 << 2)
+#define LPC_SSP_INTR_TX_HALF_EMPTY   (0x01 << 3)
+
+/* SSP DMA Control */
+#define LPC_SSP_RX_DMA_EN   (0x01 << 0)
+#define LPC_SSP_TX_DMA_EN   (0x01 << 1)
 
 
 #endif /* DRIVERS_SSP_H */

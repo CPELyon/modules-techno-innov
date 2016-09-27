@@ -1,10 +1,9 @@
 /****************************************************************************
- *   core/lpc_core_cm0.h
+ *   core/lpc_core.h
  *
  * Helper functions to access some registers and Cortex M0 core functionalities.
  *
- *
- * Most of the code from here comes from CMSIS. Should this be rewritten ?
+ * Most of the code from here has been adapted from CMSIS.
  *
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,11 +21,65 @@
  *
  *************************************************************************** */
 
-#ifndef LPC_CORE_CM0_H
-#define LPC_CORE_CM0_H
+#ifndef LPC_CORE_H
+#define LPC_CORE_H
 
-#include <stdint.h>   /* standard types definitions */
-#include "core/lpc_regs_12xx.h"
+#include "lib/stdint.h"
+#include "core/lpc_regs.h"
+
+
+
+/***************************************************************************** */
+/*                    Cortex-M0 System Control Block                           */
+/***************************************************************************** */
+/* Cortex-M0 System Control Block Registers */
+struct syst_ctrl_block_regs {
+	volatile const uint32_t cpuid; /* 0x000 : CPU ID Base Register (R/ ) */
+	volatile uint32_t icsr;        /* 0x004 : Interrupt Control State Register (R/W) */
+	uint32_t reserved_0;
+	volatile uint32_t aircr;       /* 0x00C : Application Interrupt / Reset Control Register (R/W) */
+	volatile uint32_t scr;         /* 0x010 : System Control Register (R/W) */
+	volatile uint32_t ccr;         /* 0x014 : Configuration Control Register (R/W) */
+	uint32_t reserved_1;
+	volatile uint32_t shp[2];      /* 0x01C : System Handlers Priority Registers. [0] is reserved_ (R/W) */
+};
+#define LPC_SCB       ((struct syst_ctrl_block_regs *) LPC_SCB_BASE) /* SCB configuration struct */
+
+/* SCB CPUID Register Definitions */
+#define SCB_CPUID_IMPLEMENTER      (0xFFUL << 24)     /* SCB CPUID: IMPLEMENTER Mask */
+#define SCB_CPUID_VARIANT          (0xFUL << 20)      /* SCB CPUID: VARIANT Mask */
+#define SCB_CPUID_ARCHITECTURE     (0xFUL << 16)      /* SCB CPUID: ARCHITECTURE Mask */
+#define SCB_CPUID_PARTNO           (0xFFFUL << 4)     /* SCB CPUID: PARTNO Mask */
+#define SCB_CPUID_REVISION         (0xFUL << 0)       /* SCB CPUID: REVISION Mask */
+
+/* SCB Interrupt Control State Register Definitions */
+#define SCB_ICSR_NMIPENDSET        (1UL << 31)        /* SCB ICSR: NMIPENDSET Mask */
+#define SCB_ICSR_PENDSVSET         (1UL << 28)        /* SCB ICSR: PENDSVSET Mask */
+#define SCB_ICSR_PENDSVCLR         (1UL << 27)        /* SCB ICSR: PENDSVCLR Mask */
+#define SCB_ICSR_PENDSTSET         (1UL << 26)        /* SCB ICSR: PENDSTSET Mask */
+#define SCB_ICSR_PENDSTCLR         (1UL << 25)        /* SCB ICSR: PENDSTCLR Mask */
+#define SCB_ICSR_ISRPREEMPT        (1UL << 23)        /* SCB ICSR: ISRPREEMPT Mask */
+#define SCB_ICSR_ISRPENDING        (1UL << 22)        /* SCB ICSR: ISRPENDING Mask */
+#define SCB_ICSR_VECTPENDING       (0x1FFUL << 12)    /* SCB ICSR: VECTPENDING Mask */
+#define SCB_ICSR_VECTACTIVE        (0x1FFUL << 0)     /* SCB ICSR: VECTACTIVE Mask */
+
+/* SCB Application Interrupt and Reset Control Register Definitions */
+#define SCB_AIRCR_VECTKEY_OFFSET   16
+#define SCB_AIRCR_VECTKEY          (0xFFFFUL << 16)   /* SCB AIRCR: VECTKEY Mask */
+#define SCB_AIRCR_VECTKEYSTAT      (0xFFFFUL << 16)   /* SCB AIRCR: VECTKEYSTAT Mask */
+#define SCB_AIRCR_ENDIANESS        (1UL << 15)        /* SCB AIRCR: ENDIANESS Mask */
+#define SCB_AIRCR_SYSRESETREQ      (1UL << 2)         /* SCB AIRCR: SYSRESETREQ Mask */
+#define SCB_AIRCR_VECTCLRACTIVE    (1UL << 1)         /* SCB AIRCR: VECTCLRACTIVE Mask */
+
+/* SCB System Control Register Definitions */
+#define SCB_SCR_SEVONPEND          (1UL << 4)         /* SCB SCR: SEVONPEND Mask */
+#define SCB_SCR_SLEEPDEEP          (1UL << 2)         /* SCB SCR: SLEEPDEEP Mask */
+#define SCB_SCR_SLEEPONEXIT        (1UL << 1)         /* SCB SCR: SLEEPONEXIT Mask */
+
+/* SCB Configuration Control Register Definitions */
+#define SCB_CCR_STKALIGN           (1UL << 9)         /* SCB CCR: STKALIGN Mask */
+#define SCB_CCR_UNALIGN_TRP        (1UL << 3)         /* SCB CCR: UNALIGN_TRP Mask */
+
 
 
 /*******************************************************************************/
@@ -239,6 +292,24 @@ static inline void lpc_disable_irq(void)
 /*******************************************************************************/
 /*                Hardware Abstraction Layer : NVIC Functions                  */
 /*******************************************************************************/
+
+/* Cortex-M0 NVIC Registers */
+struct nvic_regs {
+	volatile uint32_t int_set_enable;  /* 0x000 : Interrupt Set Enable Register (R/W) */
+	uint32_t reserved_0[31];
+	volatile uint32_t int_clear_enable;  /* 0x080 : Interrupt Clear Enable Register (R/W) */
+	uint32_t reserved_1[31];
+	volatile uint32_t int_set_pending;  /* 0x100 : Interrupt Set Pending Register (R/W) */
+	uint32_t reserved_2[31];
+	volatile uint32_t int_clear_pending;  /* 0x180 : Interrupt Clear Pending Register (R/W) */
+	uint32_t reserved_3[31];
+	volatile uint32_t int_active_bit; /* 0x200 : Interrupt Active Bit Register (R/-) */
+	uint32_t reserved_4[63];
+	volatile uint32_t int_priority[8]; /* 0x3EC : Interrupt Priority Register (R/W) */
+};
+#define LPC_NVIC      ((struct nvic_regs *) LPC_NVIC_BASE)        /* NVIC configuration struct */
+
+
 /*  Enable External Interrupt
   This function enables a device specific interrupt in the NVIC interrupt controller.
   The interrupt number cannot be a negative value.
@@ -419,5 +490,5 @@ static inline void irq_sync_lock_release(volatile uint32_t *addr)
 }
 
 
-#endif /* LPC_CORE_CM0_H */
+#endif /* LPC_CORE_H */
 

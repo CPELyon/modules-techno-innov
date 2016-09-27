@@ -22,11 +22,10 @@
  *  internal reprogrammable flash.
  * They are stored in the internal ROM memory and may be called using specific
  *  calls with defined parameters depending on the ROM call used.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
 #include "core/system.h"
-#include "core/lpc_core_cm0.h"
 
 /*******************************************************************************/
 /*            Integer division using ROM based division routines               */

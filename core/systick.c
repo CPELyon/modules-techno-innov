@@ -23,12 +23,10 @@
 /*               System Tick Timer                                             */
 /***************************************************************************** */
 
-/* Driver for the internal systick timer of the LPC1224.
- * Refer to the LPC1224 documentation (UM10441.pdf) for more information
+/* Driver for the internal systick timer of the LPC122x.
+ * Refer to the LPC122x documentation (UM10441.pdf) for more information
  */
 
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
 #include "core/system.h"
 #include "core/systick.h"
 #include "lib/errno.h"
@@ -226,7 +224,7 @@ void systick_timer_on(uint32_t ms)
 		reload = (get_main_clock() / 1000) - 1;
 		ms = 1;
 	}
-	/* For the LPC1224 the system tick clock is fixed to half the frequency of the system clock */
+	/* For the LPC122x the system tick clock is fixed to half the frequency of the system clock */
 	reload = reload >> 1; /* Divide by 2 */
 	systick->reload_val = (reload & 0xffffff);
 	tick_ms = ms;
@@ -243,7 +241,7 @@ void systick_timer_on(uint32_t ms)
 
 	/* Perform this division now for the usleep function. */
 	usleep_us_count = get_main_clock() / (1000 * 1000);
-	/* For the LPC1224 the system tick clock is fixed to half the frequency of the system clock */
+	/* For the LPC122x the system tick clock is fixed to half the frequency of the system clock */
 	usleep_us_count = (usleep_us_count >> 1); /* Divide by two */
 
 	/* FIXME : document this */

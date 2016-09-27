@@ -22,8 +22,8 @@
 /*                GPIOs and GPIO Interrupts                                    */
 /***************************************************************************** */
 
-/* Driver for GPIO configuration and access (including GPIO interrupts) on the LPC1224.
- * Refer to LPC1224 documentation (UM10441.pdf) for more information.
+/* Driver for GPIO configuration and access (including GPIO interrupts) on the LPC122x.
+ * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 
 #ifndef DRIVERS_GPIO_H
@@ -31,12 +31,43 @@
 
 
 #include "lib/stdint.h"
+#include "core/lpc_regs.h"
 #include "core/pio.h"
 
 
 /***************************************************************************** */
+/*                     General Purpose Input/Output                            */
+/***************************************************************************** */
+/* General Purpose Input/Output (GPIO) */
+struct lpc_gpio
+{
+	volatile uint32_t mask;       /* 0x00 : Pin mask, affects in, out, set, clear and invert */
+	volatile uint32_t in;         /* 0x04 : Port data Register (R/-) */
+	volatile uint32_t out;        /* 0x08 : Port output Register (R/W) */
+	volatile uint32_t set;        /* 0x0C : Port output set Register (-/W) */
+	volatile uint32_t clear;      /* 0x10 : Port output clear Register (-/W) */
+	volatile uint32_t toggle;     /* 0x14 : Port output invert Register (-/W) */
+	uint32_t reserved_1[2];
+	volatile uint32_t data_dir;   /* 0x20 : Data direction Register (R/W) */
+	volatile uint32_t int_sense;  /* 0x24 : Interrupt sense Register (R/W) */
+	volatile uint32_t int_both_edges; /* 0x28 : Interrupt both edges Register (R/W) */
+	volatile uint32_t int_event;  /* 0x2C : Interrupt event Register  (R/W) */
+	volatile uint32_t int_enable; /* 0x30 : Interrupt mask Register (R/W) */
+	volatile uint32_t raw_int_status;    /* 0x34 : Raw interrupt status Register (R/-) */
+	volatile uint32_t masked_int_status; /* 0x38 : Masked interrupt status Register (R/-) */
+	volatile uint32_t int_clear;  /* 0x3C : Interrupt clear Register (R/W) */
+};
+#define LPC_GPIO_0      ((struct lpc_gpio *) LPC_GPIO_0_BASE)
+#define LPC_GPIO_1      ((struct lpc_gpio *) LPC_GPIO_1_BASE)
+#define LPC_GPIO_2      ((struct lpc_gpio *) LPC_GPIO_2_BASE)
+
+#define LPC_GPIO_REGS(x)  ((struct lpc_gpio *) (LPC_AHB_BASE + (0x10000 * (x))))
+
+
 /*   Public access to GPIO setup   */
 
+#define GPIO_DIR_IN 0
+#define GPIO_DIR_OUT 1
 
 enum gpio_interrupt_senses {
 	EDGES_BOTH = 0,

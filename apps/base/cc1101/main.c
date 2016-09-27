@@ -1,5 +1,5 @@
 /****************************************************************************
- *   apps/cc1101/main.c
+ *   apps/base/cc1101/main.c
  *
  * CC1101 example
  *
@@ -22,17 +22,14 @@
  *************************************************************************** */
 
 
-#include <stdint.h>
-#include "core/lpc_regs_12xx.h"
-#include "core/lpc_core_cm0.h"
-#include "core/pio.h"
 #include "core/system.h"
 #include "core/systick.h"
-#include "lib/stdio.h"
+#include "core/pio.h"
+#include "drivers/ssp.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
+#include "lib/stdio.h"
 #include "extdrv/status_led.h"
-#include "drivers/ssp.h"
 #include "extdrv/cc1101.h"
 
 
@@ -73,10 +70,7 @@ void system_init()
 {
 	/* Stop the watchdog */
 	startup_watchdog_disable(); /* Do it right now, before it gets a chance to break in */
-
-	/* Note: Brown-Out detection must be powered to operate the ADC. adc_on() will power
-	 *  it back on if called after system_init() */
-	system_brown_out_detection_config(0);
+	system_brown_out_detection_config(0); /* No ADC used */
 	system_set_default_power_state();
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
@@ -95,10 +89,7 @@ void system_init()
  */
 void fault_info(const char* name, uint32_t len)
 {
-	serial_write(1, name, len);
-	/* Wait for end of Tx */
-	serial_flush(1);
-	/* FIXME : Perform soft reset of the micro-controller ! */
+	uprintf(UART1, name);
 	while (1);
 }
 
@@ -125,10 +116,11 @@ void cc1101_test_rf_serial_link_tx(uint8_t c)
 }
 
 /***************************************************************************** */
-int main(void) {
+int main(void)
+{
 	system_init();
-	uart_on(0, 115200, cc1101_test_rf_serial_link_tx);
-	uart_on(1, 115200, NULL);
+	uart_on(UART0, 115200, cc1101_test_rf_serial_link_tx);
+	uart_on(UART1, 115200, NULL);
 	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 
 	/* Radio */
@@ -157,14 +149,14 @@ int main(void) {
 			/* Send */
 			ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
 			/* Give some feedback on UART 1 */
-			uprintf(1, "Tx ret: %d\r\n", ret);
+			uprintf(UART1, "Tx ret: %d\n", ret);
 			/* Wait a short time for data to be sent ... */
 			/* FIXME : This should be done using the packet sent signal from CC1101 on GDO pin */
 			msleep(2);
 			do {
 				ret = cc1101_tx_fifo_state();
 				if (ret < 0) {
-					uprintf(1, "Tx Underflow !\r\n");
+					uprintf(UART1, "Tx Underflow !\n");
 					break;
 				}
 			} while (ret != 0);
@@ -172,8 +164,8 @@ int main(void) {
 			cc1101_enter_rx_mode();
 			/* And give some feedback again */
 			val = cc1101_read_status();
-			uprintf(1, "Status : 0x%02x, Sending : %d\r\n", val, tx_len);
-			serial_write(1, (char*)&(cc_tx_data[2]), tx_len);
+			uprintf(UART1, "Status : 0x%02x, Sending : %d\n", val, tx_len);
+			serial_write(UART1, (char*)&(cc_tx_data[2]), tx_len);
 			cc_tx = 0;
 		}
 
@@ -189,16 +181,16 @@ int main(void) {
 				uint8_t val = 0;
 				len = ret;
 				/* Send packet on UART 0 */
-				serial_write(0, &buff[2], (len - 2));
-				serial_write(0, "\r\n", 2);
+				serial_write(UART0, &buff[2], (len - 2));
+				uprintf(UART0, "\n");
 				/* And also some feedback on UART 1 */
 				rxlen = buff[0];
 				addr = buff[1];
 				val = cc1101_get_signal_strength_indication();
-				uprintf(1, "Status: %d, link: %d, len: %d/%d, addr: %d\r\n", status, val, rxlen, len, addr);
+				uprintf(UART1, "Status: %d, link: %d, len: %d/%d, addr: %d\n", status, val, rxlen, len, addr);
 			} else if (ret < 0) {
 				/* Send error on UART 1 */
-				uprintf(1, "Rx Error: %d, len: %d\r\n", -ret, (status & 0x7F));
+				uprintf(UART1, "Rx Error: %d, len: %d\n", -ret, (status & 0x7F));
 			}
 		}
 	}

@@ -57,6 +57,7 @@
  */
 struct tmp101_sensor_config {
 	uint8_t addr;
+	uint8_t bus_num;
 	uint8_t probe_ok;
 	uint8_t actual_config;
 	int last_accessed_register;

@@ -35,11 +35,26 @@
 #include "core/lpc_regs.h"
 
 
+#define NB_I2C_BUSSES   1
+
 #define I2C_CLK_100KHz  (100*1000)
 #define I2C_CLK_400KHz  (400*1000)
 
 #define I2C_READ_BIT 0x01
 #define I2C_WRITE_BIT 0x00
+
+enum i2c_busses {
+	I2C0 = 0,
+	I2C1,
+	I2C2,
+	I2C3,
+};
+
+enum i2c_modes {
+   I2C_MASTER = 0,
+   I2C_SLAVE,
+   I2C_MONITOR,
+};
 
 enum i2c_conditions {
 	I2C_CONT = 0,
@@ -106,7 +121,7 @@ enum i2c_state_machine_states {
  *   -EREMOTEIO : Device did not acknowledge
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* inbuff, size_t count);
+int i2c_read(uint8_t bus_num, const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* inbuff, size_t count);
 
 /* I2C Write
  * Performs a non-blocking write on the i2c bus.
@@ -127,16 +142,28 @@ int i2c_read(const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* i
  *   -EREMOTEIO : Device did not acknowledge
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
-int i2c_write(const void *buf, size_t count, const void* ctrl_buf);
+int i2c_write(uint8_t bus_num, const void *buf, size_t count, const void* ctrl_buf);
 
+
+/* Release Bus
+ * Some devices do not release the Bus at the end of a transaction if they don't receive
+ *   a start condition immediately followed by a stop condition.
+ */
+void i2c_release_bus(uint8_t bus_num);
 
 
 
 /***************************************************************************** */
 /*                I2C Init                                                     */
 /***************************************************************************** */
-void i2c_on(uint32_t i2c_clk_freq);
-void i2c_off(void);
+/* I2C on / off
+ *   bus_num : I2C bus number to use. Ignored on this micro-controller which has only one I2C bus.
+ *   i2c_clk_freq : I2C clock freqeuncy in Hz
+ *   mode is one of I2C_MASTER, I2C_SLAVE or I2C_MONITOR.
+ *   Note that only I2C_MASTER is currently supported.
+ */
+int i2c_on(uint8_t bus_num, uint32_t i2c_clk_freq, uint8_t mode);
+int i2c_off(uint8_t bus_num);
 /* Allow system to propagate main clock */
 void i2c_clock_update(void);
 

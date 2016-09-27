@@ -67,7 +67,7 @@ int tmp101_probe_sensor(struct tmp101_sensor_config* conf)
 
 	/* Did we already probe the sensor ? */
 	if (conf->probe_ok != 1) {
-		conf->probe_ok = i2c_read(&cmd_buf, 1, NULL, NULL, 0);
+		conf->probe_ok = i2c_read(conf->bus_num, &cmd_buf, 1, NULL, NULL, 0);
 	}
 	return conf->probe_ok;
 }
@@ -104,23 +104,25 @@ int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* de
 	/* Read the requested data */
 	if (conf->last_accessed_register == TMP_REG_TEMPERATURE) {
 		/* No need to switch back to temperature register */
-		ret = i2c_read((cmd_buf + 2), 1, (ctrl_buf + 2), (char*)&temp, 2);
+		ret = i2c_read(conf->bus_num, (cmd_buf + 2), 1, (ctrl_buf + 2), (char*)&temp, 2);
 	} else {
 		/* Send (write) temperature register address to TMP101 internal pointer */
-		ret = i2c_read(cmd_buf, CMD_BUF_SIZE, ctrl_buf, (char*)&temp, 2);
+		ret = i2c_read(conf->bus_num, cmd_buf, CMD_BUF_SIZE, ctrl_buf, (char*)&temp, 2);
 		conf->last_accessed_register = TMP_REG_TEMPERATURE;
 	}
 
-	if (ret == 2) {
-		if (raw != NULL) {
-			*raw = byte_swap_16(temp);
-		}
-		if (deci_degrees != NULL) {
-			*deci_degrees = tmp101_convert_to_deci_degrees(byte_swap_16(temp));
-		}
-		return 0;
+	if (ret != 2) {
+		conf->probe_ok = 0;
+		return ret;
 	}
-	return ret;
+
+	if (raw != NULL) {
+		*raw = byte_swap_16(temp);
+	}
+	if (deci_degrees != NULL) {
+		*deci_degrees = tmp101_convert_to_deci_degrees(byte_swap_16(temp));
+	}
+	return 0;
 }
 
 
@@ -146,12 +148,13 @@ int tmp101_sensor_config(struct tmp101_sensor_config* conf)
 	conf->actual_config = (TMP_SHUTDOWN_MODE_ON | TMP_THERMOSTAT_INTERRUPT_MODE | TMP_ALERT_POLARITY_HIGH);
 	conf->actual_config |= (conf->resolution & (0x03 << 5));
 	cmd[2] = conf->actual_config;
-	ret = i2c_write(cmd, 3, NULL);
+	ret = i2c_write(conf->bus_num, cmd, 3, NULL);
 	conf->last_accessed_register = TMP_REG_CONFIG;
-	if (ret == 3) {
-		return 0; /* Config success */
+	if (ret != 3) {
+		conf->probe_ok = 0;
+		return ret;
 	}
-	return ret;
+	return 0; /* Config success */
 }
 
 /* Start a conversion when the sensor is in shutdown mode. */
@@ -166,12 +169,13 @@ int tmp101_sensor_start_conversion(struct tmp101_sensor_config* conf)
 
 	cmd[2] = conf->actual_config;
 	cmd[2] |= TMP_ONE_SHOT_TRIGGER;
-	ret = i2c_write(cmd, 3, NULL);
+	ret = i2c_write(conf->bus_num, cmd, 3, NULL);
 	conf->last_accessed_register = TMP_REG_CONFIG;
-	if (ret == 3) {
-		return 0; /* Conversion start success */
+	if (ret != 3) {
+		conf->probe_ok = 0;
+		return ret;
 	}
-	return ret;
+	return 0; /* Conversion start success */
 }
 
 

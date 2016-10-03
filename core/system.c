@@ -127,6 +127,44 @@ void enter_deep_sleep(void)
 	/* FIXME */
 }
 
+/* Enter deep power down.
+ * NOTE : entering deep power down implies a lot of side effects. I'll try to list them all here
+ *        so this can be done right.
+ *    - The device watchdog must not have deep power-down locked.
+ *
+ * Note : see remark about RTC and deep sleep in section 5.3.3 of UM10441
+ */
+void enter_deep_power_down(void)
+{
+	struct lpc_sys_config* sys_config = LPC_SYS_CONFIG;
+	struct syst_ctrl_block_regs* scb = LPC_SCB;
+	struct lpc_pm_unit* pmu = LPC_PMU;
+
+	/* Clear deep power down flag */
+	pmu->power_ctrl |= LPC_DPD_FLAG;
+
+	/* Ask for the same clock status when waking up */
+	sys_config->powerdown_wake_cfg = sys_config->powerdown_run_cfg;
+
+	/* Set power-down sleep config : Turn Watchdog and BOD off when entering deep power down */
+	sys_config->powerdown_sleep_cfg = 0xFFFF;
+	/* Switch to low-speed WDO */
+	sys_config->main_clk_sel = LPC_MAIN_CLK_SRC_IRC_OSC;
+	sys_config->main_clk_upd_en = 0;
+	sys_config->main_clk_upd_en = 1;
+	while (!(sys_config->main_clk_upd_en & 0x01));
+
+	/* Enter deep power-down on next wfi() call */
+	pmu->power_ctrl |= LPC_PD_EN;
+	scb->scr |= SCB_SCR_SLEEPDEEP;
+
+	/* Power down everything but the IRC and Flash */
+	sys_config->powerdown_run_cfg &= ~(LPC_POWER_DOWN_IRC_OUT | LPC_POWER_DOWN_IRC | LPC_POWER_DOWN_FLASH);
+
+	/* "wfi" instruction to enter deep power-down */
+	wfi();
+}
+
 /* Power on or off a subsystem */
 void subsystem_power(uint32_t power_bit, uint32_t on_off)
 {

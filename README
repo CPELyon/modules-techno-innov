@@ -70,6 +70,7 @@ SUPPORTED FEATURES and INTERFACES
    - systick
    - precise msleep and usleep functions (using systick)
    - pio configuration
+   - deep power down
 
 - Simple C Library
    - memcpy and memset

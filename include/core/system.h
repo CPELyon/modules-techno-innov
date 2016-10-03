@@ -35,25 +35,44 @@
 /***************************************************************************** */
 /*                       Power up defaults                                     */
 /***************************************************************************** */
-/* Change reset power state to our default, removing power from unused
- * interfaces */
+/* Change reset power state to our default, removing power from unused interfaces */
 void system_set_default_power_state(void);
+
 
 /***************************************************************************** */
 /*                       Power                                                 */
 /***************************************************************************** */
+/* Enter deep sleep.
+ * NOTE : entering deep sleep implies a lot of side effects. I'll try to list them all here
+ *        so this can be done right.
+ *
+ * Note : see remark about RTC and deep sleep in section 5.3.3 of UM10441
+ */
 void enter_deep_sleep(void);
+
+/* Enter deep power down.
+ * NOTE : entering deep power down implies a lot of side effects. I'll try to list them all here
+ *        so this can be done right.
+ *    - The device watchdog must not have deep power-down locked.
+ *
+ * There are only two ways to get out of deep power down : RTC interrupt and wakeup pin going low.
+ *   Even RESET pin won't get the chip out of power down.
+ */
+void enter_deep_power_down(void);
+
 
 /* Power on or off a subsystem */
 void subsystem_power(uint32_t power_bit, uint32_t on_off);
 /* Check whether a subsystem is powered or not */
 uint8_t subsystem_powered(uint32_t power_bit);
 
+
 /* Configure the brown-out detection.
  * Note: Brown-Out detection must be powered to operate the ADC (See Section 19.2
  *    of UM10441 revision 2.1 or newer for more information)
  */
 void system_brown_out_detection_config(uint32_t level);
+
 
 /***************************************************************************** */
 /*                      System Clock                                           */
@@ -264,6 +283,10 @@ struct lpc_pm_unit
 };
 #define LPC_PMU         ((struct lpc_pm_unit *) LPC_PMU_BASE)
 
+/* Power control register */
+#define LPC_PD_EN                   (0x01 << 1)
+#define LPC_SLEEP_FLAG              (0x01 << 8)
+#define LPC_DPD_FLAG                (0x01 << 11)
 /* System config register */
 #define LPC_WAKEUP_PIN_HYST_MASK    (0x01 << 10)
 #define LPC_RTC_CLK_SRC_SHIFT       11

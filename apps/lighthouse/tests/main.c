@@ -42,7 +42,7 @@
 #define RF_868MHz  1
 #define RF_915MHz  0
 #if ((RF_868MHz) + (RF_915MHz) != 1)
-#error Either RF_868MHz or RF_915MHz MUST be defined.
+#error Either RF_868MHz or RF_915MHz MUST be defined, but not both or none.
 #endif
 
 
@@ -135,7 +135,11 @@ static uint8_t rf_specific_settings[] = {
 	CC1101_REGS(radio_stm[1]), 0x3F, /* CCA mode "if RSSI below threshold", Stay in RX, Go to RX (page 81) */
 	CC1101_REGS(agc_ctrl[1]), 0x20, /* LNA 2 gain decr first, Carrier sense relative threshold set to 10dB increase in RSSI value */
 #if (RF_915MHz == 1)
-	/* FIXME : Add here a define protected list of settings for 915MHz configuration */
+	/* Settings for 915MHz configuration :
+	 * Carrier Frequency control - FREQ2..0 : Fcarrier == 914.999969 MHz */
+	CC1101_REGS(freq_control[0]), 0x23, /* 0x23313b == Fcarrier * 2^16 / Fxtal */
+	CC1101_REGS(freq_control[1]), 0x31, /*          == approx(915 MHz) * 65536 / 26 MHz */
+	CC1101_REGS(freq_control[2]), 0x3b,
 #endif
 };
 

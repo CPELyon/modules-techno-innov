@@ -30,6 +30,7 @@
 #include "drivers/gpio.h"
 #include "drivers/ssp.h"
 #include "drivers/i2c.h"
+#include "drivers/rtc.h"
 #include "extdrv/cc1101.h"
 #include "extdrv/status_led.h"
 #include "extdrv/ws2812.h"
@@ -98,10 +99,11 @@ void system_init()
 	clock_config(SELECTED_FREQ);
 	set_pins(common_pins);
 	gpio_on();
-	/* System tick timer MUST be configured and running in order to use the sleeping
-	 * functions */
+	/* System tick timer MUST be configured and running in order to use the sleeping functions */
 	systick_timer_on(1); /* 1ms */
 	systick_start();
+	/* RTC */
+	rtc_on();
 }
 
 /* Define our fault handler. This one is not mandatory, the dummy fault handler
@@ -116,6 +118,13 @@ void fault_info(const char* name, uint32_t len)
 }
 
 
+/******************************************************************************/
+/* RTC events handling */
+uint32_t rtc_event = 0;
+void rtc_toggle_led(uint32_t tick)
+{
+	rtc_event = tick;
+}
 
 /******************************************************************************/
 /* RF Communication */
@@ -271,15 +280,23 @@ int main(void)
 
 	/* Led strip configuration */
 	ws2812_config(&ws2812_data_out_pin);
-
 	ws2812_clear();
+
+	/* RTC */
+	set_rtc_callback(&rtc_toggle_led, 0, 2);
 
 	while (1) {
 		uint8_t status = 0;
 
 		status_led(none);
 
-		chenillard(25);
+		if (rtc_event != 0) {
+#ifdef DEBUG
+			uprintf(UART0, "RTC: %d\n", rtc_event);
+#endif
+			rtc_event = 0;
+			chenillard(25);
+		}
 		/* RF */
 		if (cc_tx == 1) {
 			send_uart_to_rf();

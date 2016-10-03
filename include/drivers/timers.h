@@ -57,6 +57,13 @@ enum lpc_timers {
 	LPC_TIMER_32B1,  /* 32 bits timer 1 */
 };
 
+enum lpc_timer_channels {
+	CHAN0 = 0,
+	CHAN1,
+	CHAN2,
+	CHAN3,
+};
+
 /* Available timer modes *
  * Some mode may be combined, and some are exlusive :
  * Values here are important :

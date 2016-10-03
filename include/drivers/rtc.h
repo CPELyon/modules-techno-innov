@@ -46,7 +46,7 @@ uint32_t rtc_get_count(void);
 
 /* In case someone wants the RTC to count something different from seconds
  * No need to call this function if you only want to count seconds, this is the default.
- * source selection values are defined in lpc_regs_12xx.h
+ * source selection values are defined below.
  * clk_div is only usefull when selected clock source is PCLK (peripheral clock). Use value
  *    betwween 1 and 255 included.
  */
@@ -70,7 +70,7 @@ void rtc_set_date(uint32_t date);
  * If periodic is 1 then the rtc match register will be updated after the interrupt
  *    has been handled by adding the offset.
  * If date is set, the match register will be set to date. (regardless of the periodic
- *    argument, wich allows to have the first interrupt at a given date, and the following
+ *    argument, which allows to have the first interrupt at a given date, and the following
  *    ones at a period set by the offset argument.
  * If date is 0, then the match register is set to current date + offset.
  * return -1 if RTC is not started and synced.
@@ -82,7 +82,13 @@ int rtc_set_match(uint32_t date, uint32_t offset, uint8_t periodic);
  *   periodic interrupts. 'period' is a number of RTC counter increments.
  * Return a positive integer if registration is OK and callback has a chance of being called.
  * Return a negative integer if the match configuration was not possible.
+ * Note :
+ *  The callback becomes active only after the RTC starts returning valid data. set_rtc_callback()
+ *  takes care of waiting for this event by installing a systick callback which tries to setup the
+ *  RTC callback every RTC_CB_INST_RETRY_MS milli-seconds. This systick callback will be removed
+ *  once the RTC callback is installed.
  */
+#define RTC_CB_INST_RETRY_MS  500
 int set_rtc_callback(void (*callback) (uint32_t), uint32_t when, uint32_t period);
 void remove_rtc_callback();
 

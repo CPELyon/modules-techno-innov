@@ -125,7 +125,7 @@ void rtc_set_date(uint32_t date)
  * If periodic is 1 then the rtc match register will be updated after the interrupt
  *    has been handled by adding the offset.
  * If date is set, the match register will be set to date. (regardless of the periodic
- *    argument, wich allows to have the first interrupt at a given date, and the following
+ *    argument, which allows to have the first interrupt at a given date, and the following
  *    ones at a period set by the offset argument.
  * If date is 0, then the match register is set to current date + offset.
  * return -1 if RTC is not started and synced
@@ -168,6 +168,11 @@ void setup_callback(uint32_t ticks)
  *   periodic interrupts. 'period' is a number of RTC counter increments.
  * Return a positive integer if registration is OK and callback has a chance of being called.
  * Return a negative integer if the match configuration was not possible.
+ * Note :
+ *  The callback becomes active only after the RTC starts returning valid data. set_rtc_callback()
+ *  takes care of waiting for this event by installing a systick callback which tries to setup the
+ *  RTC callback every RTC_CB_INST_RETRY_MS milli-seconds. This systick callback will be removed
+ *  once the RTC callback is installed.
  */
 int set_rtc_callback(void (*callback) (uint32_t), uint32_t when, uint32_t period)
 {
@@ -180,7 +185,8 @@ int set_rtc_callback(void (*callback) (uint32_t), uint32_t when, uint32_t period
 		rtc_set_match(when, period, ((period == 0) ? 0 : 1));
 	} else {
 		/* Add callback for "config later" */
-		ret = add_systick_callback(&setup_callback, (3000 / systick_get_tick_ms_period()));
+		uint32_t retry_period = (RTC_CB_INST_RETRY_MS / systick_get_tick_ms_period());
+		ret = add_systick_callback(&setup_callback, retry_period);
 		match_first = when;
 		periodic_match = ((period == 0) ? 0 : 1);
 		rtc_match_period = period;

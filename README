@@ -32,9 +32,11 @@ lib/ directory, and add stuff there.
 
 Once done you should build using the provided makefile by running the
 simple "make" command in the base directory, which will build all apps, or
-run "make <module_name>/<app_name>" to build a specific application. You can
-also run the simple "make" command in the specific app subdirectory to compile
-this application alone.
+run "make <module_name>/<app_name>" to build a specific application.
+You can also run the simple "make" command in the specific app subdirectory
+to compile this application alone.
+The provided Makefiles display some information about the size and memory
+usage of the generated binary.
 
 To flash the binary (the one with .bin) to the LPC Flash you will need the
 lpctool package, now packaged for Debian, starting with Jessie, or available
@@ -46,6 +48,12 @@ Usual command lines :
    lpcprog -d /dev/ttyUSB0 -c flash app_name.bin
 See lpctools readme and lpcprog or isp help (-h) or manpages for more
 information.
+For easier use of lpcprog in the usual case it is possible to define an alias
+such as the following one, which you can add to your shell ressources file :
+   alias prog='lpcprog -d /dev/ttyUSB0 -c flash $(basename $PWD).bin'
+This alias will call lpcprog on the most commonly used tty device (for me at
+least) and try to flash the file ending in ".bin" which has the same name as
+the current directory (which is what the apps Makefiles produces).
 
 
 ********************
@@ -99,6 +107,7 @@ SUPPORTED FEATURES and INTERFACES
    - LCD Character displays
    - Maxim Max31855 thermocouple to digital converters
    - On semiconductor NCN5120 KNX bus interface (under test)
+   - VEML6070 I²C UV sensor
 
 - Other
    - 8x8 font for use with Epaper display

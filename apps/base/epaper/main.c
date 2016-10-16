@@ -141,6 +141,10 @@ extern unsigned int _end_text;
 extern unsigned int _end_data;
 
 
+#define ROW(x)   REVERSE(x)
+DECLARE_FONT(font);
+
+
 #define TEXT_LENGTH_MAX 33
 static volatile uint8_t display_text_buff[TEXT_LENGTH_MAX];
 static volatile uint8_t update_text = 0;
@@ -163,7 +167,7 @@ void build_line(uint8_t* img_buff, uint8_t* text)
 	int len = strlen((char*)text);
 
 	for (i = 0; i < len; i++) {
-		uint8_t tile = (text[i] > first_font_char) ? (text[i] - first_font_char) : 0;
+		uint8_t tile = (text[i] > FIRST_FONT_CHAR) ? (text[i] - FIRST_FONT_CHAR) : 0;
 		uint8_t* tile_data = (uint8_t*)(&font[tile]);
 		for (line = 0; line < 8; line++) {
 			img_buff[ (line * epaper_def.bytes_per_line) + i ] = tile_data[7 - line];
@@ -171,27 +175,6 @@ void build_line(uint8_t* img_buff, uint8_t* text)
 	}
 }
 
-
-/* FIXME :
- * Actual font data is stored in "human drawing order", but must be sent in revers bit order.
- * This function takes care of bit reversal for each font byte once and for all.
- * This should be done on the font file for execution efficiency and code size, but would make
- *   font update harder.
- */
-void fix_font(uint64_t* font_64, uint8_t size)
-{
-	int i = 0;
-	uint32_t* f = (uint32_t*)font_64;
-	size = size * 2;
-	for (i = 0; i < size; i++) {
-		// swap odd and even bits
-		f[i] = ((f[i] >> 1) & 0x55555555) | ((f[i] & 0x55555555) << 1);
-		// swap consecutive pairs
-		f[i] = ((f[i] >> 2) & 0x33333333) | ((f[i] & 0x33333333) << 2);
-		// swap nibbles ... 
-		f[i] = ((f[i] >> 4) & 0x0F0F0F0F) | ((f[i] & 0x0F0F0F0F) << 4);
-	}
-}
 
 /***************************************************************************** */
 #define BUFF_LEN 60
@@ -206,8 +189,6 @@ int main(void)
 
 	/* E-Paper */
 	epaper_config(&epaper_def);
-	/* Font fix */
-	fix_font(font, NB_FONT_TILES);
 
 	while (1) {
 		if (white_request == 1) {

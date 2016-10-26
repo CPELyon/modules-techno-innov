@@ -352,7 +352,7 @@ int countertimer_on(uint8_t timer_num, uint32_t clkrate, void (*callback)(uint32
 	}
 	timer->regs->prescale = prescale;
 
-	NVIC_EnableIRQ(countertimers[timer_num].irq);
+	NVIC_EnableIRQ( timer->irq );
 	return 0;
 }
 

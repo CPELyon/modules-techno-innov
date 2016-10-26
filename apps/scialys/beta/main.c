@@ -27,16 +27,22 @@
 #include "core/systick.h"
 #include "core/pio.h"
 #include "lib/stdio.h"
+#include "lib/errno.h"
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
 #include "drivers/adc.h"
 #include "drivers/ssp.h"
 #include "drivers/i2c.h"
+#include "drivers/timers.h"
 
 #include "extdrv/status_led.h"
 #include "extdrv/ws2812.h"
 #include "extdrv/max31855_thermocouple.h"
 #include "extdrv/tmp101_temp_sensor.h"
+#include "extdrv/rtc_pcf85363a.h"
+#include "extdrv/ssd130x_oled_driver.h"
+#include "lib/font.h"
+
 
 #define MODULE_VERSION    0x01
 #define MODULE_NAME "Scialys uC"
@@ -55,13 +61,13 @@
 
 /* If temperature falls bellow FORCE_HEATER_TEMP value, we enter forced heater mode, until
  *    TARGET_FORCED_HEATER_TEMP is reached.
- * When in forced heater mode, the heated is controlled to heat at FORCED_MODE_VALUE which 
- *    is between 0 and 255.
+ * When in forced heater mode, the heater is controlled to heat at FORCED_MODE_VALUE which
+ *    is between 0 and 100.
  */
 #define FORCE_HEATER_TEMP  25
 #define TARGET_FORCED_HEATER_TEMP 45
 #define NO_FORCED_HEATING_ON_SUNNY_DAYS 750
-#define FORCED_MODE_VALUE  190 /* A fraction of 255 */
+#define FORCED_MODE_VALUE  75 /* A fraction of 100 */
 uint32_t forced_heater_mode = 0;
 uint32_t forced_heater_delay = 0;
 uint32_t forced_heater_time = 0;
@@ -142,6 +148,14 @@ const struct pio zero_cross_in_pin = LPC_GPIO_0_4;
 const struct pio th_warn_in_pin = LPC_GPIO_0_5;
 const struct pio charge_status_in_pin = LPC_GPIO_0_28;
 
+/* Outputs */
+/* Led control data pin */
+const struct pio ws2812_data_out_pin = LPC_GPIO_0_23;
+/* AC output control (Mosfet / Triac) */
+const struct pio ac_ctrl = LPC_GPIO_0_7;
+/* Fixme : Fan */
+
+
 /* Thermocouple reading */
 const struct max31855_sensor_config thermo = {
 	.ssp_bus_num = 0,
@@ -156,9 +170,38 @@ struct tmp101_sensor_config tmp101_sensor = {
 	.resolution = TMP_RES_ELEVEN_BITS,
 };
 
-/* Led control data pin */
-const struct pio ws2812_data_out_pin = LPC_GPIO_0_23;
 
+#define FAN_ON    (10 * 1000)
+const struct lpc_timer_pwm_config fan_pwm_conf = {
+	.nb_channels = 1,
+	.period_chan = CHAN3,
+	.period = FAN_ON,
+	.outputs = { CHAN0, },
+	.match_values = { 0, },
+};
+
+const struct lpc_tc_config ac_timer_conf = {
+	.mode = LPC_TIMER_MODE_TIMER | LPC_TIMER_MODE_MATCH,
+	.match_control = { 0, LPC_TIMER_INT_RESET_AND_STOP_ON_MATCH, 0, 0, },
+	.match = { 0, 10, 0, 0, },
+	.ext_match_config = { 0, LPC_TIMER_SET_ON_MATCH, 0, 0, },
+};
+
+#define	RTC_ADDR   0xA2
+struct rtc_pcf85363a_config rtc_conf = {
+	.bus_num = I2C0,
+	.addr = RTC_ADDR,
+	.mode = PCF85363A_MODE_RTC,
+	.config_marker = PCF85363A_CONFIGURED_1,
+	.batt_ctrl = PCF85363A_CONF_BATT_TH_2_8V,
+};
+/* Oldest acceptable time in RTC. BCD coded. */
+const struct rtc_time oldest = {
+	.year = 0x16,
+	.month = 0x10,
+	.day = 0x26,
+};
+static struct rtc_time now;
 
 /***************************************************************************** */
 /* Basic system init and configuration */
@@ -173,7 +216,7 @@ const struct wdt_config wdconf = {
 	.intr_mode_only = 0,
 	.callback = wdt_callback,
 	.locks = 0,
-	.nb_clk = 0x0FFFFFF, /* 0x3FF to 0x03FFFFFF */
+	.nb_clk = 0x03FFFFFF, /* 0x3FF to 0x03FFFFFF */
 	.wdt_window = 0,
 	.wdt_warn = 0x3FF,
 };
@@ -207,23 +250,121 @@ void fault_info(const char* name, uint32_t len)
 
 
 /***************************************************************************** */
+/* System configuration over USB */
+static uint32_t fan_speed = 0;
+static int act_cmd = 0;
 void config_rx(uint8_t c)
 {
+	/* FAN control */
+	if (c == 'f') {
+		fan_speed = 100;
+		timer_set_match(LPC_TIMER_32B0, CHAN0, FAN_ON);
+	} else if (c == 'z') {
+		fan_speed = 0;
+		timer_set_match(LPC_TIMER_32B0, CHAN0, 0);
+	} else if ((c >= '0') && (c <= '9')) {
+		fan_speed = ((c - '0') * 10);
+		if (fan_speed < 60) {
+			fan_speed = 0;
+		}
+		timer_set_match(LPC_TIMER_32B0, CHAN0, (FAN_ON - ((FAN_ON / 100) * (100 - fan_speed))));
+	}
+	/* Load control */
+	if (c == 'l') {
+		act_cmd = 100;
+	} else if (c == 'x') {
+		act_cmd = 0;
+	}
 }
+
+
+
+/***************************************************************************** */
+/* System communication over UART1 */
 void cmd_rx(uint8_t c)
 {
 }
 
-void dmx_send_frame(uint8_t start_code, uint8_t* slots, uint16_t nb_slots)
+
+/***************************************************************************** */
+
+void set_ctrl_duty_cycle(uint8_t value)
 {
+	act_cmd = value;
+	if (act_cmd > 100) {
+		/* 100 is the maximum allowed value */
+		act_cmd = 100;
+	} else if (act_cmd <= 2) {
+		/* Below 3% there are triggering problems which lead to 50% instead of 1% or 2% */
+		act_cmd = 0;
+	}
 }
 
+static volatile uint8_t ac_ctrl_state = 0;
+void ac_switch_on(uint32_t flags)
+{
+	/* Generate a 5us (approx) pulse */
+	if (ac_ctrl_state == 1) {
+		/* Start of pulse */
+		gpio_set(ac_ctrl);
+		/* Change state machine state */
+		ac_ctrl_state = 0;
+		/* And request interrupt in approx 5us to clear ac_ctrl output */
+		timer_set_match(LPC_TIMER_32B1, CHAN1, (5 * 480));
+		timer_restart(LPC_TIMER_32B1);
+	} else {
+		/* End of pulse */
+		gpio_clear(ac_ctrl);
+	}
+}
+
+static uint32_t clk_cycles_ac_zc = 0;
+static volatile uint32_t zc_count = 0; /* Wraps every 1.36 year ... */
+void zero_cross(uint32_t gpio)
+{
+	uint32_t delay = 0;
+
+	zc_count ++;
+
+	if (act_cmd == 100) {
+		gpio_set(ac_ctrl);
+		return;
+	}
+	gpio_clear(ac_ctrl);
+	if (act_cmd == 0) {
+		return;
+	}
+	/* Set timer to trigger ac out ON at given delay */
+	delay = clk_cycles_ac_zc * (100 - act_cmd);
+	timer_set_match(LPC_TIMER_32B1, CHAN1, delay);
+	timer_restart(LPC_TIMER_32B1);
+	/* Set "AC triggering" stame machine state */
+	ac_ctrl_state = 1;
+}
+
+static uint8_t thermal_warn_flag = 0;
+void th_warning(uint32_t gpio)
+{
+	/* FIXME : test for condition set or removed */
+	/* Turn off AC output */
+	gpio_clear(ac_ctrl);
+	act_cmd = 0;
+	thermal_warn_flag = 1;
+	/* Turn on Fan at max speed */
+	timer_set_match(LPC_TIMER_32B0, CHAN0, 0);
+}
+
+
+
+/***************************************************************************** */
+/* System interface */
 enum buttons {
 	BUTTON_NONE = 0,
 	BUTTON_OK,
 	BUTTON_UP,
 	BUTTON_DOWN,
 };
+
 
 uint32_t manual_activation_request = 0;
 uint8_t button_pressed = 0;
@@ -254,12 +395,7 @@ void handle_dec_request(uint32_t curent_tick) {
 }
 
 
-void zero_cross(uint32_t gpio) {
-}
-void th_warning(uint32_t gpio) {
-}
-
-
+/***************************************************************************** */
 void temp_config(int uart_num)
 {
 	int ret = 0;
@@ -270,13 +406,59 @@ void temp_config(int uart_num)
 }
 
 
-#define NB_VAL 20
+/***************************************************************************** */
+/* Oled Display */
+#define DISPLAY_ADDR   0x78
+struct oled_display display = {
+	.address = DISPLAY_ADDR,
+	.bus_num = I2C0,
+	.video_mode = SSD130x_DISP_NORMAL,
+	.contrast = 128,
+	.scan_dir = SSD130x_SCAN_BOTTOM_TOP,
+	.read_dir = SSD130x_RIGHT_TO_LEFT,
+	.display_offset_dir = SSD130x_MOVE_TOP,
+	.display_offset = 4,
+};
 
+#define ROW(x)   VERTICAL_REV(x)
+DECLARE_FONT(font);
+
+void display_char(uint8_t line, uint8_t col, uint8_t c)
+{
+	uint8_t tile = (c > FIRST_FONT_CHAR) ? (c - FIRST_FONT_CHAR) : 0;
+	uint8_t* tile_data = (uint8_t*)(&font[tile]);
+	ssd130x_set_tile(&display, col, line, tile_data);
+}
+int display_line(uint8_t line, uint8_t col, char* text)
+{
+	int len = strlen((char*)text);
+	int i = 0;
+
+	for (i = 0; i < len; i++) {
+		uint8_t tile = (text[i] > FIRST_FONT_CHAR) ? (text[i] - FIRST_FONT_CHAR) : 0;
+		uint8_t* tile_data = (uint8_t*)(&font[tile]);
+		ssd130x_set_tile(&display, col++, line, tile_data);
+		if (col >= (SSD130x_NB_COL / 8)) {
+			col = 0;
+			line++;
+			if (line >= SSD130x_NB_PAGES) {
+				return i;
+			}
+		}
+	}
+	return len;
+}
+
+
+
+
+/***************************************************************************** */
+#define NB_VAL 20
 
 enum modes {
 	heat = 'C',
 	ejp = 'E',
-	no_heat_prod = 'P',
+	delayed_heat_prod = 'P',
 	forced = 'F',
 	temp_OK = 'T',
 	manual = 'M',
@@ -292,6 +474,7 @@ int main(void)
 	uint8_t idx = 0;
 	uint32_t loop = 0;
 	char mode = heat; /* Debug info */
+	int ret = 0;
 
 	system_init();
 	status_led(red_only);
@@ -300,6 +483,11 @@ int main(void)
 	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
 	ssp_master_on(thermo.ssp_bus_num, LPC_SSP_FRAME_SPI, 8, 4*1000*1000);
 	adc_on(NULL);
+	timer_on(LPC_TIMER_32B0, 0, NULL);
+	timer_on(LPC_TIMER_32B1, 0, ac_switch_on);
+
+	/* Immediatly turn off Mosfet / Triac */
+	config_gpio(&ac_ctrl, 0, GPIO_DIR_OUT, 0);
 
 	/* Thermocouple configuration */
 	max31855_sensor_config(&thermo);
@@ -310,12 +498,17 @@ int main(void)
 
 	/* Activate on Rising edge (button release) */
 	set_gpio_callback(manual_activation, &button_ok, EDGE_RISING);
+#if 0
+	/* Debug */
+	config_gpio(&button_b1, 0, GPIO_DIR_OUT, 0);
+	config_gpio(&button_b2, 0, GPIO_DIR_OUT, 0);
+#endif
 	set_gpio_callback(manual_up, &button_b1, EDGE_RISING);
 	set_gpio_callback(manual_down, &button_b2, EDGE_RISING);
 
 	/* Zero cross and alert pin */
-	set_gpio_callback(zero_cross, &zero_cross_in_pin, EDGE_RISING);
-	set_gpio_callback(th_warning, &th_warn_in_pin, EDGE_RISING);
+	set_gpio_callback(zero_cross, &zero_cross_in_pin, EDGE_FALLING);
+	set_gpio_callback(th_warning, &th_warn_in_pin, EDGES_BOTH);
 
 	/* Start ADC sampling */
 	adc_start_burst_conversion(ADC_MCH(0) | ADC_MCH(1) | ADC_MCH(2) | ADC_MCH(7), LPC_ADC_SEQ(0));
@@ -328,13 +521,40 @@ int main(void)
 	/* WS2812B Leds on display board */
 	ws2812_config(&ws2812_data_out_pin);
 
+	/* FAN Config */
+	timer_pwm_config(LPC_TIMER_32B0, &fan_pwm_conf);
+	timer_start(LPC_TIMER_32B0);
+	/* AC Switch Config */
+	timer_counter_config(LPC_TIMER_32B1, &ac_timer_conf);
+	/* We want 100 Hz (50 Hz but two zero crossings) with 1% granularity */
+	clk_cycles_ac_zc = get_main_clock() / (100 * 100);
+
 	status_led(green_only);
+
+    /* Configure and start display */
+    ret = ssd130x_display_on(&display);
+    /* Erase screen */
+    ssd130x_display_set(&display, 0x00);
+    ret = ssd130x_display_full_screen(&display);
+
+	/* RTC init ? */
+	ret = rtc_pcf85363a_config(&rtc_conf);
+	ret = rtc_pcf85363a_is_up(&rtc_conf, &oldest);
+	if (ret == 1) {
+		char buff[30];
+		rtc_pcf85363_time_read(&rtc_conf, &now);
+		rtc_pcf85363_time_to_str(&now, buff, 30);
+		uprintf(UART0, buff);
+	} else if (ret == -EFAULT) {
+		memcpy(&now, &oldest, sizeof(struct rtc_time));
+		rtc_pcf85363_time_write(&rtc_conf, &now);
+	}
 
 	msleep(50);
 	/* Read parameters from memory */
 	if (1) {
 		never_force = 0;
-		forced_heater_delay = FORCED_HEATER_DELAY;
+		forced_heater_delay = 0;
 		forced_heater_time = FORCED_HEATER_DURATION;
 	}
 
@@ -404,6 +624,8 @@ int main(void)
 				uprintf(UART0, "Water Temp read error : %d\n", ret);
 			}
 		}
+
+		/* Need to enter Forced heating mode ? */
 		if (water_centi_degrees < (FORCE_HEATER_TEMP * 100)) {
 			if (forced_heater_mode == 0) {
 				uprintf(UART0, "Entering forced mode\n");
@@ -419,11 +641,10 @@ int main(void)
 			mode = temp_OK;
 		}
 
-		/* Do not force if there is some sun, it may be enough to heat again */
+		/* Do not force if there is a lot of sun, it may be enough to heat again soon */
 		if (moyenne_solar > NO_FORCED_HEATING_ON_SUNNY_DAYS) {
 			forced_heater_mode = 0;
-			mode = no_heat_prod;
-			forced_heater_delay = FORCED_HEATER_DELAY;
+			mode = delayed_heat_prod;
 		}
 
 		/* Do not force heating if this is an EJP day */
@@ -466,8 +687,8 @@ int main(void)
 			}
 		} else if (moyenne_solar < moyenne_home) {
 			/* Low production mode */
-			if (command_val > 25) {
-				command_val -= 25;
+			if (command_val > 10) {
+				command_val -= 10;
 			} else {
 				command_val = 0;
 				mode = idle_heat;
@@ -475,17 +696,19 @@ int main(void)
 			status_led(green_off);
 		} else {
 			/* High production mode */
-			if (command_val < 245) {
+			if (command_val < 90) {
 				command_val += 10;
 			} else {
-				command_val = 255;
+				command_val = 100;
 				mode = full_heat;
 			}
 			status_led(green_on);
 		}
 
-		/* Send DMX frame */
-		dmx_send_frame(0x00, 0, 1);
+		/* Set Control Output duty cycle */
+		/* Debug Nath TMP */
+		//set_ctrl_duty_cycle(command_val);
+		set_ctrl_duty_cycle( user_potar / 10 );
 		/* Display */
 		if (1) {	
 			int abs_centi = water_centi_degrees;
@@ -508,9 +731,9 @@ int main(void)
 				uprintf(UART0, "Button : %d\n", button_pressed);
 				button_pressed  = 0;
 			}
-			uprintf(UART0, "CMD: %d\n\n", 0);
-			ws2812_set_pixel(0, (isnail_val_home / 100), (isnail_val_solar / 100), 0);
-			ws2812_set_pixel(1, (acs_val_load >> 2), 0, (user_potar >> 2));
+			uprintf(UART0, "CMD: %d/%d, Fan: %d, ZC: %d\n\n", command_val, act_cmd, fan_speed, zc_count);
+			ws2812_set_pixel(0, (isnail_val_home / 100), (isnail_val_solar / 100), fan_speed);
+			ws2812_set_pixel(1, (acs_val_load >> 2), (zc_count & 0xFF), (user_potar >> 2));
 			ws2812_send_frame(0);
 		}
 	}

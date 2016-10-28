@@ -26,6 +26,7 @@
 /***************************************************************************** */
 
 #include "lib/stdint.h"
+#include "core/lpc_core.h"
 
 
 /***************************************************************************** */
@@ -48,11 +49,19 @@ uint8_t clz(uint32_t x);
  */
 uint8_t ctz(uint32_t x);
 
-/*
- * Count bits set
+/* Count bits set
  */
 uint8_t bits_set(uint32_t x);
 
 
+
+/* Network to host and host to network.
+ * LPC1224 is a little endian platform, we need to change endianness (reverse byte order)
+ */
+static inline uint32_t ntohl(uint32_t val) __attribute__ ((alias ("byte_swap_32")));
+static inline uint32_t htonl(uint32_t val) __attribute__ ((alias ("byte_swap_32")));
+/* Short versions */
+static inline uint32_t ntohs(uint32_t val) __attribute__ ((alias ("byte_swap_16")));
+static inline uint32_t htons(uint32_t val) __attribute__ ((alias ("byte_swap_16")));
 #endif /* LIB_UTILS_H */
 

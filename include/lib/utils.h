@@ -63,5 +63,12 @@ static inline uint32_t htonl(uint32_t val) __attribute__ ((alias ("byte_swap_32"
 /* Short versions */
 static inline uint32_t ntohs(uint32_t val) __attribute__ ((alias ("byte_swap_16")));
 static inline uint32_t htons(uint32_t val) __attribute__ ((alias ("byte_swap_16")));
+
+
+/* MIN and MAX */
+#define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+#define MAX(a, b)  (((a) > (b)) ? (a) : (b))
+
+
 #endif /* LIB_UTILS_H */
 

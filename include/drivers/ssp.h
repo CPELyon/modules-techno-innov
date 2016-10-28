@@ -34,6 +34,10 @@
 #include "core/lpc_regs.h"
 
 
+enum ssp_bus_number {
+	SSP_BUS_0 = 0,
+};
+
 /* Set this to 1 for use of this driver in a multitasking OS, it will activate the SPI Mutex */
 #define MULTITASKING 0
 

@@ -66,7 +66,7 @@ int flash_hal_erase_sector(uint32_t addr)
 		return ret;
 	}
 	/* Erase sector */
-	return iap_erase_flash_sectors(sector, sector); 
+	return iap_erase_flash_sectors(sector, sector);
 }
 
 /* Flash a binary image chunk to a sector. */

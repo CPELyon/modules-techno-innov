@@ -450,32 +450,32 @@ static inline uint32_t sync_lock_test_and_set(volatile uint32_t *addr, uint32_t 
 {
 	uint32_t oldval;
 	lpc_disable_irq();
-    dsb();
+	dsb();
 	oldval = *addr;
 	*addr = value;
-    dsb();
+	dsb();
 	lpc_enable_irq();
 	return oldval;
 }
 /* Remove the lock */
 static inline void sync_lock_release(volatile uint32_t *addr)
 {
-    *addr = 0;
-    dsb();
+	*addr = 0;
+	dsb();
 }
 
 /* IRQ disabled version : If lock is acquired (old value is 0) IRQ are
- *     disabled when the call returns
+ *   disabled when the call returns
  * Returns the old value after the new value has been set.
  */
 static inline uint32_t irq_sync_lock_test_and_set(volatile uint32_t *addr, uint32_t value)
 {
 	uint32_t oldval;
 	lpc_disable_irq();
-    dsb();
+	dsb();
 	oldval = *addr;
 	*addr = value;
-    dsb();
+	dsb();
 	if (oldval) {
 		lpc_enable_irq();
 	}
@@ -484,8 +484,8 @@ static inline uint32_t irq_sync_lock_test_and_set(volatile uint32_t *addr, uint3
 /* Remove the lock */
 static inline void irq_sync_lock_release(volatile uint32_t *addr)
 {
-    *addr = 0;
-    dsb();
+	*addr = 0;
+	dsb();
 	lpc_enable_irq();
 }
 

@@ -2,7 +2,7 @@
  *  lib/vsprintf.c
  *
  * Code based on lib/vsprintf.c from linux kernel.
- * 
+ *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -114,8 +114,8 @@ int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 
 	/* Parse format string */
 	while ((buf < end) && *fmt) {
-    	uint32_t flags = 0;
-    	uint32_t width = 0;
+		uint32_t flags = 0;
+		uint32_t width = 0;
 
 		if (*fmt != '%') {
 			*buf++ = *fmt++;

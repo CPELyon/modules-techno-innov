@@ -50,7 +50,7 @@ void ADC_Handler(void)
 	}
 }
 
-/* Read the conversion from the given channel (0 to 7) 
+/* Read the conversion from the given channel (0 to 7)
  * This function reads the conversion value directly in the data register and
  * always returns a value.
  * Return 0 if the value is a new one and no overrun occured.

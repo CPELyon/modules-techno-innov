@@ -41,7 +41,7 @@
 #define WDT_CLK_IRC 0
 #define WDT_CLK_WDTCLK 1
 struct wdt_config {
- 	/* clk_sel is either 0 (IRC) or 1 (WDTCLK). The corresponding clock source will be powered on. */
+	/* clk_sel is either 0 (IRC) or 1 (WDTCLK). The corresponding clock source will be powered on. */
 	uint8_t clk_sel;
 	uint8_t intr_mode_only; /* If set to 1, a watchdog timeout will trigger an interrupt instead of a reset */
 	void (*callback)(void);

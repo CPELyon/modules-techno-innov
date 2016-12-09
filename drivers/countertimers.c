@@ -1,7 +1,7 @@
 /****************************************************************************
  *  drivers/countertimers.c
  *
- * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
+ * Copyright 2016 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 /* These are local to our file */
 struct countertimer_device
 {
- 	struct lpc_timer* regs;
+	struct lpc_timer* regs;
 	uint32_t power_bit;
 	uint8_t irq;
 	uint8_t configured;
@@ -52,28 +52,28 @@ static struct countertimer_device countertimers[NUM_COUNTERTIMERS] = {
 		.irq = TIMER0_IRQ,
 		.configured = 0,
 		.callback = NULL,
-	}, 
+	},
 	{
 		.regs = LPC_TMR16B1,
 		.power_bit = LPC_SYS_ABH_CLK_CTRL_CT16B1,
 		.irq = TIMER1_IRQ,
 		.configured = 0,
 		.callback = NULL,
-	}, 
+	},
 	{
 		.regs = LPC_TMR32B0,
 		.power_bit = LPC_SYS_ABH_CLK_CTRL_CT32B0,
 		.irq = TIMER2_IRQ,
 		.configured = 0,
 		.callback = NULL,
-	}, 
+	},
 	{
 		.regs = LPC_TMR32B1,
 		.power_bit = LPC_SYS_ABH_CLK_CTRL_CT32B1,
 		.irq = TIMER3_IRQ,
 		.configured = 0,
 		.callback = NULL,
-	}, 
+	},
 };
 
 /* Handlers */

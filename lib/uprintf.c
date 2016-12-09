@@ -2,7 +2,7 @@
  *  lib/uprintf.c
  *
  * UART printf
- * 
+ *
  * Copyright 2012 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  * This program is free software: you can redistribute it and/or modify

@@ -29,7 +29,7 @@
 /*                  Counter Timer                                              */
 /***************************************************************************** */
 /* Timers driver for the integrated timers of the LPC122x.
- * The LPC122x Has two 16bits timers and two 32bits timers.
+ * The LPC122x has two 16bits timers and two 32bits timers.
  * Refer to LPC122x documentation (UM10441.pdf) for more information.
  */
 #define NUM_COUNTERTIMERS     4

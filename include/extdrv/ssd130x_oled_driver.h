@@ -33,6 +33,7 @@ struct oled_display {
 	uint8_t address; /* 8 bits address */
 	uint8_t bus_num; /* I2C bus number */
 	uint8_t probe_ok;
+	uint8_t charge_pump;
 	uint8_t video_mode;
 	uint8_t contrast;
 	uint8_t scan_dir;
@@ -120,6 +121,13 @@ enum ssd130x_defs {
 /* Data bytes for horizontal or vertical adressing mode */
 #define SSD130x_ADDR_COL(x)       ((x) & 0x7F)
 #define SSD130x_ADDR_PAGE(x)      ((x) & 0x07)
+
+/* Charge pump */
+#define SSD130x_EXT_VCC       0x01
+#define SSD130x_INTERNAL_PUMP 0x00
+#define SSD130x_CMD_CHARGE_PUMP    0x8D
+#define SSD130x_CMD_CHARGE_EXT     0x10
+#define SSD130x_CMD_CHARGE_INTERN  0x14
 
 /* Hardware configuration */
 #define SSD130x_CMD_START_LINE(x)      (0x40 + ((x) & 0x3F))

@@ -261,16 +261,23 @@ int ssd130x_display_off(struct oled_display* conf)
 int ssd130x_display_on(struct oled_display* conf)
 {
 	int ret = 0;
+	uint8_t val = 0;
 
 	/* Display OFF */
-	ret = ssd130x_display_power(conf, SSD130x_DISP_OFF);
+	ret = ssd130x_display_power(conf, SSD130x_DISP_OFF);  /* 0xAE */
 	if (ret != 0) {
 		return ret;
 	}
+	if (conf->charge_pump == SSD130x_INTERNAL_PUMP) {
+		val = SSD130x_CMD_CHARGE_INTERN;
+		ssd130x_send_command(conf, SSD130x_CMD_CHARGE_PUMP, &val, 1); /* 0x8D */
+	}
+
 	ret = ssd130x_set_mem_addressing_mode(conf, SSD130x_ADDR_TYPE_HORIZONTAL);
 	if (ret != 0) {
 		return ret;
 	}
+
 	ret = ssd130x_set_scan_direction(conf);
 	if (ret != 0) {
 		return ret;
@@ -279,6 +286,14 @@ int ssd130x_display_on(struct oled_display* conf)
 	if (ret != 0) {
 		return ret;
 	}
+
+	if (conf->charge_pump == SSD130x_INTERNAL_PUMP) {
+		val = 0xF1;
+		ssd130x_send_command(conf, SSD130x_CMD_SET_PRECHARGE, &val, 1); /* 0xD9 */
+		val = SSD130x_VCOM_083;
+		ssd130x_send_command(conf, SSD130x_CMD_VCOM_LEVEL, &val, 1);  /* 0xDB */
+	}
+
 	ret = ssd130x_set_display_on(conf, SSD130x_DISP_RAM);
 	if (ret != 0) {
 		return ret;

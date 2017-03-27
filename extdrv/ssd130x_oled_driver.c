@@ -403,11 +403,11 @@ int ssd130x_update_modified(struct oled_display* conf)
 /* Change our internal buffer, without actually displaying the changes */
 int ssd130x_set_pixel(struct oled_display* conf, uint8_t x0, uint8_t y0, uint8_t state)
 {
-	uint8_t* addr = gddram_start + ((y0 >> 3) * 128) + x0;
+	uint8_t* addr = gddram_start + ((y0 / 8) * 128) + x0;
 	if (state != 0) {
-		*addr |=  (0x01 << (7 - (x0 & 0x03)));
+		*addr |=  (0x01 << (y0 % 8));
 	} else {
-		*addr &= ~(0x01 << (7 - (x0 & 0x03)));
+		*addr &= ~(0x01 << (y0 % 8));
 	}
 	return 0;
 }

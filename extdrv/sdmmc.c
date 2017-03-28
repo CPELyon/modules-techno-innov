@@ -271,6 +271,11 @@ int sdmmc_init_end(struct sdmmc_card* mmc)
 		if (mmc->block_size > MMC_MAX_SECTOR_SIZE) {
 			mmc->block_size = MMC_MAX_SECTOR_SIZE;
 		}
+		while (mmc->block_size > 1) {
+			mmc->block_shift++;
+			mmc->block_size = mmc->block_size >> 1;
+		}
+		mmc->block_size = (0x01 << mmc->block_shift);
 		r1 = sdmmc_send_command(mmc, MMC_SET_BLOCKLEN, mmc->block_size, NULL, 0);
 		if (r1 > MMC_R1_IN_IDLE_STATE) {
 			mmc->card_type = MMC_CARDTYPE_UNKNOWN;
@@ -300,6 +305,10 @@ int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_
 
 	/* Garbage for the SPI out data */
 	memset(buffer, 0xFF, mmc->block_size);
+
+	if (mmc->card_type != MMC_CARDTYPE_SDV2_HC) {
+		block_number = (block_number << mmc->block_shift);
+	}
 
 	/* Get SPI Bus */
 	spi_get_mutex(mmc->ssp_bus_num);

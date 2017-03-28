@@ -34,6 +34,7 @@ struct sdmmc_card {
 	uint8_t ssp_bus_num;
 	uint8_t card_type;
 	uint16_t block_size;
+	uint8_t block_shift;
 	struct pio chip_select;
 };
 

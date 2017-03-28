@@ -55,7 +55,7 @@ static uint32_t get_sector_number(uint32_t addr)
 /* Erase one sector, given a flash address
  * return 0 on success.
  */
-int flash_hal_erase_sector(uint32_t addr)
+int flash_erase_sector(uint32_t addr)
 {
 	uint32_t sector = get_sector_number(addr);
 	int ret = 0;
@@ -70,7 +70,7 @@ int flash_hal_erase_sector(uint32_t addr)
 }
 
 /* Flash a binary image chunk to a sector. */
-int flash_hal_program_page(uint32_t addr, uint32_t size, unsigned char *buf)
+int flash_program_page(uint32_t addr, uint32_t size, unsigned char *buf)
 {
 	uint32_t sector = 0;
 	int ret = 0;

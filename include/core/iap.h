@@ -150,13 +150,13 @@ void relocate_vector_table(void);
 /* Erase one sector, given a flash address
  * return 0 on success.
  */
-int flash_hal_erase_sector(uint32_t addr);
+int flash_erase_sector(uint32_t addr);
 
 /* Flash a binary image chunk to flash.
  * Flash must have been erased first.
  * return 0 on success.
  */
-int flash_hal_program_page (uint32_t addr, uint32_t sz, unsigned char *buf);
+int flash_program_page (uint32_t addr, uint32_t sz, unsigned char *buf);
 
 #endif /* CORE_IAP_H */
 

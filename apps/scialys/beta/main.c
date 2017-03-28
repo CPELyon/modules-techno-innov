@@ -42,7 +42,9 @@
 #include "extdrv/rtc_pcf85363a.h"
 #include "extdrv/ssd130x_oled_driver.h"
 #include "lib/font.h"
+#include "lib/time.h"
 
+#include "extdrv/sdmmc.h"
 
 #define MODULE_VERSION    0x01
 #define MODULE_NAME "Scialys uC"
@@ -64,18 +66,21 @@
  * When in forced heater mode, the heater is controlled to heat at FORCED_MODE_VALUE which
  *    is between 0 and 100.
  */
-#define FORCE_HEATER_TEMP  25
-#define TARGET_FORCED_HEATER_TEMP 45
-#define NO_FORCED_HEATING_ON_SUNNY_DAYS 750
+#define FORCE_HEATER_TEMP  28
+#define TARGET_FORCED_HEATER_TEMP 32
 #define FORCED_MODE_VALUE  75 /* A fraction of 100 */
+/* mA prod value above which the system will not enter forced mode, waiting for home
+ * to stop using power to start automatic heating */
+#define NO_FORCED_HEATING_ON_SUNNY_DAYS 750
+
 uint32_t forced_heater_mode = 0;
 uint32_t forced_heater_delay = 0;
 uint32_t forced_heater_time = 0;
 
-#define FORCED_HEATER_DELAY      (7 * 3600 * 1000 / DEC_PERIOD)  /* Delay before automatic forced heating */
+#define FORCED_HEATER_DELAY      (2 * 3600 * 1000 / DEC_PERIOD)  /* Delay before automatic forced heating */
 #define FORCED_HEATER_DURATION   (3 * 3600 * 1000 / DEC_PERIOD)  /* Duration of automatic forced heating */
 
-#define MANUAL_ACTIVATION_DURATION   (3600 * 1000 / DEC_PERIOD)  /* One hour */
+#define MANUAL_ACTIVATION_DURATION   (3 * 3600 * 1000 / DEC_PERIOD)  /* Three hours */
 
 uint32_t never_force = 0;
 
@@ -187,6 +192,21 @@ const struct lpc_tc_config ac_timer_conf = {
 	.ext_match_config = { 0, LPC_TIMER_SET_ON_MATCH, 0, 0, },
 };
 
+
+/***************************************************************************** */
+/* SD/MMC Card */
+struct sdmmc_card micro_sd = {
+	.ssp_bus_num = SSP_BUS_0,
+	.card_type = MMC_CARDTYPE_UNKNOWN,
+	.block_size = 64,
+	.chip_select = LPC_GPIO_1_6,
+};
+
+uint8_t mmc_data[MMC_MAX_SECTOR_SIZE];
+
+
+/***************************************************************************** */
+/* RTC and time */
 #define	RTC_ADDR   0xA2
 struct rtc_pcf85363a_config rtc_conf = {
 	.bus_num = I2C0,
@@ -198,10 +218,13 @@ struct rtc_pcf85363a_config rtc_conf = {
 /* Oldest acceptable time in RTC. BCD coded. */
 const struct rtc_time oldest = {
 	.year = 0x16,
-	.month = 0x10,
-	.day = 0x26,
+	.month = 0x12,
+	.day = 0x01,
+	.hour = 0x13,
+	.min = 0x37,
 };
 static struct rtc_time now;
+
 
 /***************************************************************************** */
 /* Basic system init and configuration */
@@ -268,12 +291,6 @@ void config_rx(uint8_t c)
 			fan_speed = 0;
 		}
 		timer_set_match(LPC_TIMER_32B0, CHAN0, (FAN_ON - ((FAN_ON / 100) * (100 - fan_speed))));
-	}
-	/* Load control */
-	if (c == 'l') {
-		act_cmd = 100;
-	} else if (c == 'x') {
-		act_cmd = 0;
 	}
 }
 
@@ -429,6 +446,8 @@ void display_char(uint8_t line, uint8_t col, uint8_t c)
 	uint8_t* tile_data = (uint8_t*)(&font[tile]);
 	ssd130x_set_tile(&display, col, line, tile_data);
 }
+#define OLED_LINE_CHAR_LENGTH     (SSD130x_NB_COL / 8)
+#define DISPLAY_LINE_LENGTH  (OLED_LINE_CHAR_LENGTH + 1)
 int display_line(uint8_t line, uint8_t col, char* text)
 {
 	int len = strlen((char*)text);
@@ -438,7 +457,7 @@ int display_line(uint8_t line, uint8_t col, char* text)
 		uint8_t tile = (text[i] > FIRST_FONT_CHAR) ? (text[i] - FIRST_FONT_CHAR) : 0;
 		uint8_t* tile_data = (uint8_t*)(&font[tile]);
 		ssd130x_set_tile(&display, col++, line, tile_data);
-		if (col >= (SSD130x_NB_COL / 8)) {
+		if (col >= (OLED_LINE_CHAR_LENGTH)) {
 			col = 0;
 			line++;
 			if (line >= SSD130x_NB_PAGES) {
@@ -537,18 +556,35 @@ int main(void)
     ssd130x_display_set(&display, 0x00);
     ret = ssd130x_display_full_screen(&display);
 
-	/* RTC init ? */
+	/* RTC init */
 	ret = rtc_pcf85363a_config(&rtc_conf);
 	ret = rtc_pcf85363a_is_up(&rtc_conf, &oldest);
 	if (ret == 1) {
 		char buff[30];
 		rtc_pcf85363_time_read(&rtc_conf, &now);
 		rtc_pcf85363_time_to_str(&now, buff, 30);
+		/* Debug */
 		uprintf(UART0, buff);
 	} else if (ret == -EFAULT) {
 		memcpy(&now, &oldest, sizeof(struct rtc_time));
 		rtc_pcf85363_time_write(&rtc_conf, &now);
 	}
+
+	/* microSD card init */
+	ret = sdmmc_init(&micro_sd);
+	if (ret == 0) {
+		msleep(1);
+		ret = sdmmc_init_wait_card_ready(&micro_sd);
+		if (ret == 0) {
+			ret = sdmmc_init_end(&micro_sd);
+		}
+	}
+	uprintf(UART0, "uSD init: %d, type: %d, bs: %d\n", ret, micro_sd.card_type, micro_sd.block_size);
+	ret = sdmmc_read_block(&micro_sd, 0, mmc_data);
+	uprintf(UART0, "uSD read: %s\n", mmc_data);
+
+	/* Add a systick callback to handle time counting */
+	//add_systick_callback(handle_dec_request, DEC_PERIOD);
 
 	msleep(50);
 	/* Read parameters from memory */
@@ -560,8 +596,10 @@ int main(void)
 
 	while (1) {
 		static uint8_t command_val = 0;
-		uint32_t moyenne_solar = 0;
-		uint32_t moyenne_home = 0;
+		static uint8_t n_dec = 0;  /* Add some PID like (derivative part) */
+		static uint8_t n_inc = 0;  /* Add some PID like (derivative part) */
+		int moyenne_solar = 0;
+		int moyenne_home = 0;
 		uint16_t isnail_val_solar = 0;
 		uint16_t isnail_val_home = 0;
 		uint16_t acs_val_load = 0;
@@ -586,7 +624,7 @@ int main(void)
 			idx = 0;
 		}
 		/* Compute average value when we sampled enough values */
-		/* FIXME : Improve by removing oldest value before storing new one in table and adding new one */
+		/* FIXME : Improve by substracting oldest value before storing new one in table and adding new one */
 		if ((idx == 0) || (idx == (NB_VAL / 2))) {
 			int i = 0;
 			for (i = 0; i < NB_VAL; i++) {
@@ -614,6 +652,14 @@ int main(void)
 			if (ret != 0) {
 				uprintf(UART0, "TMP101 read error : %d\n", ret);
 			}
+		}
+		/* If internal temperature is above 30°C, then turn on fan. Turn of when back to under 28.5°C */
+		if (tmp101_deci_degrees > 300) {
+			fan_speed = 100;
+			timer_set_match(LPC_TIMER_32B0, CHAN0, FAN_ON);
+		} else if (tmp101_deci_degrees < 285) {
+			fan_speed = 0;
+			timer_set_match(LPC_TIMER_32B0, CHAN0, 0);
 		}
 
 		/* Get thermocouple value */
@@ -643,8 +689,10 @@ int main(void)
 
 		/* Do not force if there is a lot of sun, it may be enough to heat again soon */
 		if (moyenne_solar > NO_FORCED_HEATING_ON_SUNNY_DAYS) {
-			forced_heater_mode = 0;
 			mode = delayed_heat_prod;
+			forced_heater_mode = 0;
+			/* Note : Do not set forced_heater_mode to 0 in order to keep decrementing the delay for force
+			 * heating in case the house power usage does not fall below the production value. */
 		}
 
 		/* Do not force heating if this is an EJP day */
@@ -685,19 +733,30 @@ int main(void)
 				forced_heater_delay = FORCED_HEATER_DELAY;
 				forced_heater_time = FORCED_HEATER_DURATION;
 			}
-		} else if (moyenne_solar < moyenne_home) {
+		} else if (moyenne_solar < (moyenne_home - 75)) {
 			/* Low production mode */
-			if (command_val > 10) {
-				command_val -= 10;
+			if (command_val > 15) {
+				command_val -= ((3 + n_dec) % 15);
+				/* Asservissement */
+				n_dec++;
+				if (n_dec >= 3) {
+					n_inc = 0;
+				}
 			} else {
 				command_val = 0;
 				mode = idle_heat;
 			}
 			status_led(green_off);
-		} else {
+		} else if (moyenne_solar > (moyenne_home + 75)) {
 			/* High production mode */
-			if (command_val < 90) {
-				command_val += 10;
+			if (command_val < 95) {
+				command_val += (2 + n_inc);
+				/* Asservissement */
+				n_inc++;
+				if (n_inc >= 5) {
+					n_inc = 5;
+					n_dec = 0;
+				}
 			} else {
 				command_val = 100;
 				mode = full_heat;
@@ -706,12 +765,14 @@ int main(void)
 		}
 
 		/* Set Control Output duty cycle */
+		set_ctrl_duty_cycle(command_val);
 		/* Debug Nath TMP */
-		//set_ctrl_duty_cycle(command_val);
-		set_ctrl_duty_cycle( user_potar / 10 );
+		//set_ctrl_duty_cycle( user_potar / 10 );
 		/* Display */
-		if (1) {	
+		if (1) {
+			char line[DISPLAY_LINE_LENGTH];
 			int abs_centi = water_centi_degrees;
+			int abs_deci = tmp101_deci_degrees;
 			uprintf(UART0, "%c:%d - Is: %d,%04d - Ih: %d,%04d\n", mode, loop++,
 						(moyenne_solar / 1000), (moyenne_solar % 1000),
 						(moyenne_home / 1000), (moyenne_home % 1000));
@@ -720,21 +781,39 @@ int main(void)
 			}
 			uprintf(UART0, "Water Temp : % 4d.%02d\n", (water_centi_degrees / 100), (abs_centi % 100));
 			if (tmp101_deci_degrees < 0) {
-				abs_centi = -tmp101_deci_degrees;
-			} else {
-				abs_centi = tmp101_deci_degrees;
+				abs_deci = -tmp101_deci_degrees;
 			}
-			uprintf(UART0, "Internal Temp : % 4d.%02d\n", (tmp101_deci_degrees / 10), (abs_centi % 10));
+			uprintf(UART0, "Internal Temp : % 4d.%02d\n", (tmp101_deci_degrees / 10), (abs_deci % 10));
+			uprintf(UART0, "ZC_cnt: %d\n", zc_count);
 			uprintf(UART0, "ADC: Sol: %dmA, Home: %dmA, Load: %d, User: %d\n",
 							isnail_val_solar, isnail_val_home, acs_val_load, user_potar);
 			if (button_pressed != 0) {
 				uprintf(UART0, "Button : %d\n", button_pressed);
 				button_pressed  = 0;
 			}
-			uprintf(UART0, "CMD: %d/%d, Fan: %d, ZC: %d\n\n", command_val, act_cmd, fan_speed, zc_count);
-			ws2812_set_pixel(0, (isnail_val_home / 100), (isnail_val_solar / 100), fan_speed);
-			ws2812_set_pixel(1, (acs_val_load >> 2), (zc_count & 0xFF), (user_potar >> 2));
+			uprintf(UART0, "CMD: %d/%d, Fan: %d, ndec:%d, ninc:%d\n\n", command_val, act_cmd, fan_speed, n_dec, n_inc);
+			ws2812_set_pixel(0, (isnail_val_home / 2000), (isnail_val_solar / 2000), fan_speed);
+			ws2812_set_pixel(1, 0, 0, (user_potar >> 2));
 			ws2812_send_frame(0);
+			/* Erase screen (internal copy) */
+			ssd130x_display_set(&display, 0x00);
+			/* Update time and time display on internal memory */
+			rtc_pcf85363_time_read(&rtc_conf, &now);
+			snprintf(line, DISPLAY_LINE_LENGTH, "%02xh%02x:%02x", now.hour, now.min, now.sec); 
+			display_line(0, 0, line);
+			/* Display info */
+			snprintf(line, DISPLAY_LINE_LENGTH, "Water:% 2d.%03d %cC", (water_centi_degrees / 100), (abs_centi % 100), 0x1F);
+			display_line(2, 0, line);
+			snprintf(line, DISPLAY_LINE_LENGTH, "Prod :% 2d,%03dA", (isnail_val_solar / 1000), ((isnail_val_solar % 1000) / 10));
+			display_line(3, 0, line);
+			snprintf(line, DISPLAY_LINE_LENGTH, "Conso:% 2d,%03dA", (isnail_val_home / 1000), ((isnail_val_home % 1000) / 10));
+			display_line(4, 0, line);
+			snprintf(line, DISPLAY_LINE_LENGTH, "Command: %d%%", act_cmd);
+			display_line(5, 0, line);
+			snprintf(line, DISPLAY_LINE_LENGTH, "Mode: %c", mode);
+			display_line(6, 0, line);
+			/* Update Oled display */
+			ret = ssd130x_display_full_screen(&display);
 		}
 	}
 	return 0;

@@ -377,7 +377,7 @@ int ssd130x_display_full_screen(struct oled_display* conf)
  */
 int ssd130x_update_tile(struct oled_display* conf, uint8_t x0, uint8_t y0)
 {
-	uint8_t* addr = gddram_start + ((y0 >> 3) * 128) + x0;
+	uint8_t* addr = gddram_start + (y0 * 128) + x0 * 8;
 	int ret = 0;
 
 	ret = ssd130x_set_column_address(conf, (x0 * 8), (((x0 + 1) * 8) - 1));

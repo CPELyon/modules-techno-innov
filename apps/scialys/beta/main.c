@@ -41,6 +41,7 @@
 #include "extdrv/tmp101_temp_sensor.h"
 #include "extdrv/rtc_pcf85363a.h"
 #include "extdrv/ssd130x_oled_driver.h"
+#include "extdrv/ssd130x_oled_buffer.h"
 #include "lib/font.h"
 #include "lib/time.h"
 
@@ -426,6 +427,7 @@ void temp_config(int uart_num)
 /***************************************************************************** */
 /* Oled Display */
 #define DISPLAY_ADDR   0x78
+static uint8_t gddram[ 4 + GDDRAM_SIZE ];
 struct oled_display display = {
 	.address = DISPLAY_ADDR,
 	.bus_num = I2C0,
@@ -435,6 +437,7 @@ struct oled_display display = {
 	.read_dir = SSD130x_RIGHT_TO_LEFT,
 	.display_offset_dir = SSD130x_MOVE_TOP,
 	.display_offset = 4,
+  .gddram = gddram,
 };
 
 #define ROW(x)   VERTICAL_REV(x)
@@ -444,7 +447,7 @@ void display_char(uint8_t line, uint8_t col, uint8_t c)
 {
 	uint8_t tile = (c > FIRST_FONT_CHAR) ? (c - FIRST_FONT_CHAR) : 0;
 	uint8_t* tile_data = (uint8_t*)(&font[tile]);
-	ssd130x_set_tile(&display, col, line, tile_data);
+	ssd130x_buffer_set_tile(gddram, col, line, tile_data);
 }
 #define OLED_LINE_CHAR_LENGTH     (SSD130x_NB_COL / 8)
 #define DISPLAY_LINE_LENGTH  (OLED_LINE_CHAR_LENGTH + 1)
@@ -456,7 +459,7 @@ int display_line(uint8_t line, uint8_t col, char* text)
 	for (i = 0; i < len; i++) {
 		uint8_t tile = (text[i] > FIRST_FONT_CHAR) ? (text[i] - FIRST_FONT_CHAR) : 0;
 		uint8_t* tile_data = (uint8_t*)(&font[tile]);
-		ssd130x_set_tile(&display, col++, line, tile_data);
+		ssd130x_buffer_set_tile(gddram, col++, line, tile_data);
 		if (col >= (OLED_LINE_CHAR_LENGTH)) {
 			col = 0;
 			line++;
@@ -553,7 +556,7 @@ int main(void)
     /* Configure and start display */
     ret = ssd130x_display_on(&display);
     /* Erase screen */
-    ssd130x_display_set(&display, 0x00);
+    ssd130x_buffer_set(gddram, 0x00);
     ret = ssd130x_display_full_screen(&display);
 
 	/* RTC init */
@@ -796,7 +799,7 @@ int main(void)
 			ws2812_set_pixel(1, 0, 0, (user_potar >> 2));
 			ws2812_send_frame(0);
 			/* Erase screen (internal copy) */
-			ssd130x_display_set(&display, 0x00);
+			ssd130x_buffer_set(gddram, 0x00);
 			/* Update time and time display on internal memory */
 			rtc_pcf85363_time_read(&rtc_conf, &now);
 			snprintf(line, DISPLAY_LINE_LENGTH, "%02xh%02x:%02x", now.hour, now.min, now.sec); 

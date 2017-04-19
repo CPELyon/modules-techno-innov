@@ -33,6 +33,7 @@
 
 #include "extdrv/status_led.h"
 #include "extdrv/ssd130x_oled_driver.h"
+#include "extdrv/ssd130x_oled_buffer.h"
 #include "lib/font.h"
 
 
@@ -98,6 +99,7 @@ void fault_info(const char* name, uint32_t len)
 /***************************************************************************** */
 /* Oled Display */
 #define DISPLAY_ADDR   0x78
+static uint8_t gddram[ 4 + GDDRAM_SIZE ];
 struct oled_display display = {
 	.address = DISPLAY_ADDR,
 	.bus_num = I2C0,
@@ -108,6 +110,7 @@ struct oled_display display = {
 	.read_dir = SSD130x_RIGHT_TO_LEFT,
 	.display_offset_dir = SSD130x_MOVE_TOP,
 	.display_offset = 4,
+  .gddram = gddram,
 };
 
 #define ROW(x)   VERTICAL_REV(x)
@@ -117,7 +120,7 @@ void display_char(uint8_t line, uint8_t col, uint8_t c)
 {
 	uint8_t tile = (c > FIRST_FONT_CHAR) ? (c - FIRST_FONT_CHAR) : 0;
 	uint8_t* tile_data = (uint8_t*)(&font[tile]);
-	ssd130x_set_tile(&display, col, line, tile_data);
+	ssd130x_buffer_set_tile(gddram, col, line, tile_data);
 }
 int display_line(uint8_t line, uint8_t col, char* text)
 {
@@ -127,7 +130,7 @@ int display_line(uint8_t line, uint8_t col, char* text)
 	for (i = 0; i < len; i++) {
 		uint8_t tile = (text[i] > FIRST_FONT_CHAR) ? (text[i] - FIRST_FONT_CHAR) : 0;
 		uint8_t* tile_data = (uint8_t*)(&font[tile]);
-		ssd130x_set_tile(&display, col++, line, tile_data);
+		ssd130x_buffer_set_tile(gddram, col++, line, tile_data);
 		if (col >= (SSD130x_NB_COL / 8)) {
 			col = 0;
 			line++;
@@ -177,7 +180,7 @@ int main(void)
 	/* Configure and start display */
 	ret = ssd130x_display_on(&display);
 	/* Erase screen with lines, makes it easier to know things are going right */
-	ssd130x_display_set(&display, 0x10);
+	ssd130x_buffer_set(gddram, 0x10);
 	ret = ssd130x_display_full_screen(&display);
 
 	while (1) {

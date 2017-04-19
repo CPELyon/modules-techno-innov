@@ -59,7 +59,7 @@ void* memset(void* s, int c, size_t count)
 	unsigned long* sl = (unsigned long*) s;
 	unsigned long cl = 0;
 	char* s8;
-	int i;
+	size_t i;
 
 	/* do it one word at a time (32 bits or 64 bits) while possible */
 	if ( ((uint32_t)s & (sizeof(*sl) - 1)) == 0) {

@@ -311,9 +311,8 @@ int ssd130x_display_on(struct oled_display* conf)
  * Graphical data starts at byte 4. The first four bytes are here for temporary
  *  storage of display data during I2C frame transfer.
  */
-#define GDDRAM_SIZE   (128 * 8)
-static uint8_t gddram[ 4 + GDDRAM_SIZE ];
-static uint8_t* gddram_start = (gddram + 4);
+//static uint8_t gddram[ 4 + GDDRAM_SIZE ];
+//static uint8_t* gddram_start = (gddram + 4);
 
 
 int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
@@ -323,8 +322,8 @@ int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
 	/* Check that start and satrt + len are within buffer */
 
 	/* Copy previous two bytes to storage area (gddram[0] and gddram[1]) */
-	gddram[0] = *(start - 2);
-	gddram[1] = *(start - 1);
+	conf->gddram[0] = *(start - 2);
+	conf->gddram[1] = *(start - 1);
 
 	/* Setup I2C transfer */
 	*(start - 2) = conf->address;
@@ -334,22 +333,14 @@ int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
 	ret = i2c_write(conf->bus_num, (start - 2), (2 + len), NULL);
 
 	/* Restore gddram data */
-	*(start - 2) = gddram[0];
-	*(start - 1) = gddram[1];
+	*(start - 2) = conf->gddram[0];
+	*(start - 1) = conf->gddram[1];
 
 	if (ret != (2 + len)) {
 		return ret;
 	}
 	return len;
 }
-
-/* Set whole display to given value */
-int ssd130x_display_set(struct oled_display* conf, uint8_t val)
-{
-	memset(gddram_start, val, GDDRAM_SIZE);
-	return 0;
-}
-
 
 /* Update what is really displayed */
 int ssd130x_display_full_screen(struct oled_display* conf)
@@ -364,7 +355,7 @@ int ssd130x_display_full_screen(struct oled_display* conf)
 	if (ret != 0) {
 		return ret;
 	}
-	ret = ssd130x_send_data(conf, gddram_start, GDDRAM_SIZE);
+	ret = ssd130x_send_data(conf, conf->gddram + 4, GDDRAM_SIZE);
 	if (ret != GDDRAM_SIZE) {
 		return ret;
 	}
@@ -377,7 +368,7 @@ int ssd130x_display_full_screen(struct oled_display* conf)
  */
 int ssd130x_update_tile(struct oled_display* conf, uint8_t x0, uint8_t y0)
 {
-	uint8_t* addr = gddram_start + (y0 * 128) + x0 * 8;
+	uint8_t* addr = conf->gddram + 4 + (y0 * 128) + x0 * 8;
 	int ret = 0;
 
 	ret = ssd130x_set_column_address(conf, (x0 * 8), (((x0 + 1) * 8) - 1));
@@ -397,29 +388,6 @@ int ssd130x_update_tile(struct oled_display* conf, uint8_t x0, uint8_t y0)
 
 int ssd130x_update_modified(struct oled_display* conf)
 {
-	return 0;
-}
-
-/* Change our internal buffer, without actually displaying the changes */
-int ssd130x_set_pixel(struct oled_display* conf, uint8_t x0, uint8_t y0, uint8_t state)
-{
-	uint8_t* addr = gddram_start + ((y0 / 8) * 128) + x0;
-	if (state != 0) {
-		*addr |=  (0x01 << (y0 % 8));
-	} else {
-		*addr &= ~(0x01 << (y0 % 8));
-	}
-	return 0;
-}
-
-/* Change a "tile" in the bitmap memory.
- * A tile is a 8x8 pixels region, aligned on a 8x8 grid representation of the display.
- *  x0 and y0 are in number of tiles.
- */
-int ssd130x_set_tile(struct oled_display* conf, uint8_t x0, uint8_t y0, uint8_t* tile)
-{
-	uint8_t* addr = gddram_start + (y0 * 128) + (x0 * 8);
-	memcpy(addr, tile, 8);
 	return 0;
 }
 

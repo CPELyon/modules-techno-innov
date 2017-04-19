@@ -30,16 +30,17 @@
 /***************************************************************************** */
 /* Oled Display */
 struct oled_display {
-	uint8_t address; /* 8 bits address */
-	uint8_t bus_num; /* I2C bus number */
-	uint8_t probe_ok;
-	uint8_t charge_pump;
-	uint8_t video_mode;
-	uint8_t contrast;
-	uint8_t scan_dir;
-	uint8_t read_dir;
-	uint8_t display_offset_dir;
-	uint8_t display_offset;
+	uint8_t  address; /* 8 bits address */
+	uint8_t  bus_num; /* I2C bus number */
+	uint8_t  probe_ok;
+	uint8_t  charge_pump;
+	uint8_t  video_mode;
+	uint8_t  contrast;
+	uint8_t  scan_dir;
+	uint8_t  read_dir;
+	uint8_t  display_offset_dir;
+	uint8_t  display_offset;
+  uint8_t* gddram;
 };
 
 #define SSD130x_NB_LINES   64
@@ -314,10 +315,8 @@ int ssd130x_set_display_offset(struct oled_display* conf, uint8_t dir, uint8_t n
 int ssd130x_display_on(struct oled_display* conf);
 int ssd130x_display_off(struct oled_display* conf);
 
-int ssd130x_display_init(struct oled_display* conf);
 
-
-
+#define GDDRAM_SIZE   (128 * 8)
 /***************************************************************************** */
 /* Data */
 
@@ -327,9 +326,6 @@ int ssd130x_display_init(struct oled_display* conf);
  */
 int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len);
 
-/* Set whole display to given value */
-int ssd130x_display_set(struct oled_display* conf, uint8_t val);
-
 
 /* Update what is really displayed */
 int ssd130x_display_full_screen(struct oled_display* conf);
@@ -337,10 +333,5 @@ int ssd130x_update_tile(struct oled_display* conf, uint8_t x0, uint8_t y0);
 int ssd130x_update_region(struct oled_display* conf,
 							uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 int ssd130x_update_modified(struct oled_display* conf);
-
-/* Change our internal buffer, without actually displaying the changes */
-int ssd130x_set_pixel(struct oled_display* conf, uint8_t x0, uint8_t y0, uint8_t state);
-int ssd130x_set_tile(struct oled_display* conf, uint8_t x0, uint8_t y0, uint8_t* tile);
-
 
 #endif /* EXTDRV_SSD130X_OLED_DRIVER_H */

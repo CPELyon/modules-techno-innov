@@ -42,6 +42,9 @@ int sdmmc_init(struct sdmmc_card* mmc);
 int sdmmc_init_wait_card_ready(struct sdmmc_card* mmc);
 int sdmmc_init_end(struct sdmmc_card* mmc);
 
+/* Read one block of data.
+ * Return -ENODEV on error, -EBUSY on timeout, -EIO on CRC error, or 0 on success
+ */
 int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_t *buffer);
 
 

@@ -24,6 +24,8 @@
 #include "core/system.h"
 #include "lib/string.h"
 #include "lib/errno.h"
+#include "lib/crc_ccitt.h"
+#include "lib/utils.h"
 #include "drivers/gpio.h"
 #include "drivers/ssp.h"
 
@@ -265,21 +267,17 @@ int sdmmc_init_end(struct sdmmc_card* mmc)
 	}
 
 	/* Set block length */
-	if (mmc->card_type == MMC_CARDTYPE_SDV2_HC) {
+	if (mmc->block_size > MMC_MAX_SECTOR_SIZE) {
 		mmc->block_size = MMC_MAX_SECTOR_SIZE;
+		mmc->block_shift = (31 - clz(mmc->block_size));
 	} else {
-		if (mmc->block_size > MMC_MAX_SECTOR_SIZE) {
-			mmc->block_size = MMC_MAX_SECTOR_SIZE;
-		}
-		while (mmc->block_size > 1) {
-			mmc->block_shift++;
-			mmc->block_size = mmc->block_size >> 1;
-		}
+		/* Force mmc->block_size to a power of 2 */
+		mmc->block_shift = (31 - clz(mmc->block_size));
 		mmc->block_size = (0x01 << mmc->block_shift);
-		r1 = sdmmc_send_command(mmc, MMC_SET_BLOCKLEN, mmc->block_size, NULL, 0);
-		if (r1 > MMC_R1_IN_IDLE_STATE) {
-			mmc->card_type = MMC_CARDTYPE_UNKNOWN;
-		}
+	}
+	r1 = sdmmc_send_command(mmc, MMC_SET_BLOCKLEN, mmc->block_size, NULL, 0);
+	if (r1 > MMC_R1_IN_IDLE_STATE) {
+		mmc->card_type = MMC_CARDTYPE_UNKNOWN;
 	}
 
 end_init_release_bus:
@@ -292,11 +290,13 @@ end_init_release_bus:
 
 
 /* Read one block of data.
- * Return -ENODEV on error, -EBUSY on timeout, or CRC on success
+ * Return -ENODEV on error, -EBUSY on timeout, -EIO on CRC error, or 0 on success
  */
+#define TMPBUF_SIZE 64
 int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_t* buffer)
 {
-	uint16_t crc = 0xFFFF;
+	uint16_t crc = 0x0000;
+	uint16_t sd_crc = 0xFFFF;
 	int ret = 0;
 
 	if ((buffer == NULL) || (mmc->card_type == MMC_CARDTYPE_UNKNOWN)) {
@@ -306,6 +306,7 @@ int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_
 	/* Garbage for the SPI out data */
 	memset(buffer, 0xFF, mmc->block_size);
 
+	/* Non SDHC cards use address and not block number */
 	if (mmc->card_type != MMC_CARDTYPE_SDV2_HC) {
 		block_number = (block_number << mmc->block_shift);
 	}
@@ -327,12 +328,43 @@ int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_
 		goto read_release;
 	}
 
-	/* Read data */
-	spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, buffer, mmc->block_size, 8);
+	/* Read data, interresting part */
+	ret = spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, buffer, mmc->block_size, 8);
+	/* Compute CRC of this part */
+	crc = crc_ccitt(0x0000, buffer, mmc->block_size);
+	/* Read data, remaining part */
+	if ((mmc->card_type == MMC_CARDTYPE_SDV2_HC) && (mmc->block_size != MMC_MAX_SECTOR_SIZE)) {
+		char tmpbuf[TMPBUF_SIZE];
+		int size = (MMC_MAX_SECTOR_SIZE - mmc->block_size);
+		do {
+			int tmp_size = TMPBUF_SIZE;
+			memset(tmpbuf, 0, TMPBUF_SIZE);
+			if (tmp_size > size) {
+				tmp_size = size;
+			}
+			/* Read data - remaining part ... and drop it (null input but non null output buffer) */
+			ret = spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, tmpbuf, tmp_size, 8);
+			/* Update CRC with this part */
+			crc = crc_ccitt(crc, (uint8_t*)tmpbuf, tmp_size);
+			size -= tmp_size;
+		} while (size > 0);
+	}
 	/* Read CRC */
-	spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, (uint8_t*)(&crc), 2, 8);
+	ret = spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, (uint8_t*)(&sd_crc), 2, 8);
+	sd_crc = (uint16_t)ntohs(sd_crc);
+	if (crc != sd_crc) {
+		ret = -EIO;
+		goto read_release;
+	}
 
-	ret = crc;
+	/* Wait for card ready */
+	ret = sdmmc_wait_for_ready(mmc, 0xFF);
+	if (ret != 0xFF) {
+		ret = -EBUSY;
+		goto read_release;
+	}
+
+	ret = 0;
 
 read_release:
 	/* Release SPI Bus */
@@ -369,24 +401,31 @@ int sdmmc_write_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8
 	ret = sdmmc_send_command(mmc, MMC_WRITE_SINGLE_BLOCK, block_number, NULL, 0);
 	if (ret != MMC_R1_NO_ERROR) {
 		ret = -ENODEV;
-		goto read_release;
+		goto write_release;
 	}
 
 	/* Wait for start of Data */
 	ret = sdmmc_wait_for_ready(mmc, MMC_START_DATA_BLOCK_TOCKEN);
 	if (ret != MMC_START_DATA_BLOCK_TOCKEN) {
 		ret = -EBUSY;
+		goto write_release;
+	}
+
+	/* Send data */
+	spi_transfer_multiple_frames(mmc->ssp_bus_num, buffer, NULL, mmc->block_size, 8);
+	/* Read CRC */
+	/* FIXME */
+	spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, (uint8_t*)(&crc), 2, 8);
+	ret = crc;
+
+	/* Wait for card ready */
+	ret = sdmmc_wait_for_ready(mmc, 0xFF);
+	if (ret != 0xFF) {
+		ret = -EBUSY;
 		goto read_release;
 	}
 
-	/* Read data */
-	spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, buffer, mmc->block_size, 8);
-	/* Read CRC */
-	spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, (uint8_t*)(&crc), 2, 8);
-
-	ret = crc;
-
-read_release:
+write_release:
 	/* Release SPI Bus */
 	sdmmc_cs_release(mmc);
 	spi_release_mutex(mmc->ssp_bus_num);

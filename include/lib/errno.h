@@ -22,15 +22,25 @@
 #define LIB_ERRNO_H
 
 /* Error Values, from glibc errno.h and errno-base.h */
+#define EPERM        1  /* Operation not permitted */
 #define EIO          5 /* Bad one: Input or Output error. */
 #define E2BIG        7 /* Argument list too long or Data size beyond buffer size */
-#define EAGAIN      11 /* Device already in use */
+#define EAGAIN      11 /* Device already in use (Try again) */
+#define ENOMEM      12  /* Out of memory */
+#define EACCES      13  /* Permission denied */
 #define EFAULT      14 /* Address error */
 #define EBUSY       16 /* Device or ressource Busy */
 #define ENODEV      19 /* No such device */
 #define EINVAL      22 /* Invalid argument */
+#define ENODATA     61  /* No data available */
+#define ECOMM       70  /* Communication error on send */
+#define EPROTO      71  /* Protocol error */
 #define EBADFD      77 /* Device not initialized */
-#define EREMOTEIO  121 /* Device did not acknowledge */
+#define EILSEQ      84  /* Illegal byte sequence */
+#define ENOBUFS     105 /* No buffer space available */
+#define EREMOTEIO   121 /* Device did not acknowledge */
+#define ECANCELED   125 /* Operation Canceled */
+
 
 /* Note on error values for I2C :
  *  EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine

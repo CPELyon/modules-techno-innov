@@ -96,6 +96,8 @@ const struct pio status_led_red = LPC_GPIO_1_5;
 const struct pio isp = LPC_GPIO_0_12;   /* ISP button */
 const struct pio button = LPC_GPIO_1_1; /* User button */
 
+const struct pio water_level = LPC_GPIO_0_6; /* Water level info */
+
 const struct pio ws2812_data_out_pin = LPC_GPIO_0_0; /* Led control data pin */
 
 const struct pio motor_power = LPC_GPIO_0_22; /* Motor Power */
@@ -191,6 +193,7 @@ void fault_info(const char* name, uint32_t len)
 
 
 static void pos_detect(uint32_t gpio);
+static void water_level_info(uint32_t gpio);
 static void pompe_force(uint32_t gpio);
 static void motor_force(uint32_t gpio);
 
@@ -213,6 +216,7 @@ void system_config(void)
 	for (i = 0; i < NB_POS_SENSORS; i++) {
 		set_gpio_callback(pos_detect, &(positions[i]), EDGES_BOTH);
 	}
+	set_gpio_callback(water_level_info, &water_level, EDGES_BOTH);
 
 	/* GPIO for Motor control */
 	config_gpio(&motor_power, 0, GPIO_DIR_OUT, 0);
@@ -259,11 +263,20 @@ void system_config(void)
 volatile uint8_t current_position = 255;
 static void pos_detect(uint32_t gpio)
 {
-	if (gpio_read(positions[(gpio - 22)]) == 0) {
+	if (gpio_read(positions[(gpio - 24)]) == 0) {
 		/* The sensor output is 0 when it detects a magnet */
-		current_position = gpio - 22;
+		current_position = gpio - 24;
 	} else {
-		current_position = gpio - 12;
+		current_position = gpio - 14;
+	}
+}
+volatile uint8_t water_info = 0;
+static void water_level_info(uint32_t gpio)
+{
+	if (gpio_read(water_level) == 0) {
+		water_info = 0;
+	} else {
+		water_info = 1;
 	}
 }
 
@@ -320,6 +333,7 @@ static void pompe_force(uint32_t gpio)
 int main(void)
 {
 	uint8_t old_position = 255;
+	uint8_t old_water_level = 255;
 	uint8_t old_pompe = 0;
 
 	system_init();
@@ -335,9 +349,12 @@ int main(void)
 		tmp101_sensor_start_conversion(&tmp101_sensor);
 		chenillard(700);
 		if (current_position != old_position) {
-			old_position = current_position;
 			uprintf(UART0, "New position : %d\n", current_position);
 			old_position = current_position;
+		}
+		if (water_info != old_water_level) {
+			old_water_level = water_info;
+			uprintf(UART0, "Water is at %d\n", water_info);
 		}
 		if (old_pompe != pompe_cmd) {
 			if (pompe_cmd == 1) {

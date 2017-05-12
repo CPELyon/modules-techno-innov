@@ -148,16 +148,13 @@ int bme280_configure(struct bme280_sensor_config* conf)
     if (bme280_probe_sensor(conf) != 1) {
         return -ENODEV;
     }
-	/* The call to bme280_configure() was certainly the first access to the sensor, so
-	 *   the probe part made I2C access, thus leave some delay for I2C to become available again. */
-	msleep(1);
 	/* Send the configuration */
     ret = i2c_write(conf->bus_num, cmd_buf, CONF_BUF_SIZE, NULL);
     if (ret != CONF_BUF_SIZE) {
 		conf->probe_ok = 0;
         return -EIO;
     }
-
+	/* Get the calibration data */
 	ret = bme280_get_calibration_data(conf);
 
     return ret;

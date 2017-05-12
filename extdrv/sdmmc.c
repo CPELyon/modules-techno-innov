@@ -290,7 +290,9 @@ end_init_release_bus:
 
 
 /* Read one block of data.
- * Return -ENODEV on error, -EBUSY on timeout, -EIO on CRC error, or 0 on success
+ * Returns -EINVAL on arguments error, -ENODEV on command error,
+ *         -EBUSY on timeout, -EIO on CRC error,
+ *         or 0 on success
  */
 #define TMPBUF_SIZE 64
 int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_t* buffer)
@@ -349,7 +351,7 @@ int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_
 			size -= tmp_size;
 		} while (size > 0);
 	}
-	/* Read CRC */
+	/* Read CRC (received in network endianness) */
 	ret = spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, (uint8_t*)(&sd_crc), 2, 8);
 	sd_crc = (uint16_t)ntohs(sd_crc);
 	if (crc != sd_crc) {
@@ -376,7 +378,11 @@ read_release:
 
 
 /* Write one block of data.
- * Return -ENODEV on error, -EBUSY on timeout, or CRC on success
+ * This routine does not pre-erase the block, so if the user did not pre-erase the
+ *   corresponding block then the write takes longer.
+ * Returns -EINVAL on arguments error, -ENODEV on command error,
+ *         -ECOMM on response error, -EIO on CRC error, -EPERM on write error
+ *         or 0 on success
  */
 int sdmmc_write_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_t* buffer)
 {
@@ -395,35 +401,62 @@ int sdmmc_write_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8
 	spi_get_mutex(mmc->ssp_bus_num);
 	sdmmc_cs_activate(mmc);
 
-	/* Erase blocks */
-	/* FIXME */
-
 	ret = sdmmc_send_command(mmc, MMC_WRITE_SINGLE_BLOCK, block_number, NULL, 0);
 	if (ret != MMC_R1_NO_ERROR) {
 		ret = -ENODEV;
 		goto write_release;
 	}
 
-	/* Wait for start of Data */
-	ret = sdmmc_wait_for_ready(mmc, MMC_START_DATA_BLOCK_TOCKEN);
-	if (ret != MMC_START_DATA_BLOCK_TOCKEN) {
-		ret = -EBUSY;
+	/* Send start of Data token */
+	ret = (uint8_t)spi_transfer_single_frame(mmc->ssp_bus_num, MMC_START_DATA_BLOCK_TOCKEN);
+
+	/* Send interresting data */
+	ret = spi_transfer_multiple_frames(mmc->ssp_bus_num, buffer, NULL, mmc->block_size, 8);
+	/* Compute CRC of this part */
+	crc = crc_ccitt(0x0000, buffer, mmc->block_size);
+	/* Send data, remaining part */
+	if ((mmc->card_type == MMC_CARDTYPE_SDV2_HC) && (mmc->block_size != MMC_MAX_SECTOR_SIZE)) {
+		int size = (MMC_MAX_SECTOR_SIZE - mmc->block_size);
+		do {
+			int tmp_size = mmc->block_size;
+			if (tmp_size > size) {
+				tmp_size = size;
+			}
+			/* Send data - remaining part ... using the same data again */
+			ret = spi_transfer_multiple_frames(mmc->ssp_bus_num, buffer, NULL, tmp_size, 8);
+			/* Update CRC with this part */
+			crc = crc_ccitt(crc, buffer, tmp_size);
+			size -= tmp_size;
+		} while (size > 0);
+	}
+	/* Send CRC (in network endianness) */
+	crc = (uint16_t)ntohs(crc);
+	ret = spi_transfer_multiple_frames(mmc->ssp_bus_num, (uint8_t*)(&crc), NULL, 2, 8);
+
+	/* Get Data response tocken */
+	ret = (uint8_t)spi_transfer_single_frame(mmc->ssp_bus_num, 0xFF);
+	if (!MMC_IS_WRITE_RESPONSE_TOKEN(ret)) {
+		ret = -ECOMM;
 		goto write_release;
 	}
-
-	/* Send data */
-	spi_transfer_multiple_frames(mmc->ssp_bus_num, buffer, NULL, mmc->block_size, 8);
-	/* Read CRC */
-	/* FIXME */
-	spi_transfer_multiple_frames(mmc->ssp_bus_num, NULL, (uint8_t*)(&crc), 2, 8);
-	ret = crc;
+	ret = MMC_WRITE_RESPONSE_TOKEN(ret);
+	if (ret != MMC_WRITE_RESPONSE_OK) {
+		if (ret == MMC_WRITE_RESPONSE_CRC_ERR) {
+			ret = -EIO;
+		} else {
+			ret = -EPERM;
+		}
+		goto write_release;
+	}
 
 	/* Wait for card ready */
 	ret = sdmmc_wait_for_ready(mmc, 0xFF);
 	if (ret != 0xFF) {
 		ret = -EBUSY;
-		goto read_release;
+		goto write_release;
 	}
+
+	ret = 0;
 
 write_release:
 	/* Release SPI Bus */

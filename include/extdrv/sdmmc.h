@@ -46,6 +46,7 @@ int sdmmc_init_end(struct sdmmc_card* mmc);
  * Return -ENODEV on error, -EBUSY on timeout, -EIO on CRC error, or 0 on success
  */
 int sdmmc_read_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_t *buffer);
+int sdmmc_write_block(const struct sdmmc_card* mmc, uint32_t block_number, uint8_t *buffer);
 
 
 /* Card states and Operation modes */

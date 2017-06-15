@@ -92,8 +92,10 @@ static void uart_check_rx(struct uart_device* uart, uint32_t intr)
 			/* Call the Rx callback */
 			uart->rx_callback(data);
 		} else {
-			/* Echo */
-			uart->regs->func.buffer = data;
+			/* Echo ? */
+			if (!uart->sending) {
+				uart->regs->func.buffer = data;
+			}
 		}
 	}
 	/* FIXME : handle RX erors */

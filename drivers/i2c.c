@@ -274,25 +274,24 @@ void I2C_0_Handler(void)
 }
 
 
-
 /***************************************************************************** */
 /*                        I2C access                                           */
 /***************************************************************************** */
-static int i2c_perform_data_transfer(struct i2c_bus* i2c)
+
+/* Translate I2C state to 0 on success or a glibc error code.
+ */
+static int i2c_state(struct i2c_bus* i2c)
 {
 	int ret = 0;
-
-	/* Start the process */
-	i2c->state = I2C_BUSY;
-	i2c->regs->ctrl_set = I2C_START_FLAG;
-	/* Wait for process completion */
-	do {} while (i2c->state == I2C_BUSY);
 
 	/* Handle returned state (errors or OK) */
 	switch (i2c->state) {
 		case I2C_OK:
 		case I2C_NO_DATA:
 			/* Return 0 : success */
+			break;
+		case I2C_BUSY:
+			ret = -EAGAIN;
 			break;
 		case I2C_NACK:
 			ret = -EREMOTEIO;
@@ -309,6 +308,7 @@ static int i2c_perform_data_transfer(struct i2c_bus* i2c)
 
 	return ret;
 }
+
 
 /* Release Bus
  * Some devices do not release the Bus at the end of a transaction if they don't receive
@@ -328,7 +328,7 @@ void i2c_release_bus(uint8_t bus_num)
 
 
 /* Read
- * Performs a non-blocking read on the module's i2c bus.
+ * Performs a blocking read on the module's i2c bus.
  *   cmd_buf : buffer containing all control byte to be sent on the i2c bus
  *   cmd_size : size of the cmd_buf command buffer
  *   ctrl_buf : buffer containing action to be done after sending, like repeated START conditions
@@ -353,11 +353,13 @@ int i2c_read(uint8_t bus_num, const void *cmd_buf, size_t cmd_size, const void* 
 		return -EINVAL;
 
 	if (i2c->state == I2C_BUSY) {
-		return -EBUSY;
+		return -EAGAIN;
 	}
 	if (i2c->state != I2C_OK) {
 		/* What should we do ??? someone failed to reset status ? */
 	}
+
+	i2c->state = I2C_BUSY;
 
 	/* Set up i2c structure for read operation */
 	/* command (write) buffer */
@@ -373,7 +375,12 @@ int i2c_read(uint8_t bus_num, const void *cmd_buf, size_t cmd_size, const void* 
 	i2c->read_length = count;
 	i2c->read_index = 0;
 
-	ret = i2c_perform_data_transfer(i2c);
+	/* Start the process */
+	i2c->regs->ctrl_set = I2C_START_FLAG;
+	/* Wait for process completion */
+	do {} while (i2c->state == I2C_BUSY);
+
+	ret = i2c_state(i2c);
 	if (ret == 0) {
 		return i2c->read_index;
 	}
@@ -381,8 +388,58 @@ int i2c_read(uint8_t bus_num, const void *cmd_buf, size_t cmd_size, const void* 
 	return ret;
 }
 
-/* Write
+/* Asynchronous Write
  * Performs a non-blocking write on the module's i2c bus.
+ *   buf : buffer containing all byte to be sent on the i2c bus,
+ *         including conrtol bytes (address, offsets, ...)
+ *   count : the number of bytes to be sent, including address bytes and so on.
+ *   ctrl_buf : buffer containing action to be done after sending, like repeated START conditions
+ *         FIXME : note that STOP + START conditions are not allowed, the STOP would lead to sending
+ *         the first bytes of buf, creating an infinite loop.
+ * RETURN VALUE
+ *   Upon successfull transmition start, returns 0. On error, returns a negative
+ *   integer equivalent to errors from glibc.
+ */
+int i2c_write_async(uint8_t bus_num, const void *buf, size_t count, const void* ctrl_buf)
+{
+	struct i2c_bus* i2c = &(i2c_buses[0]);
+
+	/* Checks */
+	if (i2c->regs != LPC_I2C0)
+		return -EBADFD;
+	if (buf == NULL)
+		return -EINVAL;
+
+	if (i2c->state == I2C_BUSY) {
+		return -EAGAIN;
+	}
+	if (i2c->state != I2C_OK) {
+		/* What should we do ??? someone failed to reset status ? */
+	}
+
+	i2c->state = I2C_BUSY;
+
+	/* Clear read information to prevent entering master receiver states */
+	i2c->read_length = 0;
+	i2c->in_buff = NULL;
+	/* Set up i2c_bus structure for write operation */
+	i2c->out_buff = buf;
+	i2c->write_length = count;
+	/* control buffer, if any. Note that it's the only way to control
+	 *   operations on modules i2C bus to simplify the interface */
+	i2c->restart_after_addr = I2C_CONT;
+	i2c->repeated_start_restart = ctrl_buf;
+	i2c->restart_after_data = 0;
+
+	/* Start the process */
+	i2c->regs->ctrl_set = I2C_START_FLAG;
+
+	return 0;
+}
+
+
+/* Write
+ * Performs a blocking write on the module's i2c bus.
  *   buf : buffer containing all byte to be sent on the i2c bus,
  *         including conrtol bytes (address, offsets, ...)
  *   count : the number of bytes to be sent, including address bytes and so on.
@@ -396,35 +453,17 @@ int i2c_read(uint8_t bus_num, const void *cmd_buf, size_t cmd_size, const void* 
 int i2c_write(uint8_t bus_num, const void *buf, size_t count, const void* ctrl_buf)
 {
 	struct i2c_bus* i2c = &(i2c_buses[0]);
-	int ret = 0;
+	int ret;
 
-	/* Checks */
-	if (i2c->regs != LPC_I2C0)
-		return -EBADFD;
-	if (buf == NULL)
-		return -EINVAL;
-
-	if (i2c->state == I2C_BUSY) {
-		return -EBUSY;
-	}
-	if (i2c->state != I2C_OK) {
-		/* What should we do ??? someone failed to reset status ? */
+	ret = i2c_write_async(bus_num, buf, count, ctrl_buf);
+	if (ret != 0) {
+		return ret;
 	}
 
-	/* Clear read information to prevent entering master receiver states */
-	i2c->read_length = 0;
-	i2c->in_buff = NULL;
-	i2c->state = I2C_BUSY;
-	/* Set up i2c_bus structure for write operation */
-	i2c->out_buff = buf;
-	i2c->write_length = count;
-	/* control buffer, if any. Note that it's the only way to control
-	 *   operations on modules i2C bus to simplify the interface */
-	i2c->restart_after_addr = I2C_CONT;
-	i2c->repeated_start_restart = ctrl_buf;
-	i2c->restart_after_data = 0;
+	/* Wait for process completion */
+	do {} while (i2c->state == I2C_BUSY);
 
-	ret = i2c_perform_data_transfer(i2c);
+	ret = i2c_state(i2c);
 	if (ret == 0) {
 		return i2c->write_length;
 	}

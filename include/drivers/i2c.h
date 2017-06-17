@@ -104,7 +104,7 @@ enum i2c_state_machine_states {
 /*                Modules I2C access                                           */
 /***************************************************************************** */
 /* I2C Read
- * Performs a non-blocking read on the i2c bus.
+ * Performs a blocking read on the i2c bus.
  *   cmd_buf : buffer containing all control byte to be sent on the i2c bus
  *   cmd_size : size of the cmd_buf command buffer
  *   ctrl_buf : buffer containing action to be done after sending, like repeated START conditions
@@ -124,7 +124,7 @@ enum i2c_state_machine_states {
 int i2c_read(uint8_t bus_num, const void *cmd_buf, size_t cmd_size, const void* ctrl_buf, void* inbuff, size_t count);
 
 /* I2C Write
- * Performs a non-blocking write on the i2c bus.
+ * Performs a blocking write on the i2c bus.
  *   buf : buffer containing all byte to be sent on the i2c bus,
  *         including conrtol bytes (address, offsets, ...)
  *   count : the number of bytes to be sent, including address bytes and so on.
@@ -136,13 +136,32 @@ int i2c_read(uint8_t bus_num, const void *cmd_buf, size_t cmd_size, const void* 
  *   Upon successfull completion, returns the number of bytes written. On error, returns a negative
  *   integer equivalent to errors from glibc.
  *   -EBADFD : Device not initialized
- *   -EBUSY : Device or ressource Busy or Arbitration lost
+ *   -EAGAIN : Device already in use
+ *   -EBUSY : Arbitration lost
  *   -EAGAIN : Device already in use
  *   -EINVAL : Invalid argument (buf)
  *   -EREMOTEIO : Device did not acknowledge
  *   -EIO : Bad one: Illegal start or stop, or illegal state in i2c state machine
  */
 int i2c_write(uint8_t bus_num, const void *buf, size_t count, const void* ctrl_buf);
+
+/* I2C Asynchronous Write
+ * Performs a non-blocking write on the i2c bus.
+ *   buf : buffer containing all byte to be sent on the i2c bus,
+ *         including conrtol bytes (address, offsets, ...)
+ *   count : the number of bytes to be sent, including address bytes and so on.
+ *   ctrl_buf : buffer containing action to be done after sending, like repeated START conditions
+ *         ctrl_buf has the same size as cmd_buf
+ *         FIXME : note that STOP + START conditions are not allowed, the STOP would lead to sending
+ *         the first bytes of buf, creating an infinite loop.
+ * RETURN VALUE
+ *   Upon successfull transmition start, returns 0. On error, returns a negative
+ *   integer equivalent to errors from glibc.
+ *   -EBADFD : Device not initialized
+ *   -EAGAIN : Device already in use
+ *   -EINVAL : Invalid argument (buf)
+ */
+int i2c_write_async(uint8_t bus_num, const void *buf, size_t count, const void* ctrl_buf);
 
 
 /* Release Bus

@@ -103,7 +103,9 @@ int ssd130x_send_command(struct oled_display* conf, uint8_t cmd, uint8_t* data, 
 			cmd_buf[ 4 + (2 * i) ] = data[i];
 		}
 	}
-	ret = i2c_write(conf->bus_num, cmd_buf, (3 + (len * 2)), NULL);
+	do {
+		ret = i2c_write(conf->bus_num, cmd_buf, (3 + (len * 2)), NULL);
+	} while (ret == -EAGAIN);
 	if (ret != (3 + (len * 2))) {
 		conf->probe_ok = 0;
 		return ret;
@@ -330,7 +332,9 @@ int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
 	*(start - 1) = SSD130x_DATA_ONLY;
 
 	/* Send data on I2C bus */
-	ret = i2c_write(conf->bus_num, (start - 2), (2 + len), NULL);
+	do {
+		ret = i2c_write(conf->bus_num, (start - 2), (2 + len), NULL);
+	} while (ret == -EAGAIN);
 
 	/* Restore gddram data */
 	*(start - 2) = conf->gddram[0];
@@ -355,11 +359,17 @@ int ssd130x_display_full_screen(struct oled_display* conf)
 	if (ret != 0) {
 		return ret;
 	}
-	ret = ssd130x_send_data(conf, conf->gddram + 4, GDDRAM_SIZE);
-	if (ret != GDDRAM_SIZE) {
-		return ret;
-	}
-	return 0;
+
+	/* Setup I2C transfer */
+	*(conf->gddram + 2) = conf->address;
+	*(conf->gddram + 3) = SSD130x_DATA_ONLY;
+
+	/* Send data on I2C bus */
+	do {
+		ret = i2c_write_async(conf->bus_num, conf->gddram + 2, 2 + GDDRAM_SIZE, NULL);
+	} while (ret == -EAGAIN);
+
+	return ret;
 }
 
 /* Change a "tile" in the GDDRAM memory.

@@ -145,9 +145,6 @@ void bme_display(int uart_num)
 				comp_pressure,
 				comp_temp / 10,  (comp_temp > 0) ? (comp_temp % 10) : ((-comp_temp) % 10),
 				comp_humidity / 10, comp_humidity % 10);
-		ws2812_set_pixel(0, comp_humidity / 10, 0,0);
-		ws2812_set_pixel(1, 0, 0, comp_humidity % 10);
-		ws2812_send_frame(0);
 	}
 }
 
@@ -229,9 +226,6 @@ int main(void)
 	bme_config(UART0);
 	uv_config(UART0);
 	lux_config(UART0);
-
-	/* */
-	ws2812_config(&ws2812_data_out_pin);
 
 	while (1) {
 		bme_display(UART0);

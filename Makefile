@@ -41,7 +41,8 @@ OBJS = ${SRC:%.c=${OBJDIR}/%.o}
 DEPS = ${OBJS:%.o=$(OBJDIR)/%.d}
 
 NAME_SRC = $(wildcard $(TARGET_DIR)/*.c)
-NAME_OBJS = ${NAME_SRC:%.c=${OBJDIR}/%.o}
+NAME_A_SRC = $(wildcard $(TARGET_DIR)/*.s)
+NAME_OBJS = ${NAME_SRC:%.c=${OBJDIR}/%.o} ${NAME_A_SRC:%.s=${OBJDIR}/%.o}
 NAME_DEPS = ${NAME_OBJS:%.o=$(OBJDIR)/%.d}
 
 -include $(DEPS) $(NAME_DEPS)
@@ -62,6 +63,11 @@ NAME_DEPS = ${NAME_OBJS:%.o=$(OBJDIR)/%.d}
 ${OBJDIR}/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo "-- compiling" $<
+	@$(CC) -MMD -MP -MF ${OBJDIR}/$*.d $(CFLAGS) $< -c -o $@ -I$(INCLUDES) -I$(TARGET_INCLUDES)
+
+${OBJDIR}/%.o: %.s
+	@mkdir -p $(dir $@)
+	@echo "-- assembing" $<
 	@$(CC) -MMD -MP -MF ${OBJDIR}/$*.d $(CFLAGS) $< -c -o $@ -I$(INCLUDES) -I$(TARGET_INCLUDES)
 
 

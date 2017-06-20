@@ -34,9 +34,11 @@ int ssd130x_buffer_set_pixel(uint8_t* gddram, uint8_t x0, uint8_t y0, uint8_t st
 int ssd130x_buffer_set_tile(uint8_t* gddram, uint8_t x0, uint8_t y0, uint8_t* tile);
 
 /* Simple RLE decompressor (two implementations, wip) */
-void uncompress_image(uint8_t* compressed_data,
+void uncompress_image(const uint8_t* compressed_data,
                       uint8_t* buffer);
-void uncompress_image_asm(uint8_t* compressed_data,
+void uncompress_image_asm(const uint8_t* compressed_data,
+                          uint8_t* buffer);
+void uncompress_image_asm_old(const uint8_t* compressed_data,
                           uint8_t* buffer);
 
 #endif

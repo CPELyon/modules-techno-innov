@@ -13,7 +13,7 @@ ARCH = armv6-m
 
 CROSS_COMPILE ?= arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
-#DEBUG = -g
+# DEBUG = -ggdb3
 LD_DEBUG = $(DEBUG)
 #LD_DEBUG = $(DEBUG) -Wl,--print-memory-usage
 #LD_DEBUG = $(DEBUG) -Wl,--print-gc-sections -Wl,--print-output-format \
@@ -34,10 +34,16 @@ INCLUDES = include/
 TARGET_INCLUDES = $(TARGET_DIR)/
 OBJDIR = objs
 
-SRC = $(wildcard */*.c)
-SRC += $(wildcard lib/*/*.c)
-SRC += $(wildcard lib/protocols/*/*.c)
-OBJS = ${SRC:%.c=${OBJDIR}/%.o}
+C_SRC = $(wildcard */*.c)
+C_SRC += $(wildcard lib/*/*.c)
+C_SRC += $(wildcard lib/protocols/*/*.c)
+
+A_SRC = $(wildcard */*.s)
+A_SRC += $(wildcard lib/*/*.s)
+A_SRC += $(wildcard lib/protocols/*/*.s)
+
+
+OBJS = ${C_SRC:%.c=${OBJDIR}/%.o} ${A_SRC:%.s=${OBJDIR}/%.o}
 DEPS = ${OBJS:%.o=$(OBJDIR)/%.d}
 
 NAME_SRC = $(wildcard $(TARGET_DIR)/*.c)

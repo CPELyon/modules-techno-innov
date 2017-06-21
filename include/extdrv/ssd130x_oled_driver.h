@@ -40,7 +40,10 @@ struct oled_display {
 	uint8_t  read_dir;
 	uint8_t  display_offset_dir;
 	uint8_t  display_offset;
-  uint8_t* gddram;
+	uint8_t* gddram;
+	uint8_t  async;
+	/* internal */
+	uint8_t  fullscreen;
 };
 
 #define SSD130x_NB_LINES   64

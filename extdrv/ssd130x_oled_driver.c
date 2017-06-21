@@ -265,6 +265,8 @@ int ssd130x_display_on(struct oled_display* conf)
 	int ret = 0;
 	uint8_t val = 0;
 
+	conf->fullscreen = 0;
+
 	/* Display OFF */
 	ret = ssd130x_display_power(conf, SSD130x_DISP_OFF);  /* 0xAE */
 	if (ret != 0) {
@@ -319,6 +321,7 @@ int ssd130x_display_on(struct oled_display* conf)
 
 int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
 {
+	int (*write)(uint8_t, const void *, size_t, const void*);
 	int ret = 0;
 
 	/* Check that start and satrt + len are within buffer */
@@ -332,8 +335,9 @@ int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
 	*(start - 1) = SSD130x_DATA_ONLY;
 
 	/* Send data on I2C bus */
+	write = conf->async ? i2c_write_async : i2c_write;
 	do {
-		ret = i2c_write(conf->bus_num, (start - 2), (2 + len), NULL);
+		ret = write(conf->bus_num, (start - 2), (2 + len), NULL);
 	} while (ret == -EAGAIN);
 
 	/* Restore gddram data */
@@ -349,15 +353,19 @@ int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
 /* Update what is really displayed */
 int ssd130x_display_full_screen(struct oled_display* conf)
 {
+	int (*write)(uint8_t, const void *, size_t, const void*);
 	int ret = 0;
 
-	ret = ssd130x_set_column_address(conf, 0, 127);
-	if (ret != 0) {
-		return ret;
-	}
-	ret = ssd130x_set_page_address(conf, 0, 7);
-	if (ret != 0) {
-		return ret;
+	if (!conf->fullscreen) {
+		ret = ssd130x_set_column_address(conf, 0, 127);
+		if (ret != 0) {
+			return ret;
+		}
+		ret = ssd130x_set_page_address(conf, 0, 7);
+		if (ret != 0) {
+			return ret;
+		}
+		conf->fullscreen = 1;
 	}
 
 	/* Setup I2C transfer */
@@ -365,8 +373,9 @@ int ssd130x_display_full_screen(struct oled_display* conf)
 	*(conf->gddram + 3) = SSD130x_DATA_ONLY;
 
 	/* Send data on I2C bus */
+	write = conf->async ? i2c_write_async : i2c_write;
 	do {
-		ret = i2c_write_async(conf->bus_num, conf->gddram + 2, 2 + GDDRAM_SIZE, NULL);
+		ret = write(conf->bus_num, conf->gddram + 2, 2 + GDDRAM_SIZE, NULL);
 	} while (ret == -EAGAIN);
 
 	return ret;
@@ -380,6 +389,8 @@ int ssd130x_update_tile(struct oled_display* conf, uint8_t x0, uint8_t y0)
 {
 	uint8_t* addr = conf->gddram + 4 + (y0 * 128) + x0 * 8;
 	int ret = 0;
+
+	conf->fullscreen = 0;
 
 	ret = ssd130x_set_column_address(conf, (x0 * 8), (((x0 + 1) * 8) - 1));
 	if (ret != 0) {

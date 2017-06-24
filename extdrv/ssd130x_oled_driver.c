@@ -31,6 +31,7 @@
 #include "lib/string.h"
 #include "drivers/gpio.h"
 #include "drivers/i2c.h"
+#include "drivers/ssp.h"
 
 #include "extdrv/ssd130x_oled_driver.h"
 
@@ -89,26 +90,40 @@
 #define CMD_BUF_SIZE 24
 int ssd130x_send_command(struct oled_display* conf, uint8_t cmd, uint8_t* data, uint8_t len)
 {
-	char cmd_buf[CMD_BUF_SIZE] = { conf->address, SSD130x_NEXT_BYTE_CMD, cmd, };
-	int ret = 0;
+	int i;
 
-	if (len > (CMD_BUF_SIZE - 3)) {
-		return -EINVAL;
-	}
-
-	if (len != 0) {
-		int i = 0;
+	if (conf->bus_type == SSD130x_BUS_SPI) {
+		gpio_clear(conf->gpio_dc);
+		gpio_clear(conf->gpio_cs);
+		spi_transfer_single_frame(conf->bus_num, cmd);
 		for (i = 0; i < len; i++) {
-			cmd_buf[ 3 + (2 * i) ] = SSD130x_NEXT_BYTE_CMD;
-			cmd_buf[ 4 + (2 * i) ] = data[i];
+			spi_transfer_single_frame(conf->bus_num, data[i]);
 		}
-	}
-	do {
-		ret = i2c_write(conf->bus_num, cmd_buf, (3 + (len * 2)), NULL);
-	} while (ret == -EAGAIN);
-	if (ret != (3 + (len * 2))) {
-		conf->probe_ok = 0;
-		return ret;
+		gpio_set(conf->gpio_cs);
+	} else if (conf->bus_type == SSD130x_BUS_I2C) {
+		char cmd_buf[CMD_BUF_SIZE] = { conf->address, SSD130x_NEXT_BYTE_CMD, cmd, };
+		int ret;
+
+		if (2 * len > (CMD_BUF_SIZE - 3)) {
+			return -EINVAL;
+		}
+
+		if (len != 0) {
+			for (i = 0; i < len; i++) {
+				cmd_buf[ 3 + (2 * i) ] = SSD130x_NEXT_BYTE_CMD;
+				cmd_buf[ 4 + (2 * i) ] = data[i];
+			}
+		}
+
+		do {
+			ret = i2c_write(conf->bus_num, cmd_buf, (3 + (len * 2)), NULL);
+		} while (ret == -EAGAIN);
+		if (ret != (3 + (len * 2))) {
+			conf->probe_ok = 0;
+			return ret;
+		}
+	} else {
+		return -EPROTO;
 	}
 	return 0;
 }
@@ -267,13 +282,24 @@ int ssd130x_display_on(struct oled_display* conf)
 
 	conf->fullscreen = 0;
 
+	if (conf->bus_type == SSD130x_BUS_SPI) {
+		config_gpio(&conf->gpio_cs, 0, GPIO_DIR_OUT, 1);
+		config_gpio(&conf->gpio_dc, 0, GPIO_DIR_OUT, 1);
+
+		config_gpio(&conf->gpio_rst, 0, GPIO_DIR_OUT, 0);
+		usleep(5); /* at least 3us */
+		gpio_set(conf->gpio_rst);
+		msleep(1);
+	}
+
 	/* Display OFF */
 	ret = ssd130x_display_power(conf, SSD130x_DISP_OFF);  /* 0xAE */
 	if (ret != 0) {
 		return ret;
 	}
+
 	if (conf->charge_pump == SSD130x_INTERNAL_PUMP) {
-		val = SSD130x_CMD_CHARGE_INTERN;
+		val = SSD130x_CMD_CHARGE_INTERN; /* 0x14 */
 		ssd130x_send_command(conf, SSD130x_CMD_CHARGE_PUMP, &val, 1); /* 0x8D */
 	}
 
@@ -321,40 +347,52 @@ int ssd130x_display_on(struct oled_display* conf)
 
 int ssd130x_send_data(struct oled_display* conf, uint8_t* start, uint16_t len)
 {
-	int (*write)(uint8_t, const void *, size_t, const void*);
-	int ret = 0;
+	int ret;
 
-	/* Check that start and satrt + len are within buffer */
+	if (conf->bus_type == SSD130x_BUS_SPI) {
+		gpio_set(conf->gpio_dc);
+		gpio_clear(conf->gpio_cs);
+		ret = spi_transfer_multiple_frames(conf->bus_num, start, NULL, len, 8);
+		gpio_set(conf->gpio_cs);
+		if (ret != len) {
+			return ret;
+		}
+	} else if (conf->bus_type == SSD130x_BUS_I2C) {
+		int (*write)(uint8_t, const void *, size_t, const void*);
 
-	/* Copy previous two bytes to storage area (gddram[0] and gddram[1]) */
-	conf->gddram[0] = *(start - 2);
-	conf->gddram[1] = *(start - 1);
+		/* Check that start and satrt + len are within buffer */
 
-	/* Setup I2C transfer */
-	*(start - 2) = conf->address;
-	*(start - 1) = SSD130x_DATA_ONLY;
+		/* Copy previous two bytes to storage area (gddram[0] and gddram[1]) */
+		conf->gddram[0] = *(start - 2);
+		conf->gddram[1] = *(start - 1);
 
-	/* Send data on I2C bus */
-	write = conf->async ? i2c_write_async : i2c_write;
-	do {
-		ret = write(conf->bus_num, (start - 2), (2 + len), NULL);
-	} while (ret == -EAGAIN);
+		/* Setup I2C transfer */
+		*(start - 2) = conf->address;
+		*(start - 1) = SSD130x_DATA_ONLY;
 
-	/* Restore gddram data */
-	*(start - 2) = conf->gddram[0];
-	*(start - 1) = conf->gddram[1];
+		/* Send data on I2C bus */
+		write = conf->async ? i2c_write_async : i2c_write;
+		do {
+			ret = write(conf->bus_num, (start - 2), (2 + len), NULL);
+		} while (ret == -EAGAIN);
 
-	if (ret != (2 + len)) {
-		return ret;
+		/* Restore gddram data */
+		*(start - 2) = conf->gddram[0];
+		*(start - 1) = conf->gddram[1];
+
+		if (ret != (2 + len)) {
+			return ret;
+		}
+	} else {
+		return -EPROTO;
 	}
-	return len;
+	return 0;
 }
 
 /* Update what is really displayed */
 int ssd130x_display_full_screen(struct oled_display* conf)
 {
-	int (*write)(uint8_t, const void *, size_t, const void*);
-	int ret = 0;
+	int ret;
 
 	if (!conf->fullscreen) {
 		ret = ssd130x_set_column_address(conf, 0, 127);
@@ -368,16 +406,22 @@ int ssd130x_display_full_screen(struct oled_display* conf)
 		conf->fullscreen = 1;
 	}
 
-	/* Setup I2C transfer */
-	*(conf->gddram + 2) = conf->address;
-	*(conf->gddram + 3) = SSD130x_DATA_ONLY;
+	if (conf->bus_type == SSD130x_BUS_SPI) {
+		ret = ssd130x_send_data(conf, conf->gddram + 4, GDDRAM_SIZE);
+	} else if (conf->bus_type == SSD130x_BUS_I2C) {
+		/* Setup I2C transfer */
+		*(conf->gddram + 2) = conf->address;
+		*(conf->gddram + 3) = SSD130x_DATA_ONLY;
 
-	/* Send data on I2C bus */
-	write = conf->async ? i2c_write_async : i2c_write;
-	do {
-		ret = write(conf->bus_num, conf->gddram + 2, 2 + GDDRAM_SIZE, NULL);
-	} while (ret == -EAGAIN);
-
+		/* Send data on I2C bus */
+		int (*write)(uint8_t, const void *, size_t, const void*);
+		write = conf->async ? i2c_write_async : i2c_write;
+		do {
+			ret = write(conf->bus_num, conf->gddram + 2, 2 + GDDRAM_SIZE, NULL);
+		} while (ret == -EAGAIN);
+	} else {
+		return -EPROTO;
+	}
 	return ret;
 }
 

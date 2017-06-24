@@ -25,13 +25,15 @@
 #define EXTDRV_SSD130X_OLED_DRIVER_H
 
 #include "lib/stdint.h"
+#include "drivers/gpio.h"
 
 
 /***************************************************************************** */
 /* Oled Display */
 struct oled_display {
+	uint8_t  bus_type; /* I2C or SPI */
 	uint8_t  address; /* 8 bits address */
-	uint8_t  bus_num; /* I2C bus number */
+	uint8_t  bus_num; /* I2C/SPI bus number */
 	uint8_t  probe_ok;
 	uint8_t  charge_pump;
 	uint8_t  video_mode;
@@ -42,6 +44,10 @@ struct oled_display {
 	uint8_t  display_offset;
 	uint8_t* gddram;
 	uint8_t  async;
+	/* spi */
+	struct pio gpio_dc;
+	struct pio gpio_cs;
+	struct pio gpio_rst;
 	/* internal */
 	uint8_t  fullscreen;
 };
@@ -66,6 +72,9 @@ enum ssd130x_defs {
 	/* For display offset */
 	SSD130x_MOVE_TOP,
 	SSD130x_MOVE_BOTTOM,
+	/* I2C or SPI */
+	SSD130x_BUS_I2C,
+	SSD130x_BUS_SPI,
 };
 
 

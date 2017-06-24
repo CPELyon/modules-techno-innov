@@ -101,6 +101,7 @@ void fault_info(const char* name, uint32_t len)
 #define DISPLAY_ADDR   0x78
 static uint8_t gddram[ 4 + GDDRAM_SIZE ];
 struct oled_display display = {
+	.bus_type = SSD130x_BUS_I2C,
 	.address = DISPLAY_ADDR,
 	.bus_num = I2C0,
 	.charge_pump = SSD130x_EXT_VCC,  /* Alt is SSD130x_INTERNAL_PUMP */

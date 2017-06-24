@@ -189,8 +189,9 @@ static int spi_transfer_bytes(struct lpc_ssp* ssp, uint8_t* data_out, uint8_t* d
 
 		/* Read some of the replies, but stop if there's still data to send and the fifo
 		 *  is running short */
-		while ((ssp->status & LPC_SSP_ST_RX_NOT_EMPTY) &&
-				!((count < size) && (ssp->raw_int_status & LPC_SSP_INTR_TX_HALF_EMPTY))) {
+		while ((ssp->status & LPC_SSP_ST_RX_FULL) ||
+                ((ssp->status & LPC_SSP_ST_RX_NOT_EMPTY) &&
+				 !((count < size) && (ssp->raw_int_status & LPC_SSP_INTR_TX_HALF_EMPTY)))) {
 			/* Read the data (mandatory) */
 			data_read = (uint8_t)ssp->data;
 			if (data_in != NULL) {

@@ -81,7 +81,7 @@ int tmp101_convert_to_deci_degrees(uint16_t raw);
 
 /* Temp Read
  * Performs a non-blocking read of the temperature from the sensor.
- * addr: the sensor address on most significant bits.
+ * conf: the sensor configuration structure.
  * 'raw' and 'deci_degrees': integer addresses for conversion result, may be NULL.
  * Return value(s):
  *   Upon successfull completion, returns 0 and the temperature read is placed in the
@@ -96,7 +96,7 @@ int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* de
  * The sensor is thus placed in shutdown mode, the thermostat is in interrupt mode,
  * and the polarity is set to active high.
  * The conversion resolution is set to the provided "resolution".
- * addr: the sensor address on most significant bits.
+ * conf: the sensor configuration structure.
  * Return value:
  *   Upon successfull completion, returns 0. On error, returns a negative integer
  *   equivalent to errors from glibc.
@@ -104,7 +104,7 @@ int tmp101_sensor_read(struct tmp101_sensor_config* conf, uint16_t* raw, int* de
 int tmp101_sensor_config(struct tmp101_sensor_config* conf);
 
 /* Start a conversion when the sensor is in shutdown mode.
- * addr : the sensor address on most significant bits.
+ * conf: the sensor configuration structure.
  */
 int tmp101_sensor_start_conversion(struct tmp101_sensor_config* conf);
 

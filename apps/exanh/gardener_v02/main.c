@@ -31,6 +31,7 @@
 #include "drivers/gpio.h"
 #include "drivers/i2c.h"
 #include "lib/errno.h"
+#include "lib/utils.h"
 #include "drivers/adc.h"
 #include "drivers/ssp.h"
 #include "extdrv/status_led.h"
@@ -123,13 +124,22 @@ const struct pio positions[NB_POS_SENSORS] = {
 struct sdmmc_card micro_sd = {
 	.ssp_bus_num = SSP_BUS_0,
 	.card_type = MMC_CARDTYPE_UNKNOWN,
-	.block_size = 64,
+	.block_size = 512,
 	.chip_select = LPC_GPIO_0_15,
 };
+#define MMC_BUF_SIZE MMC_MAX_SECTOR_SIZE
+#define MMC_RECORD_SIZE  32
+static uint16_t mmc_idx = 0;
+static uint32_t mmc_block_num = 0;
+uint8_t mmc_data[MMC_BUF_SIZE];
+#define MMC_BLK_VALID_MAGIC  "This is a valid data block" /* Must be less than 32 */
+#define MMC_BLK_VALID_IDX_MAGIC "ValidIDX"
+#define MMC_BLK_VALID_IDX_MAGIC_SIZE 8
+#define MMC_LAST_DATA_IDX_DATE_OFFSET  MMC_BLK_VALID_IDX_MAGIC_SIZE
+#define MMC_LAST_DATA_IDX_OFFSET  10  /* 10 * 4 bytes */
+#define MMC_LAST_DATA_IDX_BLOCK   1
 
-uint8_t mmc_data[MMC_MAX_SECTOR_SIZE];
-
-const struct pio sclk_error = LPC_GPIO_0_18; /* Water Pump */
+const struct pio sclk_error = LPC_GPIO_0_18; /* Fix for v0.2 of the board */
 
 
 /***************************************************************************** */
@@ -145,12 +155,15 @@ struct rtc_pcf85363a_config rtc_conf = {
 /* Oldest acceptable time in RTC. BCD coded. */
 const struct rtc_time oldest = {
 	.year = 0x17,
-	.month = 0x04,
-	.day = 0x20,
-	.hour = 0x13,
-	.min = 0x00,
+	.month = 0x05,
+	.day = 0x16,
+	.hour = 0x00,
+	.min = 0x57,
 };
 static struct rtc_time now;
+static volatile uint8_t perform_time_update = 0;
+static struct rtc_time time_update;
+static int time_valid = 0;
 
 
 /***************************************************************************** */
@@ -161,6 +174,19 @@ struct tmp101_sensor_config tmp101_sensor = {
 	.addr = TMP101_ADDR,
 	.resolution = TMP_RES_ELEVEN_BITS,
 };
+
+
+/***************************************************************************** */
+#define MAX_SENSORS 6
+volatile uint8_t poll_sensor = 0;
+void request_samples(uint32_t tick)
+{
+	static uint8_t next_sensor = 1;
+	poll_sensor = next_sensor++;
+	if (next_sensor > MAX_SENSORS) {
+		next_sensor = 1;
+	}
+}
 
 
 /***************************************************************************** */
@@ -235,26 +261,81 @@ void system_config(void)
 		rtc_pcf85363_time_read(&rtc_conf, &now);
 		rtc_pcf85363_time_to_str(&now, buff, 30);
 		/* Debug */
-		uprintf(UART0, buff);
+		uprintf(UART0, "Using time from RTC: %s\n", buff);
 	} else if (ret == -EFAULT) {
+		char buff[30];
 		memcpy(&now, &oldest, sizeof(struct rtc_time));
 		rtc_pcf85363_time_write(&rtc_conf, &now);
+		rtc_pcf85363_time_to_str(&now, buff, 30);
+		uprintf(UART0, "Using time from source code as now : %s\n", buff);
+		time_valid = 0;
 	}
 
 	/* microSD card init */
 	/* FIX for v02 */
 	config_gpio(&sclk_error, 0, GPIO_DIR_IN, 0);
-	ret = sdmmc_init(&micro_sd);
-	if (ret == 0) {
-		msleep(1);
-		ret = sdmmc_init_wait_card_ready(&micro_sd);
+	do {
+		ret = sdmmc_init(&micro_sd);
 		if (ret == 0) {
-			ret = sdmmc_init_end(&micro_sd);
+			msleep(5);
+			ret = sdmmc_init_wait_card_ready(&micro_sd);
+			if (ret == 0) {
+				ret = sdmmc_init_end(&micro_sd);
+			}
 		}
-	}
-	uprintf(UART0, "uSD init: %d, type: %d, bs: %d\n", ret, micro_sd.card_type, micro_sd.block_size);
+		uprintf(UART0, "uSD init: %d, type: %d, bs: %d\n", ret, micro_sd.card_type, micro_sd.block_size);
+		msleep(50);
+	} while (ret != 0);
 	ret = sdmmc_read_block(&micro_sd, 0, mmc_data);
 	uprintf(UART0, "uSD read: %s\n", mmc_data);
+	/* Find the next empty block */
+	/* Read the second block and get the date and block number */
+	ret = sdmmc_read_block(&micro_sd, MMC_LAST_DATA_IDX_BLOCK, mmc_data);
+	if (strncmp((char*)mmc_data, MMC_BLK_VALID_IDX_MAGIC, MMC_BLK_VALID_IDX_MAGIC_SIZE) != 0) {
+		/* Never wrote a valid block number ? */
+		mmc_block_num = MMC_LAST_DATA_IDX_BLOCK;
+	} else {
+		mmc_block_num = ((uint32_t*)mmc_data)[MMC_LAST_DATA_IDX_OFFSET];
+	}
+	/* Search for the last block from this one */
+	do {
+		mmc_block_num++;
+		ret = sdmmc_read_block(&micro_sd, mmc_block_num, mmc_data);
+		if (ret != 0) {
+			uprintf(UART0, "SD Read failed while looking for last block at block %d (ret = %d)\n", mmc_block_num, ret);
+		}
+	} while (strncmp((char*)mmc_data, MMC_BLK_VALID_MAGIC, (sizeof(MMC_BLK_VALID_MAGIC) - 1)) == 0);
+	/* Debug */
+	uprintf(UART0, "Last valid data block on uSD is %d\n", mmc_block_num);
+	/* Set the date to the last found date */
+	if (rtc_pcf85363a_time_cmp(&now, (struct rtc_time*)(mmc_data + MMC_BLK_VALID_IDX_MAGIC_SIZE)) < 0) {
+		char buff[30];
+		memcpy(&now, (struct rtc_time*)(mmc_data + MMC_BLK_VALID_IDX_MAGIC_SIZE), sizeof(struct rtc_time));
+		rtc_pcf85363_time_write(&rtc_conf, &now);
+		rtc_pcf85363_time_to_str(&now, buff, 30);
+		uprintf(UART0, "Using last saved time as now : %s\n", buff);
+		time_valid = 0;
+	}
+
+	/* Prepare buffer for first set of data */
+	if (1) {
+		int offset = 0;
+		/* Start with magic */
+		memcpy(mmc_data, MMC_BLK_VALID_MAGIC, sizeof(MMC_BLK_VALID_MAGIC));
+		offset = 32;
+		/* Add date */
+		rtc_pcf85363_time_read(&rtc_conf, &now);
+		memcpy((mmc_data + offset), &now, sizeof(struct rtc_time));
+		offset += sizeof(struct rtc_time);
+		/* Internal temp and battery voltage are not available ... skip. */
+		mmc_idx = 64;
+	}
+
+	/* Register callback to send samples requests to sensors.
+	 * Send request to one sensor every 10 seconds, which makes 1 request every
+	 * minute for each sensor.
+	 */
+	add_systick_callback(request_samples, 10*1000);
 
 	uprintf(UART0, "E-Xanh Gardener started\n");
 }
@@ -280,20 +361,39 @@ static void water_level_info(uint32_t gpio)
 	}
 }
 
-
-volatile char env_buff[20];
+#define ENV_BUFF_SIZE  20
+uint8_t env_buff[ENV_BUFF_SIZE];
 volatile int idx = 0;
 volatile int mode = 0;
 void handle_cmd(uint8_t c)
 {
 	if (c == '#') {
-		mode = 1; /* Raw data */
+		mode = 1; /* Receiving data from sensors */
 		env_buff[idx++] = c;
+	} else if (c == '$') {
+		mode = 2; /* Configuration */
 	} else if (mode == 1) {
-		if (idx < 20) {
+		if (idx < ENV_BUFF_SIZE) {
 			env_buff[idx++] = c;
 		}
-		if (idx >= 20) {
+		if (idx >= ENV_BUFF_SIZE) {
+			mode = 0;
+		}
+	} else if (mode == 2) {
+		if (c == 'c') {
+			/* Received config request ? */
+			/* FIXME */
+			mode = 0;
+		} else if (c == 'd') {
+			/* Incoming date config */
+			mode = 3;
+		}
+	} else if (mode == 3) {
+		static uint8_t tidx = 0;
+		((uint8_t*)(&time_update))[tidx++] = c;
+		if (tidx >= sizeof(struct rtc_time)) {
+			tidx = 0;
+			perform_time_update = 1;
 			mode = 0;
 		}
 	} else {
@@ -335,6 +435,8 @@ int main(void)
 	uint8_t old_position = 255;
 	uint8_t old_water_level = 255;
 	uint8_t old_pompe = 0;
+	int tmp101_deci_degrees = 0;
+	int mv_batt = 0;
 
 	system_init();
 
@@ -346,26 +448,43 @@ int main(void)
 	system_config();
 
 	while (1) {
+		/* Request a temperature conversion to onboard sensor */
 		tmp101_sensor_start_conversion(&tmp101_sensor);
-		chenillard(700);
+
+		/* Add some delay to the loop */
+		chenillard(100);
+
+		/* Track selector positions */
 		if (current_position != old_position) {
 			uprintf(UART0, "New position : %d\n", current_position);
 			old_position = current_position;
 		}
+
+		/* Track water level */
 		if (water_info != old_water_level) {
 			old_water_level = water_info;
 			uprintf(UART0, "Water is at %d\n", water_info);
 		}
+
+		/* Pump activation ? */
 		if (old_pompe != pompe_cmd) {
+			/* Add data to the next mmc data block to be written */
+			rtc_pcf85363_time_read(&rtc_conf, &now);
+			memcpy((mmc_data + mmc_idx), &now, sizeof(struct rtc_time));
 			if (pompe_cmd == 1) {
+				memcpy((mmc_data + mmc_idx + sizeof(struct rtc_time)), "Pump ON", 8);
 				uprintf(UART0, "Pump On\n");
 				gpio_set(pompe_on);
 			} else {
+				memcpy((mmc_data + mmc_idx + sizeof(struct rtc_time)), "Pump OFF", 9);
 				uprintf(UART0, "Pump Stopped\n");
 				gpio_clear(pompe_on);
 			}
+			mmc_idx += 32;
 			old_pompe = pompe_cmd;
 		}
+
+		/* Selector motor activation ? */
 		if (motor_move_req == 1) {
 			if (motor_sens == 1) {
 				uprintf(UART0, "Motor moving forward\n");
@@ -383,46 +502,68 @@ int main(void)
 			gpio_clear(motor_power);
 			gpio_clear(motor_enable);
 		}
-		/* Temp sensor */
+
+		/* Read onboard Temperature sensor */
 		if (1) {
-			int tmp101_deci_degrees = 0;
 			int ret = 0;
 			ret = tmp101_sensor_read(&tmp101_sensor, NULL, &tmp101_deci_degrees);
 			if (ret != 0) {
 				uprintf(UART0, "TMP101 read error : %d\n", ret);
-			} else {
-				int abs_deci = tmp101_deci_degrees;
-				if (tmp101_deci_degrees < 0) {
-					abs_deci = -tmp101_deci_degrees;
-				}
-				uprintf(UART0, "Internal Temp : % 4d.%02d\n", (tmp101_deci_degrees / 10), (abs_deci % 10));
 			}
 		}
-		/* ADC Read */
-		if (1) {
+
+		/* Send the poll request to one of the sensors */
+		if (poll_sensor != 0) {
+			uint8_t req_buf[4];
+			req_buf[0] = '#';
+			req_buf[1] = poll_sensor;
+			poll_sensor = 0;
+			req_buf[2] = 'a';
+			serial_write(UART0, (char*)req_buf, 3);
+		}
+
+		/* Update led colors ? */
+		if (0) {
+			/* Set led */
+			ws2812_set_pixel(0, 0, 10, 10);
+			ws2812_set_pixel(1, 10, 0, 10);
+			ws2812_send_frame(0);
+		}
+
+		/* Read onboard ADC for external analog sensor */
+		if (0) {
 			uint16_t humidity_val = 0;
 			int mv_humidity = 0;
-			uint16_t batt_val = 0;
-			int mv_batt = 0;
 			adc_start_convertion_once(LPC_ADC(1), LPC_ADC_SEQ(0), 0);
 			msleep(8);
 			adc_get_value(&humidity_val, LPC_ADC(1));
 			mv_humidity = ((humidity_val * 32) / 10);
-			adc_start_convertion_once(LPC_ADC(4), LPC_ADC_SEQ(0), 0);
-			adc_get_value(&batt_val, LPC_ADC(4));
-			msleep(8);
-			mv_batt = (batt_val * 16);  /*  = ((val * 32) / 10) * 5  (pont diviseur) */
-			/* Display */
-			uprintf(UART0, "Capteur: %d mV\n", mv_humidity);
-			uprintf(UART0, "Batterie: %d.%03d V\n", (mv_batt/1000), ((mv_batt/10)%100));
-			/* Set led */
-			ws2812_set_pixel(0, 0, 0, (((mv_humidity - 1000) / 10) & 0xFF));
-			ws2812_set_pixel(1, 10, 0, 10);
-			ws2812_send_frame(0);
+			uprintf(UART0, "External sensor : %d\n", mv_humidity);
 		}
-		if (idx >= 20) {
+
+		/* Read onboard ADC for battery voltage */
+		if (1) {
+			uint16_t batt_val = 0;
+			adc_start_convertion_once(LPC_ADC(4), LPC_ADC_SEQ(0), 0);
+			msleep(8);
+			adc_get_value(&batt_val, LPC_ADC(4));
+			mv_batt = (batt_val * 16);  /*  = ((val * 32) / 10) * 5  (pont diviseur) */
+		}
+
+		/* If we received data from a sensor, then add to SD buffer for storage and display */
+		if ((idx >= ENV_BUFF_SIZE) && (mmc_idx <= (MMC_BUF_SIZE - MMC_RECORD_SIZE))) {
 			uint16_t* data = (uint16_t*)env_buff;
-			uprintf(UART0, "From raw:\n");
+			int i = 0;
+			/* Add data to the next mmc data block to be written */
+			rtc_pcf85363_time_read(&rtc_conf, &now);
+			memcpy((mmc_data + mmc_idx), &now, sizeof(struct rtc_time));
+			memcpy((mmc_data + mmc_idx + sizeof(struct rtc_time)), env_buff, ENV_BUFF_SIZE);
+			mmc_idx += 32;
+			/* Switch data to our endianness */
+			for (i = 1; i <= 8; i++) {
+				data[i] = (uint16_t)ntohs(data[i]);
+			}
+			uprintf(UART0, "From sensor %d:\n", (env_buff[1] & 0x1F));
 			uprintf(UART0, "- Soil: %d\n", data[1]);
 			uprintf(UART0, "- Lux: %d, IR: %d, UV: %d\n", data[2], data[3], data[4]);
 			uprintf(UART0, "- Patm: %d hPa, Temp: %d,%02d degC, Humidity: %d,%d rH\n\n",
@@ -430,6 +571,80 @@ int main(void)
 							data[6] / 10,  (data[6]> 0) ? (data[6] % 10) : ((-data[6]) % 10),
 							data[7] / 10, data[7] % 10);
 			idx = 0;
+			/* Data got received, clear sensor led. */
+			env_buff[1] &= 0x1F;
+			env_buff[2] = 'l';
+			env_buff[3] = 0;
+			env_buff[4] = 0;
+			env_buff[5] = 0;
+			serial_write(UART0, (char*)env_buff, 6);
+		}
+
+		/* If MMC buffer is full, then write it to the uSD card */
+		if (mmc_idx > (MMC_BUF_SIZE - MMC_RECORD_SIZE)) {
+			int ret = 0;
+			/* Save data to uSD card */
+			ret = sdmmc_write_block(&micro_sd, mmc_block_num, mmc_data);
+			if (ret == 0) {
+				uprintf(UART0, "Wrote data to block %d\n", mmc_block_num);
+			} else {
+				uprintf(UART0, "Error while writting data to block %d: %d\n", mmc_block_num, ret);
+			}
+			memset(mmc_data, 0, MMC_BUF_SIZE);
+			/* Maybe update the "last block written index" */
+			/* FIXME : Set to 0x3F */
+			if ((mmc_block_num & 0x0F) == 0x00) {
+				/* Prepare the block number 2 */
+				memcpy(mmc_data, MMC_BLK_VALID_IDX_MAGIC, MMC_BLK_VALID_IDX_MAGIC_SIZE);
+				rtc_pcf85363_time_read(&rtc_conf, &now);
+				memcpy((mmc_data + MMC_LAST_DATA_IDX_DATE_OFFSET), &now, sizeof(struct rtc_time));
+				((uint32_t*)mmc_data)[MMC_LAST_DATA_IDX_OFFSET] = mmc_block_num;
+				/* Write to block number 2 (MMC_LAST_DATA_IDX_BLOCK) */
+				ret = sdmmc_write_block(&micro_sd, MMC_LAST_DATA_IDX_BLOCK, mmc_data);
+				if (ret == 0) {
+					uprintf(UART0, "Wrote last bock number to block %d\n", MMC_LAST_DATA_IDX_BLOCK);
+				} else {
+					uprintf(UART0, "Error while writting last bock number: %d\n", ret);
+				}
+				memset(mmc_data, 0, MMC_BUF_SIZE);
+			}
+			/* Prepare buffer for next set of data */
+			if (1) {
+				int offset = 0;
+				/* Start with magic */
+				memcpy(mmc_data, MMC_BLK_VALID_MAGIC, sizeof(MMC_BLK_VALID_MAGIC));
+				offset = 32;
+				/* Add date */
+				rtc_pcf85363_time_read(&rtc_conf, &now);
+				memcpy((mmc_data + offset), &now, sizeof(struct rtc_time));
+				offset += sizeof(struct rtc_time);
+				/* Then add internal temp */
+				memcpy((mmc_data + offset), &tmp101_deci_degrees, sizeof(tmp101_deci_degrees));
+				offset += sizeof(tmp101_deci_degrees);
+				/* Add battery voltage */
+				memcpy((mmc_data + offset), &mv_batt, sizeof(mv_batt));
+				offset += sizeof(mv_batt);
+				mmc_idx = 64;
+			}
+			/* Display internal temp and battery level */
+			if (1) {
+				int abs_deci = tmp101_deci_degrees;
+				if (tmp101_deci_degrees < 0) {
+					abs_deci = -tmp101_deci_degrees;
+				}
+				uprintf(UART0, "Internal Temp : % 4d.%02d\n", (tmp101_deci_degrees / 10), (abs_deci % 10));
+				uprintf(UART0, "Batterie: %d.%03d V\n", (mv_batt/1000), ((mv_batt/10)%100));
+			}
+			mmc_block_num++;
+		}
+
+		if (perform_time_update == 1) {
+			char buff[30];
+			perform_time_update = 0;
+			rtc_pcf85363_time_write(&rtc_conf, &time_update);
+			rtc_pcf85363_time_to_str(&time_update, buff, 30);
+			uprintf(UART0, "Using updated time as now : %s\n", buff);
+			time_valid = 1;
 		}
 	}
 	return 0;

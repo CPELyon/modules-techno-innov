@@ -146,6 +146,9 @@ void temp_config()
 	if (ret != 0) {
 		uprintf(UART0, "Temp config error: %d\n", ret);
 	}
+#ifdef DEBUG
+	uprintf(UART0, "Temp config done.\n\r");
+#endif
 }
 
 /******************************************************************************/
@@ -179,7 +182,7 @@ void rf_config(void)
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
 
 #ifdef DEBUG
-	uprintf(UART0, "CC1101 RF link init done.\n");
+	uprintf(UART0, "CC1101 RF link init done.\n\r");
 #endif
 }
 
@@ -195,7 +198,7 @@ void handle_rf_rx_data(void)
 	cc1101_enter_rx_mode();
 
 #ifdef DEBUG
-	uprintf(UART0, "RF: ret:%d, st: %d.\n", ret, status);
+	uprintf(UART0, "RF: ret:%d, st: %d.\n\r", ret, status);
 #endif
 
 	switch (data[2]) {
@@ -235,6 +238,9 @@ static volatile uint8_t cc_tx_buff[RF_BUFF_LEN];
 static volatile uint8_t cc_ptr = 0;
 void handle_uart_cmd(uint8_t c)
 {
+#ifdef DEBUG
+	uprintf(UART0, "Received command : %c, buffer size: %d.\n\r",c,cc_ptr);
+#endif
 	if (cc_ptr < RF_BUFF_LEN) {
 		cc_tx_buff[cc_ptr++] = c;
 	} else {
@@ -243,6 +249,7 @@ void handle_uart_cmd(uint8_t c)
 	if ((c == '\n') || (c == '\r')) {
 		cc_tx = 1;
 	}
+
 }
 
 void send_on_rf(void)
@@ -265,7 +272,7 @@ void send_on_rf(void)
 	ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
 
 #ifdef DEBUG
-	uprintf(UART0, "Tx ret: %d\n", ret);
+	uprintf(UART0, "Tx ret: %d\n\r", ret);
 #endif
 }
 
@@ -298,9 +305,13 @@ int main(void)
 
 		/* RF */
 		if (cc_tx == 1) {
+#ifdef DEBUG
+	uprintf(UART0, "Transmission ready to send.\n\r");
+#endif
 			send_on_rf();
 			cc_tx = 0;
 		}
+
 		/* Do not leave radio in an unknown or unwated state */
 		do {
 			status = (cc1101_read_status() & CC1101_STATE_MASK);
@@ -317,10 +328,15 @@ int main(void)
 				loop = 0;
 			}
 		}
+
 		if (check_rx == 1) {
+#ifdef DEBUG
+	uprintf(UART0, "We are ready to receive.\n\r");
+#endif
 			check_rx = 0;
 			handle_rf_rx_data();
 		}
+
 	}
 	return 0;
 }

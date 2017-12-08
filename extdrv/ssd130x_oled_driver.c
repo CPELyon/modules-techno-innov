@@ -291,7 +291,13 @@ int ssd130x_display_on(struct oled_display* conf)
 		gpio_set(conf->gpio_rst);
 		msleep(1);
 	}
-
+	/* Adafruit OLED displays need to pull a down signal on reset */
+	if (conf->bus_type == SSD130x_BUS_I2C) {
+		config_gpio(&conf->gpio_rst, 0, GPIO_DIR_OUT, 0);
+		usleep(5); /* at least 3us */
+		gpio_set(conf->gpio_rst);
+		msleep(1);
+	}
 	/* Display OFF */
 	ret = ssd130x_display_power(conf, SSD130x_DISP_OFF);  /* 0xAE */
 	if (ret != 0) {

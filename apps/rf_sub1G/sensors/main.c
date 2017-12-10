@@ -243,7 +243,7 @@ int main(void)
 		/* Tell we are alive :) */
 		chenillard(500);
 
-		/* Display */
+		/* Update values */
 		if (update_display == 1) {
 			uint16_t uv = 0, ir = 0, humidity = 0;
 			uint32_t pressure = 0, temp = 0, lux = 0;

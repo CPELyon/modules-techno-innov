@@ -19,12 +19,7 @@ Copyright 2016 Nathael Pajani <nathael.pajani@ed3l.fr>
  *
  *************************************************************************** */
 
-This example shows the support of the I²C driver for the SSD130x oled display
-controller, as found on MCOT128064N2Z-YM DISPLAY from MIDAS, used on
-Seeed-Studio's 128 x 64 Oled display board, and on Techno-Innov's Scialys
-display board.
-
-Other display are supported by using charge_pump configuration setting.
-
-The example starts with one pixel line "on" per character line, and then
-displays text received from the uart on the second line of the display.
+This example shows the support of the I²C driver for the Adafruit SSD1306 oled display
+controller, it is a 128 x 64 Oled display board.
+For Adafruit Oled you need to connect the reset pin, for this example it is connected 
+to the GPIO_0_0 of the micro-controller.

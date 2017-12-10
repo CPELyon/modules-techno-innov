@@ -155,8 +155,8 @@ void temp_display(int uart_num, int* deci_degrees)
 }
 
 /***************************************************************************** */
-/* Oled Display */
-#define DISPLAY_ADDR   0x78
+/* Adafruit Oled Display */
+#define DISPLAY_ADDR   0x7A
 static uint8_t gddram[ 4 + GDDRAM_SIZE ];
 struct oled_display display = {
 	.bus_type = SSD130x_BUS_I2C,
@@ -227,7 +227,7 @@ int main(void)
 	/* Erase screen with lines, makes it easier to know things are going right */
 	ssd130x_buffer_set(gddram, 0x00);
 	ret = ssd130x_display_full_screen(&display);
-
+	
 
 	/* Add periodic handler */
 	add_systick_callback(periodic_display, 1000);
@@ -244,19 +244,18 @@ int main(void)
 
 		/* Display */
 		if (update_display == 1) {
-			uint32_t temp = 0;
 			int deci_degrees = 0;
 			char data[20];
 
 			uprintf(UART0, "Updating display\n\r");
 
-			/* Read the sensors */
+			/* Read the temperature sensor on board */
 			temp_display(UART0, &deci_degrees);
 
 			/* Update display */
-			snprintf(data, 20, "Tint: %d,%d", (deci_degrees / 10), (deci_degrees % 10));
+			snprintf(data, 20, "Temp: %d,%d", (deci_degrees / 10), (deci_degrees % 10));
 			display_line(2, 0, data);
-			snprintf(data, 20, "Text: %d,%d", (temp / 10), (temp > 0) ? (temp % 10) : ((-temp) % 10));
+			snprintf(data, 20, "CPE Lyon");
 			display_line(3, 0, data);
 			/* And send to screen */
 			ret = ssd130x_display_full_screen(&display);

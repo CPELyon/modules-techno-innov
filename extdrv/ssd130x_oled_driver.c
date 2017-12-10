@@ -32,7 +32,6 @@
 #include "drivers/gpio.h"
 #include "drivers/i2c.h"
 #include "drivers/ssp.h"
-
 #include "extdrv/ssd130x_oled_driver.h"
 
 
@@ -293,12 +292,14 @@ int ssd130x_display_on(struct oled_display* conf)
 	}
 	/* Adafruit OLED displays need to pull a down signal on reset */
 	if (conf->bus_type == SSD130x_BUS_I2C) {
-		config_gpio(&conf->gpio_rst, 0, GPIO_DIR_OUT, 0);
-		usleep(5); /* at least 3us */
+		config_gpio(&conf->gpio_rst, 0, GPIO_DIR_OUT, 1);
+		msleep(1); 
+		gpio_clear(conf->gpio_rst);
+		msleep(10);
 		gpio_set(conf->gpio_rst);
-		msleep(1);
 	}
 	/* Display OFF */
+	
 	ret = ssd130x_display_power(conf, SSD130x_DISP_OFF);  /* 0xAE */
 	if (ret != 0) {
 		return ret;

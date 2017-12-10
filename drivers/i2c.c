@@ -456,6 +456,7 @@ int i2c_write(uint8_t bus_num, const void *buf, size_t count, const void* ctrl_b
 	int ret;
 
 	ret = i2c_write_async(bus_num, buf, count, ctrl_buf);
+	
 	if (ret != 0) {
 		return ret;
 	}
@@ -464,8 +465,10 @@ int i2c_write(uint8_t bus_num, const void *buf, size_t count, const void* ctrl_b
 	do {} while (i2c->state == I2C_BUSY);
 
 	ret = i2c_state(i2c);
+	
 	if (ret == 0) {
 		return i2c->write_length;
+		
 	}
 
 	return ret;

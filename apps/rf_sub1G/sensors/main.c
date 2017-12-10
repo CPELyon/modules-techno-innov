@@ -29,7 +29,6 @@
 #include "drivers/serial.h"
 #include "drivers/gpio.h"
 #include "drivers/ssp.h"
-#include "drivers/adc.h"
 #include "drivers/i2c.h"
 
 #include "extdrv/status_led.h"
@@ -41,10 +40,6 @@
 #define MODULE_VERSION	0x03
 #define MODULE_NAME "RF Sub1G - USB"
 
-
-
-#define DEBUG 1
-#define BUFF_LEN 60
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
 
@@ -155,6 +150,8 @@ void bme_config(int uart_num)
 	}
 }
 
+/* BME will obtain temperature, pressure and humidity values */
+
 void bme_display(int uart_num, uint32_t* pressure, uint32_t* temp, uint16_t* humidity)
 {
 	int ret = 0;
@@ -229,7 +226,6 @@ int main(void)
 	system_init();
 	uart_on(UART0, 115200, NULL);
 	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
-	adc_on(NULL);
 	status_led_config(&status_led_green, &status_led_red);
 
 	/* Sensors config */
@@ -245,16 +241,12 @@ int main(void)
 	while (1) {
 		
 		/* Tell we are alive :) */
-		chenillard(250);
-
-		
+		chenillard(500);
 
 		/* Display */
 		if (update_display == 1) {
 			uint16_t uv = 0, ir = 0, humidity = 0;
 			uint32_t pressure = 0, temp = 0, lux = 0;
-			
-
 			
 			/* Read the sensors */
 			uv_display(UART0, &uv);

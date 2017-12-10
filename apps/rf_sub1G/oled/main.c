@@ -133,9 +133,9 @@ void temp_config(int uart_num)
 	/* Temp sensor */
 	ret = tmp101_sensor_config(&tmp101_sensor);
 	if (ret != 0) {
-		uprintf(uart_num, "Temp config error: %d\n", ret);
+		uprintf(uart_num, "Temp config error: %d\n\r", ret);
 	} else {
-		uprintf(uart_num, "Temp config done.\n");
+		uprintf(uart_num, "Temp config done.\n\r");
 	}
 
 }
@@ -147,9 +147,9 @@ void temp_display(int uart_num, int* deci_degrees)
 	/* Read the temperature */
 	ret = tmp101_sensor_read(&tmp101_sensor, &val, deci_degrees);
 	if (ret != 0) {
-		uprintf(uart_num, "Temp read error: %d\n", ret);
+		uprintf(uart_num, "Temp read error: %d\n\r", ret);
 	} else {
-		uprintf(uart_num, "Temp read: %d,%d - raw: 0x%04x.\n",
+		uprintf(uart_num, "Temp read: %d,%d - raw: 0x%04x.\n\r",
 				(*deci_degrees/10), (*deci_degrees%10), val);
 	}
 }
@@ -232,10 +232,10 @@ int main(void)
 	/* Add periodic handler */
 	add_systick_callback(periodic_display, 1000);
 
-	uprintf(UART0, "App started\n");
+	uprintf(UART0, "App started\n\r");
 
 	while (1) {
-		uint8_t status = 0;
+		
 		/* Request a Temp conversion on I2C TMP101 temperature sensor */
 		tmp101_sensor_start_conversion(&tmp101_sensor); /* A conversion takes about 40ms */
 		
@@ -248,7 +248,7 @@ int main(void)
 			int deci_degrees = 0;
 			char data[20];
 
-			uprintf(UART0, "Updating display\n");
+			uprintf(UART0, "Updating display\n\r");
 
 			/* Read the sensors */
 			temp_display(UART0, &deci_degrees);
@@ -261,7 +261,7 @@ int main(void)
 			/* And send to screen */
 			ret = ssd130x_display_full_screen(&display);
 			if (ret < 0) {
-				uprintf(UART0, "Display update error: %d\n", ret);
+				uprintf(UART0, "Display update error: %d\n\r", ret);
 			}
 			update_display = 0;
 		}

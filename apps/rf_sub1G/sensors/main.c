@@ -112,7 +112,7 @@ void lux_config(int uart_num)
 	int ret = 0;
 	ret = tsl256x_configure(&tsl256x_sensor);
 	if (ret != 0) {
-		uprintf(uart_num, "Lux config error: %d\n", ret);
+		uprintf(uart_num, "Lux config error: %d\n\r", ret);
 	}
 }
 
@@ -123,9 +123,9 @@ void lux_display(int uart_num, uint16_t* ir, uint32_t* lux)
 
 	ret = tsl256x_sensor_read(&tsl256x_sensor, &comb, ir, lux);
 	if (ret != 0) {
-		uprintf(uart_num, "Lux read error: %d\n", ret);
+		uprintf(uart_num, "Lux read error: %d\n\r", ret);
 	} else {
-		uprintf(uart_num, "Lux: %d  (Comb: 0x%04x, IR: 0x%04x)\n", *lux, comb, *ir);
+		uprintf(uart_num, "Lux: %d  (Comb: 0x%04x, IR: 0x%04x)\n\r", *lux, comb, *ir);
 	}
 }
 
@@ -151,7 +151,7 @@ void bme_config(int uart_num)
 
 	ret = bme280_configure(&bme280_sensor);
 	if (ret != 0) {
-		uprintf(uart_num, "Sensor config error: %d\n", ret);
+		uprintf(uart_num, "Sensor config error: %d\n\r", ret);
 	}
 }
 
@@ -161,7 +161,7 @@ void bme_display(int uart_num, uint32_t* pressure, uint32_t* temp, uint16_t* hum
 
 	ret = bme280_sensor_read(&bme280_sensor, pressure, temp, humidity);
 	if (ret != 0) {
-		uprintf(uart_num, "Sensor read error: %d\n", ret);
+		uprintf(uart_num, "Sensor read error: %d\n\r", ret);
 	} else {
 		int comp_temp = 0;
 		uint32_t comp_pressure = 0;
@@ -170,7 +170,7 @@ void bme_display(int uart_num, uint32_t* pressure, uint32_t* temp, uint16_t* hum
 		comp_temp = bme280_compensate_temperature(&bme280_sensor, *temp) / 10;
 		comp_pressure = bme280_compensate_pressure(&bme280_sensor, *pressure) / 100;
 		comp_humidity = bme280_compensate_humidity(&bme280_sensor, *humidity) / 10;
-		uprintf(uart_num, "P: %d hPa, T: %d,%02d degC, H: %d,%d rH\n",
+		uprintf(uart_num, "P: %d hPa, T: %d,%02d degC, H: %d,%d rH\n\r",
 				comp_pressure,
 				comp_temp / 10,  (comp_temp > 0) ? (comp_temp % 10) : ((-comp_temp) % 10),
 				comp_humidity / 10, comp_humidity % 10);
@@ -198,7 +198,7 @@ void uv_config(int uart_num)
 	/* UV sensor */
 	ret = veml6070_configure(&veml6070_sensor);
 	if (ret != 0) {
-		uprintf(uart_num, "UV config error: %d\n", ret);
+		uprintf(uart_num, "UV config error: %d\n\r", ret);
 	}
 }
 
@@ -208,9 +208,9 @@ void uv_display(int uart_num, uint16_t* uv_raw)
 
 	ret = veml6070_sensor_read(&veml6070_sensor, uv_raw);
 	if (ret != 0) {
-		uprintf(uart_num, "UV read error: %d\n", ret);
+		uprintf(uart_num, "UV read error: %d\n\r", ret);
 	} else {
-		uprintf(uart_num, "UV: 0x%04x\n", *uv_raw);
+		uprintf(uart_num, "UV: 0x%04x\n\r", *uv_raw);
 	}
 }
 
@@ -225,7 +225,7 @@ void periodic_display(uint32_t tick)
 
 int main(void)
 {
-	int ret = 0;
+	
 	system_init();
 	uart_on(UART0, 115200, NULL);
 	i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
@@ -240,10 +240,9 @@ int main(void)
 	/* Add periodic handler */
 	add_systick_callback(periodic_display, 1000);
 
-	uprintf(UART0, "App started\n");
+	uprintf(UART0, "App started\n\r");
 
 	while (1) {
-		uint8_t status = 0;
 		
 		/* Tell we are alive :) */
 		chenillard(250);
@@ -254,10 +253,9 @@ int main(void)
 		if (update_display == 1) {
 			uint16_t uv = 0, ir = 0, humidity = 0;
 			uint32_t pressure = 0, temp = 0, lux = 0;
-			int deci_degrees = 0;
+			
 
-			uprintf(UART0, "Updating display\n");
-
+			
 			/* Read the sensors */
 			uv_display(UART0, &uv);
 			bme_display(UART0, &pressure, &temp, &humidity);

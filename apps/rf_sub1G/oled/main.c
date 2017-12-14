@@ -156,7 +156,9 @@ void temp_display(int uart_num, int* deci_degrees)
 
 /***************************************************************************** */
 /* Adafruit Oled Display */
-#define DISPLAY_ADDR   0x7A
+/* #define DISPLAY_ADDR   0x7A */
+/* For other OLED Displays maybe : */
+#define DISPLAY_ADDR   0x78
 static uint8_t gddram[ 4 + GDDRAM_SIZE ];
 struct oled_display display = {
 	.bus_type = SSD130x_BUS_I2C,

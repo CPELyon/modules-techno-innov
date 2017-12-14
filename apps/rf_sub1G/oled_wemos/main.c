@@ -170,7 +170,7 @@ struct oled_display display = {
 	.scan_dir = SSD130x_SCAN_BOTTOM_TOP,
 	.read_dir = SSD130x_RIGHT_TO_LEFT,
 	.display_offset_dir = SSD130x_MOVE_TOP,
-	.display_offset = 0,
+	.display_offset = 4,
   .gddram = gddram,
 };
 
@@ -254,9 +254,9 @@ int main(void)
 			temp_display(UART0, &deci_degrees);
 
 			/* Update display */
-			snprintf(data, 20, "T: %d,%d", (deci_degrees / 10), (deci_degrees % 10));
+			snprintf(data, 10, "T: %d,%d", (deci_degrees / 10), (deci_degrees % 10));
 			display_line(2, 4, data); /* The driver has an offset of 4 columns with the wemos display */ 
-			snprintf(data, 20, "CPE Lyon");
+			snprintf(data, 10, "CPE Lyon");
 			display_line(3, 4, data);
 			/* And send to screen */
 			ret = ssd130x_display_full_screen(&display);

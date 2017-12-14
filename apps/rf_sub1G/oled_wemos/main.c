@@ -47,8 +47,6 @@
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
 
-#define SSD130x_NB_LINES   48
-#define SSD130x_NB_COL     64
 
 static volatile uint32_t update_display = 0;
 
@@ -172,7 +170,7 @@ struct oled_display display = {
 	.scan_dir = SSD130x_SCAN_BOTTOM_TOP,
 	.read_dir = SSD130x_RIGHT_TO_LEFT,
 	.display_offset_dir = SSD130x_MOVE_TOP,
-	.display_offset = 4,
+	.display_offset = 0,
   .gddram = gddram,
 };
 

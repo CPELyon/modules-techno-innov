@@ -43,7 +43,7 @@
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
 //#define DEBUG 1
-
+#define NODE_ID 1
 /***************************************************************************** */
 /* Pins configuration */
 /* pins blocks are passed to set_pins() for pins configuration.
@@ -281,7 +281,8 @@ int main(void)
 			uv_display(UART0, &uv);
 			bme_display(UART0, &pressure, &temp, &humidity);
 			lux_display(UART0, &ir, &lux);
-			uprintf(UART0, "{\"Lux\": %d, \"Pression\": %d, \"Temp\": %d.%02d, \"Humidity\": %d.%d, \"UV\": %d}\n\r", 
+			uprintf(UART0, "{\"id\": %d, \"Lux\": %d, \"Pression\": %d, \"Temp\": %d.%02d, \"Humidity\": %d.%d, \"UV\": %d}\n\r", 
+					NODE_ID, 
 					lux,
 					pressure,
 					temp / 10,  (temp > 0) ? (temp % 10) : ((-temp) % 10),
